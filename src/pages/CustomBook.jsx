@@ -1,3 +1,4 @@
+// src/pages/CustomBook.jsx
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -15,23 +16,16 @@ const WhatsAppIcon = ({ size = 24, className = "" }) => (
 );
 
 const bookTypes = [
-  "Wedding Album",
-  "Family Memory Book",
-  "Baby Album",
-  "Travel Photo Book",
-  "Anniversary Edition",
-  "Year in Review",
-  "Custom Theme",
+  "Wedding Album", "Family Memory Book", "Baby Album", 
+  "Travel Photo Book", "Anniversary Edition", "Custom Theme",
 ];
 
 export default function CustomBook() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [bookType, setBookType] = useState(bookTypes[0]);
-  const [pages, setPages] = useState("40");
-  const [message, setMessage] = useState("");
+  const [formData, setFormData] = useState({
+    name: "", phone: "", email: "", 
+    bookType: bookTypes[0], pages: "40", message: ""
+  });
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [dragActive, setDragActive] = useState(false);
@@ -40,22 +34,17 @@ export default function CustomBook() {
 
   const handleNext = () => {
     if (currentStep === 1) {
-      if (!name.trim() || !phone.trim()) return alert("Name and WhatsApp number are required!");
+      if (!formData.name.trim() || !formData.phone.trim()) return alert("Basic details required.");
     }
-    if (currentStep === 2) {
-      if (files.length < 5) return alert("Please upload at least 5 photos to continue.");
-    }
-    if (currentStep < totalSteps) setCurrentStep(currentStep + 1);
+    if (currentStep === 2 && files.length < 5) return alert("Upload at least 5 photos.");
+    setCurrentStep(prev => Math.min(prev + 1, totalSteps));
   };
 
-  const handleBack = () => currentStep > 1 && setCurrentStep(currentStep - 1);
-
   const handleFilesAdd = (newFiles) => {
-    const validFiles = newFiles.filter((f) => f.type.startsWith("image/"));
-    if (files.length + validFiles.length > 50) return alert("Maximum 50 images allowed.");
-    setFiles([...files, ...validFiles]);
-    const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
-    setPreviews([...previews, ...newPreviews]);
+    const validFiles = newFiles.filter(f => f.type.startsWith("image/"));
+    if (files.length + validFiles.length > 50) return alert("Max 50 images.");
+    setFiles(prev => [...prev, ...validFiles]);
+    setPreviews(prev => [...prev, ...validFiles.map(f => URL.createObjectURL(f))]);
   };
 
   const removeImage = (index) => {
@@ -66,270 +55,185 @@ export default function CustomBook() {
 
   const submitEnquiry = () => {
     const text = encodeURIComponent(
-      `Hi StudioMemories! ✨\n\nI'd like to create a custom photo book.\n\n` +
-      `👤 Name: ${name}\n📱 Phone: ${phone}\n` +
-      `${email.trim() ? `📧 Email: ${email}\n` : ""}` +
-      `📖 Book Type: ${bookType}\n📄 Pages: ${pages}\n🖼️ Images: ${files.length}\n\n` +
-      `💬 Message: ${message.trim() || "No additional requests"}\n\n` +
-      `I'll attach the photos now. Excited for your design ideas! 🌟`
+      `✨ New Custom Book Inquiry ✨\n\n` +
+      `👤 Name: ${formData.name}\n📱 WhatsApp: ${formData.phone}\n` +
+      `📖 Type: ${formData.bookType}\n📄 Pages: ${formData.pages}\n🖼️ Photos: ${files.length}\n` +
+      `💬 Notes: ${formData.message || "None"}`
     );
     window.open(`https://wa.me/${whatsappNumber}?text=${text}`, '_blank');
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] font-sans text-slate-900 pb-20">
-      {/* Hero Header with Cinematic Parallax Feel */}
-<section className="relative h-[40vh] min-h-[300px] overflow-hidden bg-slate-950 flex items-center group">
-      {/* Background Image with subtle zoom */}
-      <motion.img
-        initial={{ scale: 1.1 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-        src="https://www.pikperfect.com/assets/images/towebp/3.1_professional_wedding_album/professional-wedding-album.jpg"
-        className="absolute inset-0 w-full h-full object-cover opacity-60"
-        alt="Custom Photo Book"
-      />
-      
-      {/* Sleek Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/40 to-transparent" />
-
-      <div className="relative max-w-7xl mx-auto px-6 w-full">
-        <div className="max-w-xl">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-3 mb-4"
-          >
-            <span className="h-[2px] w-8 bg-amber-500 rounded-full" />
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-400">
-              Premium Customization
-            </span>
+    <div className="min-h-screen bg-[#FDFCFB] text-slate-950 pb-20 selection:bg-amber-100">
+      {/* HERO SECTION */}
+      <section className="relative h-[45vh] min-h-[400px] bg-slate-950 flex items-center overflow-hidden">
+        <motion.img 
+          initial={{ scale: 1.2, opacity: 0 }}
+          animate={{ scale: 1, opacity: 0.5 }}
+          transition={{ duration: 1.5 }}
+          src="https://images.unsplash.com/photo-1544365390-34f40776b7e6?q=80&w=2070&auto=format&fit=crop" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/80 to-[#FDFCFB]" />
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full text-center">
+          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+            <span className="text-amber-400 text-[10px] font-black uppercase tracking-[0.5em] mb-4 block">Handcrafted Legacies</span>
+            <h1 className="text-5xl md:text-7xl font-black text-white italic tracking-tighter uppercase leading-none">
+              Design Your <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">Masterpiece</span>
+            </h1>
           </motion.div>
-
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-4xl md:text-5xl font-black text-white leading-[1.1] uppercase italic tracking-tighter"
-          >
-            Create Your <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-              Legacy Book
-            </span>
-          </motion.h1>
-
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="mt-4 text-slate-300 text-sm font-medium max-w-sm leading-relaxed"
-          >
-            Professional design. Handcrafted quality. 
-            Ready in 3 simple steps.
-          </motion.p>
         </div>
-      </div>
+      </section>
 
-      {/* Modern Scroll Indicator (Optional) */}
-      <div className="absolute bottom-6 right-10 hidden md:flex items-center gap-4">
-         <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.3em]">Scroll for details</span>
-         <div className="w-[1px] h-12 bg-gradient-to-b from-amber-500 to-transparent" />
-      </div>
-    </section>
-      {/* Main Form Area */}
-      <div className="max-w-6xl mx-auto px-6 -mt-24 relative z-10">
-        {/* Floating Progress Tracker */}
-        <div className="bg-white/80 backdrop-blur-2xl rounded-[3rem] p-4 shadow-2xl shadow-slate-200/50 mb-10 border border-white flex items-center justify-around max-w-3xl mx-auto">
-          {[1, 2, 3].map((step) => (
-            <div key={step} className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black transition-all duration-500 ${
-                currentStep >= step ? "bg-slate-900 text-amber-400 scale-110" : "bg-slate-100 text-slate-400"
+      {/* STEPPER & FORM CONTAINER */}
+      <div className="max-w-5xl mx-auto px-6 -mt-20 relative z-20">
+        {/* FLOATING STEPPER */}
+        <div className="bg-white/70 backdrop-blur-xl border border-white rounded-full p-2 shadow-2xl shadow-slate-200/50 mb-12 flex justify-between items-center max-w-2xl mx-auto">
+          {[1, 2, 3].map(step => (
+            <div key={step} className="flex items-center gap-3 px-6">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black transition-all duration-500 ${
+                currentStep >= step ? "bg-slate-950 text-amber-400 scale-110 shadow-lg shadow-amber-500/20" : "bg-slate-100 text-slate-400"
               }`}>
-                {currentStep > step ? <Check size={20} /> : step}
+                {currentStep > step ? <Check size={14} /> : step}
               </div>
-              <span className={`hidden md:block text-[10px] font-black uppercase tracking-widest ${
-                currentStep >= step ? "text-slate-900" : "text-slate-300"
-              }`}>
-                {step === 1 ? "Basics" : step === 2 ? "Upload" : "Finish"}
+              <span className={`hidden sm:block text-[9px] font-black uppercase tracking-widest ${currentStep >= step ? "text-slate-900" : "text-slate-300"}`}>
+                {step === 1 ? "Details" : step === 2 ? "Gallery" : "Confirm"}
               </span>
             </div>
           ))}
         </div>
 
-        {/* Form Content */}
-        <div className="bg-white rounded-[3.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.05)] border border-slate-50 overflow-hidden">
+        {/* CONTENT CARD */}
+        <div className="bg-white rounded-[4rem] shadow-[0_80px_100px_-30px_rgba(0,0,0,0.06)] border border-slate-100 overflow-hidden min-h-[600px] flex flex-col">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.4 }}
-              className="p-8 md:p-16"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="p-10 md:p-20 flex-1"
             >
-              {/* Header inside Form */}
-              <div className="mb-12 text-center">
-                <h2 className="text-3xl font-black text-slate-950 tracking-tighter uppercase italic">
-                  {currentStep === 1 && "The Blueprint"}
-                  {currentStep === 2 && "The Gallery"}
-                  {currentStep === 3 && "Final Review"}
-                </h2>
-                <div className="h-1 w-12 bg-amber-500 mx-auto mt-2 rounded-full" />
-              </div>
-
-              {/* STEP 1: PREFERENCES */}
               {currentStep === 1 && (
-                <div className="grid md:grid-cols-2 gap-10">
-                  <div className="space-y-6">
-                    <InputField label="Full Name" icon={User} value={name} onChange={setName} placeholder="Your name" />
-                    <InputField label="WhatsApp Number" icon={Phone} value={phone} onChange={setPhone} placeholder="+91" />
-                    <InputField label="Email Address" icon={Mail} value={email} onChange={setEmail} placeholder="Optional" />
+                <div className="grid md:grid-cols-2 gap-12">
+                  <div className="space-y-8">
+                    <h2 className="text-3xl font-black italic uppercase tracking-tighter">Personal <br/> Blueprint</h2>
+                    <InputField label="Name" icon={User} placeholder="Full Name" value={formData.name} onChange={v => setFormData({...formData, name: v})} />
+                    <InputField label="WhatsApp" icon={Phone} placeholder="+91" value={formData.phone} onChange={v => setFormData({...formData, phone: v})} />
                   </div>
-                  <div className="space-y-6">
-                    <SelectField label="Album Type" icon={Layers} value={bookType} onChange={setBookType} options={bookTypes} />
-                    <SelectField label="Page Count" icon={BookOpen} value={pages} onChange={setPages} options={["20 pages", "40 pages", "60 pages", "100+ pages"]} />
+                  <div className="space-y-6 pt-2">
+                    <SelectField label="Album Type" icon={Layers} options={bookTypes} value={formData.bookType} onChange={v => setFormData({...formData, bookType: v})} />
+                    <SelectField label="Capacity" icon={BookOpen} options={["20 Pages", "40 Pages", "60 Pages"]} value={formData.pages} onChange={v => setFormData({...formData, pages: v})} />
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                        <MessageSquare size={12}/> Notes & Theme
-                      </label>
-                      <textarea
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        className="w-full bg-slate-50 rounded-2xl p-5 border-none focus:ring-2 focus:ring-amber-500/20 text-sm font-medium h-24 transition-all"
-                        placeholder="E.g., Vintage gold accents, floral theme..."
-                      />
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><MessageSquare size={12}/> Vision & Notes</label>
+                      <textarea className="w-full bg-slate-50 rounded-3xl p-6 text-sm font-medium h-32 focus:ring-2 focus:ring-amber-500/10 border-none" placeholder="Color preferences, themes..." value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* STEP 2: UPLOAD */}
               {currentStep === 2 && (
-                <div className="max-w-4xl mx-auto">
-                  <div
-                    onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                <div className="space-y-10">
+                  <div className="text-center max-w-md mx-auto">
+                    <h2 className="text-3xl font-black italic uppercase tracking-tighter">Media Library</h2>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Upload 5-50 High-Resolution Photos</p>
+                  </div>
+                  
+                  <div 
+                    onDragOver={e => { e.preventDefault(); setDragActive(true); }}
                     onDragLeave={() => setDragActive(false)}
-                    onDrop={(e) => { e.preventDefault(); setDragActive(false); handleFilesAdd(Array.from(e.dataTransfer.files)); }}
-                    className={`border-2 border-dashed rounded-[3rem] p-12 text-center transition-all cursor-pointer ${
-                      dragActive ? "border-amber-500 bg-amber-50/50" : "border-slate-200 bg-slate-50 hover:bg-slate-100/50"
-                    }`}
+                    onDrop={e => { e.preventDefault(); setDragActive(false); handleFilesAdd(Array.from(e.dataTransfer.files)); }}
+                    className={`border-2 border-dashed rounded-[3rem] p-16 text-center transition-all ${dragActive ? "border-amber-500 bg-amber-50/30" : "border-slate-100 bg-slate-50"}`}
                   >
-                    <input type="file" multiple accept="image/*" onChange={(e) => handleFilesAdd(Array.from(e.target.files))} className="hidden" id="file-up" />
-                    <label htmlFor="file-up" className="cursor-pointer">
-                      <div className="w-20 h-20 bg-white rounded-3xl shadow-lg flex items-center justify-center mx-auto mb-6 text-amber-500">
-                        <Camera size={32} strokeWidth={2.5}/>
+                    <input type="file" multiple hidden id="f-upload" onChange={e => handleFilesAdd(Array.from(e.target.files))} />
+                    <label htmlFor="f-upload" className="cursor-pointer group">
+                      <div className="w-16 h-16 bg-white rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                        <Camera className="text-amber-500" />
                       </div>
-                      <h3 className="text-xl font-black mb-2 uppercase tracking-tighter">Drag & Drop Your Memories</h3>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">JPG, PNG up to 50 files</p>
+                      <span className="text-xs font-black uppercase tracking-widest block">Choose from device</span>
                     </label>
                   </div>
 
                   {previews.length > 0 && (
-                    <div className="mt-12 space-y-4">
-                      <div className="flex items-center justify-between px-4">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{previews.length} Selection(s)</span>
-                        <button onClick={() => {setFiles([]); setPreviews([]);}} className="text-[10px] font-black text-rose-500 uppercase hover:underline">Clear All</button>
-                      </div>
-                      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-                        {previews.map((url, i) => (
-                          <div key={i} className="group relative aspect-square rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all">
-                            <img src={url} className="w-full h-full object-cover" alt="prev" />
-                            <button onClick={() => removeImage(i)} className="absolute inset-0 bg-rose-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white">
-                              <X size={16}/>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 gap-2 mt-10">
+                      {previews.map((url, i) => (
+                        <div key={i} className="group relative aspect-square rounded-xl overflow-hidden shadow-md">
+                          <img src={url} className="w-full h-full object-cover" />
+                          <button onClick={() => removeImage(i)} className="absolute inset-0 bg-rose-500/90 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><X size={14}/></button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
               )}
 
-              {/* STEP 3: REVIEW */}
               {currentStep === 3 && (
-                <div className="max-w-2xl mx-auto space-y-8">
-                  <div className="bg-amber-50 rounded-[2.5rem] p-8 text-center border border-amber-100 shadow-inner">
-                    <Sparkles size={48} className="text-amber-500 mx-auto mb-4" />
-                    <h3 className="text-2xl font-black tracking-tighter uppercase italic mb-2">Ready to Build!</h3>
-                    <p className="text-sm font-medium text-slate-600">Your custom blueprint is ready. Our designers will review your selection and reach out on WhatsApp with a draft.</p>
+                <div className="max-w-2xl mx-auto space-y-12">
+                   <div className="text-center">
+                    <Sparkles size={40} className="text-amber-400 mx-auto mb-4" />
+                    <h2 className="text-3xl font-black italic uppercase tracking-tighter">Final Curation</h2>
                   </div>
-                  
                   <div className="grid grid-cols-2 gap-4">
-                    <ReviewCard label="Album" value={bookType} icon={Layers} />
-                    <ReviewCard label="Pages" value={pages} icon={BookOpen} />
-                    <ReviewCard label="Photos" value={`${files.length} Selected`} icon={ImageIcon} />
-                    <ReviewCard label="User" value={name} icon={User} />
+                    <ReviewCard icon={User} label="Client" value={formData.name} />
+                    <ReviewCard icon={Layers} label="Style" value={formData.bookType} />
+                    <ReviewCard icon={BookOpen} label="Format" value={formData.pages} />
+                    <ReviewCard icon={ImageIcon} label="Gallery" value={`${files.length} Photos`} />
+                  </div>
+                  <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Note to Designer</p>
+                    <p className="text-sm font-medium italic">"{formData.message || "Ready for design review."}"</p>
                   </div>
                 </div>
               )}
-
-              {/* Navigation Actions */}
-              <div className="mt-16 flex items-center justify-between border-t border-slate-50 pt-10">
-                <button
-                  onClick={handleBack}
-                  className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${
-                    currentStep === 1 ? "opacity-0 pointer-events-none" : "text-slate-400 hover:text-slate-900"
-                  }`}
-                >
-                  <ChevronLeft size={16}/> Previous
-                </button>
-
-                <button
-                  onClick={currentStep === 3 ? submitEnquiry : handleNext}
-                  className={`flex items-center gap-4 px-10 py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl ${
-                    currentStep === 3 
-                    ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-200" 
-                    : "bg-slate-900 text-white hover:bg-amber-500 hover:text-slate-950 shadow-slate-200"
-                  }`}
-                >
-                  {currentStep === 3 ? (
-                    <>
-                      <WhatsAppIcon size={20} /> Confirm via WhatsApp
-                    </>
-                  ) : (
-                    <>
-                      Next Stage <ChevronRight size={18}/>
-                    </>
-                  )}
-                </button>
-              </div>
             </motion.div>
           </AnimatePresence>
+
+          {/* FOOTER ACTIONS */}
+          <div className="px-10 md:px-20 py-10 border-t border-slate-50 flex items-center justify-between bg-white">
+            <button 
+              onClick={() => setCurrentStep(s => s - 1)}
+              className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${currentStep === 1 ? "opacity-0" : "text-slate-400 hover:text-slate-950"}`}
+            >
+              <ChevronLeft size={16}/> Back
+            </button>
+            
+            <button 
+              onClick={currentStep === 3 ? submitEnquiry : handleNext}
+              className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-2xl ${
+                currentStep === 3 ? "bg-emerald-500 text-white shadow-emerald-200" : "bg-slate-950 text-white shadow-slate-200"
+              }`}
+            >
+              {currentStep === 3 ? <><WhatsAppIcon size={18}/> Send Inquiry</> : <>Next Phase <ChevronRight size={16}/></>}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// Subcomponents for Cleanliness
 const InputField = ({ label, icon: Icon, ...props }) => (
-  <div className="space-y-2">
-    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-      <Icon size={12}/> {label}
-    </label>
-    <input {...props} className="w-full bg-slate-50 rounded-2xl px-6 py-4 border-none focus:ring-2 focus:ring-amber-500/20 text-sm font-bold transition-all" />
+  <div className="space-y-3">
+    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Icon size={12}/> {label}</label>
+    <input {...props} onChange={e => props.onChange(e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-amber-500/20 transition-all" />
   </div>
 );
 
-const SelectField = ({ label, icon: Icon, value, onChange, options }) => (
-  <div className="space-y-2">
-    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-      <Icon size={12}/> {label}
-    </label>
-    <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-slate-50 rounded-2xl px-6 py-4 border-none focus:ring-2 focus:ring-amber-500/20 text-sm font-bold transition-all appearance-none">
-      {options.map(o => <option key={o}>{o}</option>)}
+const SelectField = ({ label, icon: Icon, options, value, onChange }) => (
+  <div className="space-y-3">
+    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Icon size={12}/> {label}</label>
+    <select value={value} onChange={e => onChange(e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-amber-500/20 appearance-none">
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
   </div>
 );
 
-const ReviewCard = ({ label, value, icon: Icon }) => (
-  <div className="bg-slate-50 p-6 rounded-3xl flex items-center gap-4 border border-slate-100 shadow-sm">
-    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-500 shadow-sm">
-      <Icon size={18}/>
-    </div>
+const ReviewCard = ({ icon: Icon, label, value }) => (
+  <div className="bg-slate-50 p-6 rounded-3xl flex items-center gap-5 border border-slate-100 shadow-sm">
+    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-amber-500 shadow-sm"><Icon size={20}/></div>
     <div>
       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-      <p className="text-xs font-black text-slate-900 uppercase truncate max-w-[120px]">{value}</p>
+      <p className="text-xs font-black uppercase tracking-tight">{value}</p>
     </div>
   </div>
 );

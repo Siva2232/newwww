@@ -13,13 +13,14 @@ import PortfolioPage from "../pages/PortfolioPage";
 import Detailed from "../pages/Detailed";
 import ContactPage from "../pages/ContactPage";
 import Cursor from "../components/ui/Cursor";
-import AdminPanel from "../sections/AdminPanel"; // or ../pages/AdminPanel
+import AdminPanel from "../sections/AdminPanel";
 import CustomBook from "../pages/CustomBook";
 import ProductDetail from "../pages/ProductDetail";
+import LoginPage from "../pages/LoginPage";
+import Debug from "../pages/Debug";
 
-// New: Login Page
-import LoginPage from "../pages/LoginPage"; // Make sure this file exists!
-import Debug from "../pages/Debug"; // Debug page for testing context
+// NEW: Import the scroll component
+import ScrollToTop from "../components/common/ScrollToTop";   // adjust path if needed
 
 // Context
 import { useProducts } from "../Context/ProductContext";
@@ -28,13 +29,10 @@ export default function AppRoutes() {
   const location = useLocation();
   const { isAuthenticated } = useProducts();
 
-  // Determine if current route is an admin route
   const isAdminRoute = location.pathname.startsWith("/admin");
 
-  // Protected Route Component
   const ProtectedAdminRoute = ({ children }) => {
     if (!isAuthenticated) {
-      // Redirect to login, preserving the intended destination
       return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
     return children;
@@ -52,6 +50,9 @@ export default function AppRoutes() {
 
       {/* Main Content */}
       <main className={isAdminRoute ? "pt-0" : "pt-20"}>
+        {/* ADD IT HERE — runs on every navigation */}
+        <ScrollToTop />
+
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
@@ -89,12 +90,11 @@ export default function AppRoutes() {
           {/* Debug Page */}
           <Route path="/debug" element={<Debug />} />
 
-          {/* Optional: Catch-all for unknown routes */}
+          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
-      {/* Conditionally render Footer only on public routes */}
       {!isAdminRoute && <Footer />}
     </>
   );

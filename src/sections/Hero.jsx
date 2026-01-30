@@ -2,9 +2,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Search, ArrowRight, ArrowUpRight, ShoppingCart, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, ArrowRight, ArrowUpRight, ShoppingCart, Star, Plus, Sparkles, Timer } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useProducts } from "../Context/ProductContext";
+import ProductCard from "../components/common/ProductCard";
 
 // WhatsApp business number
 const whatsappNumber = "9746683778";
@@ -16,7 +17,7 @@ const WhatsAppIcon = ({ size = 24, className = "" }) => (
   </svg>
 );
 
-// Special Offers Carousel (unchanged - your original data)
+// Special Offers Carousel Data
 const specialOffers = [
   {
     title: "Hot Deal: Frames",
@@ -64,142 +65,6 @@ const getDisplayCategory = (cat) => {
     default: return cat || "";
   }
 };
-
-const ProductCard = ({ 
-  product, 
-  whatsappNumber, 
-  getDisplayCategory = (cat) => cat, 
-  WhatsAppIcon,
-  trendingProductIds = [],
-  bestSellerProductIds = [],
-}) => {
-  const displayCategory = typeof getDisplayCategory === 'function' 
-    ? getDisplayCategory(product.category) 
-    : product.category;
-    
-  // Use both _id and id for compatibility
-  const productId = product._id || product.id;
-  const isTrending = trendingProductIds.includes(product._id) || trendingProductIds.includes(product.id);
-  const isBestSeller = bestSellerProductIds.includes(product._id) || bestSellerProductIds.includes(product.id);
-  const formatPrice = (num) => new Intl.NumberFormat('en-IN').format(num);
-
-  const message = encodeURIComponent(
-    `Hi! I'm interested in the ${product.name} priced at ₹${product.price}.\nCategory: ${displayCategory}\nCan you confirm availability?`
-  );
-
-  const discountPercentage = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
-    : null;
-
-  return (
-    <div className="group relative h-full max-w-[280px] mx-auto">
-      <div className="relative h-full flex flex-col bg-white rounded-[1.5rem] overflow-hidden border border-slate-100 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
-        
-        {/* COMPACT IMAGE SECTION */}
-        <div className="relative aspect-square overflow-hidden bg-slate-50">
-          {/* Minimalist Badges */}
-          <div className="absolute top-2 left-2 z-20 flex flex-col gap-1">
-            {discountPercentage > 0 && (
-              <span className="bg-amber-400 text-black text-[8px] font-black px-2 py-0.5 rounded-md uppercase">
-                {discountPercentage}% OFF
-              </span>
-            )}
-            {isBestSeller && (
-              <span className="bg-slate-900 text-white text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
-                Best
-              </span>
-            )}
-            {isTrending && (
-              <span className="bg-amber-600 text-white text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
-                Trending
-              </span>
-            )}
-          </div>
-
-          {/* LINK TO DETAIL PAGE - around the image */}
-          {productId ? (
-            <Link to={`/product/${productId}`} className="block h-full">
-              <img
-                src={product.image || product.mainImage || product.images?.[0] || "https://via.placeholder.com/400"}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-            </Link>
-          ) : (
-            <img
-              src={product.image || product.mainImage || product.images?.[0] || "https://via.placeholder.com/400"}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          )}
-          
-          {/* Quick Category Overlay */}
-          <div className="absolute bottom-2 right-2">
-            <span className="text-[8px] font-bold text-white bg-black/20 backdrop-blur-md px-2 py-1 rounded-full uppercase tracking-widest border border-white/10">
-              {displayCategory}
-            </span>
-          </div>
-        </div>
-
-        {/* COMPACT CONTENT SECTION */}
-        <div className="p-4 flex flex-col flex-grow">
-          <div className="flex-grow">
-            {/* LINK TO DETAIL PAGE - around the name */}
-            {productId ? (
-              <Link to={`/product/${productId}`}>
-                <h3 className="text-sm font-bold text-slate-900 leading-tight line-clamp-1 uppercase tracking-tight group-hover:text-amber-600 transition-colors">
-                  {product.name}
-                </h3>
-              </Link>
-            ) : (
-              <h3 className="text-sm font-bold text-slate-900 leading-tight line-clamp-1 uppercase tracking-tight">
-                {product.name}
-              </h3>
-            )}
-            
-            {/* Minimal Rating */}
-            <div className="flex items-center gap-1.5 mt-1">
-              <div className="flex items-center">
-                <div className="w-2 h-2 rounded-full bg-amber-400" />
-              </div>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">4.9 / 5.0</span>
-            </div>
-          </div>
-
-          {/* Compact Pricing */}
-          <div className="mt-3 pt-3 border-t border-slate-50">
-            <div className="flex items-baseline gap-2 mb-3">
-              <span className="text-lg font-black text-slate-900">₹{formatPrice(product.price)}</span>
-              {product.originalPrice && (
-                <span className="text-[10px] line-through text-slate-300 font-bold italic">₹{formatPrice(product.originalPrice)}</span>
-              )}
-            </div>
-
-            {/* Compact WhatsApp Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent click from triggering the parent Link
-                window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank', 'noopener,noreferrer');
-              }}
-              className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-2.5 rounded-xl transition-all hover:bg-amber-500 hover:text-black active:scale-95 shadow-md shadow-slate-100"
-            >
-              {WhatsAppIcon ? (
-                <WhatsAppIcon size={14} strokeWidth={2.5} />
-              ) : (
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              )}
-              <span className="text-[9px] font-black uppercase tracking-widest">Inquire</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ────────────────────────────────────────────────
-// The rest of your file remains completely unchanged
-// ────────────────────────────────────────────────
 
 const OfferCard = ({ offer, index }) => (
   <div className="relative group rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] h-48 md:h-60 bg-zinc-900 transition-all duration-700 border border-white/5">
@@ -271,232 +136,328 @@ const OfferCard = ({ offer, index }) => (
   </div>
 );
 
-const CarouselSection = ({ title, products, trendingProductIds = [], bestSellerProductIds = [] }) => {
+const CarouselSection = ({
+  title = "Collection",
+  products = [],
+  whatsappNumber = "",
+  WhatsAppIcon,
+  getDisplayCategory = (cat) => cat 
+}) => {
   const scrollRef = useRef(null);
+  const navigate = useNavigate();
+  const [activeNavId, setActiveNavId] = useState(null);
 
-  const scroll = (direction) => {
-    if (scrollRef.current) {
-      const scrollAmount = direction === "left" ? -350 : 350;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    }
+  if (!products || products.length === 0) return null;
+
+  const handleCardClick = (e, productId) => {
+    setActiveNavId(productId);
+    setTimeout(() => {
+      navigate(`/product/${productId}`);
+      setTimeout(() => setActiveNavId(null), 1000);
+    }, 400);
   };
 
-  if (products.length === 0) return null;
-  const titleParts = title.split(" ");
+  const scroll = (direction) => {
+    if (!scrollRef.current) return;
+    const { current } = scrollRef;
+    const card = current.querySelector('.product-card-wrapper');
+    const cardWidth = card ? card.offsetWidth + 24 : 350; 
+    current.scrollBy({ left: direction === 'left' ? -cardWidth : cardWidth, behavior: 'smooth' });
+  };
 
   return (
-    <section className="py-16 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* HEADER SECTION */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
-          <div className="relative">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2 mb-3"
-            >
-              <span className="w-10 h-[2px] bg-yellow-400" />
-              <span className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">
-                Featured Collection
-              </span>
-            </motion.div>
+    <section className="bg-[#f5f5f7] py-20 md:py-0 overflow-hidden relative">
+      <AnimatePresence>
+        {activeNavId && (
+          <motion.div 
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed top-0 left-0 right-0 h-1 bg-[#0071e3] origin-left z-[300]"
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+          />
+        )}
+      </AnimatePresence>
 
-            <motion.h2
-              initial={{ opacity: 0, y: 30 }}
+      <div className="max-w-[1440px] mx-auto px-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
+          <div className="space-y-4">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="text-4xl md:text-6xl font-black leading-[0.85] tracking-tighter text-slate-900 uppercase"
+              className="text-4xl md:text-6xl font-semibold tracking-tight text-[#1d1d1f]"
             >
-              {titleParts[0]}
-              <br />
-              <span className="text-transparent stroke-text opacity-40">
-                {titleParts.slice(1).join(" ")}
-              </span>
+              {title}.
+              <span className="text-[#86868b] block"> Engineered for excellence.</span>
             </motion.h2>
-
-            <p className="mt-6 max-w-md text-xs md:text-sm text-slate-500 font-medium leading-relaxed border-l-2 border-yellow-400 pl-4">
-              {descriptions[title] || "Elevate your digital presence with our expertly curated selection of premium models."}
-            </p>
           </div>
 
-          <div className="flex items-center gap-4">
-             <Link 
-                to="/models" 
-                className="group flex items-center gap-2 font-black text-xs uppercase tracking-widest text-slate-900 hover:text-yellow-500 transition-colors"
-             >
-                View Collection 
-                <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
-             </Link>
+          <div className="flex items-center gap-3">
+            <button onClick={() => scroll("left")} className="w-12 h-12 rounded-full bg-white border border-black/5 flex items-center justify-center text-[#1d1d1f] hover:bg-black hover:text-white transition-all active:scale-95 shadow-sm">
+              <ChevronLeft size={22} strokeWidth={1.5} />
+            </button>
+            <button onClick={() => scroll("right")} className="w-12 h-12 rounded-full bg-white border border-black/5 flex items-center justify-center text-[#1d1d1f] hover:bg-black hover:text-white transition-all active:scale-95 shadow-sm">
+              <ChevronRight size={22} strokeWidth={1.5} />
+            </button>
           </div>
         </div>
 
-        {/* CAROUSEL TRACK */}
-        <div className="relative group">
-          <div
-            ref={scrollRef}
-            className="flex overflow-x-auto gap-6 snap-x snap-mandatory scroll-smooth no-scrollbar -mx-6 px-6 md:mx-0 md:px-0 pb-8"
-          >
-            {products.map((product) => {
-              const isTrendingSection = /trend/i.test(title);
-              const isBestSellerSection = /best/i.test(title);
-              return (
-                <motion.div 
-                  key={product._id || product.id} 
-                  whileHover={{ y: -8 }}
-                  className="flex-none w-[260px] md:w-[320px] snap-start"
+        <div ref={scrollRef} className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-12">
+          {products.map((product, idx) => {
+            const isThisCardLoading = activeNavId === (product._id || product.id);
+
+            return (
+              <div key={product._id || product.id || idx} className="product-card-wrapper flex-none w-[85vw] sm:w-[340px] md:w-[400px] snap-start">
+                <motion.div
+                  whileTap={{ scale: 0.97 }}
+                  animate={isThisCardLoading ? { opacity: 0.7, scale: 0.98 } : { opacity: 1, scale: 1 }}
+                  onClick={(e) => handleCardClick(e, product._id || product.id)}
+                  className="group cursor-pointer bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-[0_30px_60px_rgba(0,0,0,0.06)] transition-all duration-500 border border-black/[0.02] relative"
                 >
-                  <ProductCard
-                    product={product}
-                    whatsappNumber={whatsappNumber}
-                    WhatsAppIcon={WhatsAppIcon}
-                    getDisplayCategory={getDisplayCategory}
-                    trendingProductIds={isTrendingSection ? trendingProductIds : []}
-                    bestSellerProductIds={isBestSellerSection ? bestSellerProductIds : []}
-                  />
+                  <AnimatePresence>
+                    {isThisCardLoading && (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 z-40 bg-white/40 backdrop-blur-[2px] flex items-center justify-center"
+                      >
+                        <div className="w-6 h-6 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="aspect-square overflow-hidden bg-[#fafafa] relative">
+                    <motion.img
+                      src={product.image || product.mainImage}
+                      alt={product.name}
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                    />
+                    <div className="absolute top-6 left-6">
+                      <span className="px-3 py-1 bg-white/80 backdrop-blur-md rounded-full text-[10px] font-bold text-[#86868b] uppercase tracking-widest border border-black/5">
+                        {getDisplayCategory(product.category)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-8">
+                    <h3 className="text-xl md:text-2xl font-semibold text-[#1d1d1f] mb-4 line-clamp-1 group-hover:text-[#0071e3] transition-colors">
+                      {product.name}
+                    </h3>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-semibold text-[#1d1d1f]">₹{product.price}</span>
+                          {product.originalPrice && (
+                            <span className="text-sm text-[#86868b] line-through opacity-50">
+                              ₹{product.originalPrice}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {whatsappNumber && WhatsAppIcon && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`https://wa.me/${whatsappNumber}`, '_blank');
+                            }}
+                            className="p-3 bg-[#f5f5f7] rounded-full text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all shadow-sm z-50 relative"
+                          >
+                            <WhatsAppIcon size={18} />
+                          </button>
+                        )}
+                        <div className="p-3 bg-[#1d1d1f] text-white rounded-full group-hover:bg-[#0071e3] transition-all shadow-md">
+                          <ArrowUpRight size={18} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
-              );
-            })} 
-          </div>
-
-          {/* CUSTOM NAVIGATION CONTROLS */}
-          {products.length > 3 && (
-            <>
-              <button
-                onClick={() => scroll("left")}
-                className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 bg-slate-900 text-white p-4 rounded-full shadow-2xl transition-all hover:bg-yellow-400 hover:text-black hover:scale-110 opacity-0 group-hover:opacity-100 hidden md:flex items-center justify-center border border-white/10"
-              >
-                <ChevronLeft size={20} strokeWidth={3} />
-              </button>
-
-              <button
-                onClick={() => scroll("right")}
-                className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 bg-slate-900 text-white p-4 rounded-full shadow-2xl transition-all hover:bg-yellow-400 hover:text-black hover:scale-110 opacity-0 group-hover:opacity-100 hidden md:flex items-center justify-center border border-white/10"
-              >
-                <ChevronRight size={20} strokeWidth={3} />
-              </button>
-            </>
-          )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <style jsx>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .stroke-text {
-          -webkit-text-stroke: 1.5px #1e293b;
-          text-stroke: 1.5px #1e293b;
-        }
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </section>
   );
 };
 
-const SpecialOffersCarousel = () => {
+
+const SpecialOffersCarousel = ({ specialOffers = [] }) => {
   const scrollRef = useRef(null);
   const animationRef = useRef(null);
+  const pausedRef = useRef(false);
 
-  const scroll = (direction) => {
-    if (!scrollRef.current) return;
-    cancelAnimationFrame(animationRef.current);
+  if (!specialOffers || specialOffers.length === 0) return null;
 
-    scrollRef.current.scrollBy({
-      left: direction === "left" ? -520 : 520,
-      behavior: "smooth",
-    });
-
-    setTimeout(() => startAutoScroll(), 1000);
-  };
-
-  const startAutoScroll = () => {
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer) return;
-
-    const speed = 1;
-    const step = () => {
-      scrollContainer.scrollLeft += speed;
-      if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) {
-        scrollContainer.scrollLeft = 0;
-      }
-      animationRef.current = requestAnimationFrame(step);
-    };
-    animationRef.current = requestAnimationFrame(step);
-  };
+  const duplicatedOffers = [
+    ...specialOffers,
+    ...specialOffers,
+    ...specialOffers,
+  ];
 
   useEffect(() => {
-    startAutoScroll();
+    const container = scrollRef.current;
+    if (!container) return;
+
+    let lastTime = performance.now();
+    const SPEED = 120;
+
+    const animate = (time) => {
+      const delta = time - lastTime;
+      lastTime = time;
+
+      if (!pausedRef.current) {
+        container.scrollLeft += (SPEED * delta) / 1000;
+        const oneSetWidth = container.scrollWidth / 3;
+        if (container.scrollLeft >= oneSetWidth * 2) {
+          container.scrollLeft -= oneSetWidth;
+        }
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationRef.current);
   }, []);
 
-  const duplicatedOffers = [...specialOffers, ...specialOffers];
+  const manualScroll = (direction) => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    pausedRef.current = true;
+    const approximateCardWidth = container.offsetWidth * 0.75;
+    const scrollAmount =
+      direction === "left"
+        ? -approximateCardWidth
+        : approximateCardWidth;
+
+    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    setTimeout(() => (pausedRef.current = false), 900);
+  };
 
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 py-14 md:py-20">
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-orange-200/40 rounded-full blur-3xl" />
-      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-rose-200/40 rounded-full blur-3xl" />
+    <section className="relative w-full bg-[#f5f5f7] py-14 sm:py-16 md:py-24 overflow-hidden">
+      {/* Background Blobs */}
+      <div className="absolute top-0 left-1/4 w-80 h-80 md:w-96 md:h-96 bg-orange-100/30 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-80 h-80 md:w-96 md:h-96 bg-blue-100/20 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="relative w-full">
-        <div className="max-w-7xl mx-auto px-6 mb-10 md:mb-14 text-center">
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight">
-            Limited Time <span className="text-orange-500">Offers</span>
-          </h2>
-          <p className="mt-2 text-gray-600 text-lg md:text-xl">
-            Hand-picked deals you shouldn’t miss
-          </p>
-        </div>
+      {/* Header */}
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 mb-10 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-orange-600 font-bold text-xs uppercase tracking-[0.2em]">
+              <Sparkles size={14} fill="currentColor" />
+              <span>Limited Time Release</span>
+            </div>
 
-        <div className="relative group">
-          <div className="pointer-events-none absolute left-0 top-0 h-full w-28 bg-gradient-to-r from-amber-50 to-transparent z-10" />
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-28 bg-gradient-to-l from-rose-50 to-transparent z-10" />
-
-          <div
-            ref={scrollRef}
-            className="flex gap-8 overflow-x-scroll scroll-smooth no-scrollbar whitespace-nowrap"
-          >
-            {duplicatedOffers.map((offer, i) => (
-              <div key={i} className="flex-none w-[92%] md:w-[75%] lg:w-[65%]">
-                <div className="transition-transform duration-500 hover:scale-[1.02]">
-                  <OfferCard offer={offer} />
-                </div>
-              </div>
-            ))}
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl sm:text-4xl md:text-7xl font-semibold tracking-tight text-[#1d1d1f]"
+            >
+              Special Offers.
+              <span className="text-[#86868b] block opacity-70 font-medium">
+                Hand-picked deals you shouldn't miss.
+              </span>
+            </motion.h2>
           </div>
 
-          <button
-            onClick={() => scroll("left")}
-            className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur shadow-xl p-3 rounded-full hover:scale-105 transition opacity-0 group-hover:opacity-100 z-20"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            onClick={() => scroll("right")}
-            className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur shadow-xl p-3 rounded-full hover:scale-105 transition opacity-0 group-hover:opacity-100 z-20"
-          >
-            <ChevronRight size={16} />
-          </button>
+          <div className="hidden sm:flex gap-3">
+            <button
+              onClick={() => manualScroll("left")}
+              className="w-11 h-11 rounded-full bg-white border border-black/5 flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm active:scale-90"
+            >
+              <ChevronLeft size={20} strokeWidth={1.5} />
+            </button>
+            <button
+              onClick={() => manualScroll("right")}
+              className="w-11 h-11 rounded-full bg-white border border-black/5 flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm active:scale-90"
+            >
+              <ChevronRight size={20} strokeWidth={1.5} />
+            </button>
+          </div>
+        </div>
+      </div>
 
-          <button
-            onClick={() => scroll("left")}
-            className="flex md:hidden absolute left-4 bottom-4 bg-white/90 shadow-xl p-3 rounded-full hover:scale-105 transition z-20"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            onClick={() => scroll("right")}
-            className="flex md:hidden absolute right-4 bottom-4 bg-white/90 shadow-xl p-3 rounded-full hover:scale-105 transition z-20"
-          >
-            <ChevronRight size={20} />
-          </button>
+      <div
+        className="relative"
+        onMouseEnter={() => (pausedRef.current = true)}
+        onMouseLeave={() => (pausedRef.current = false)}
+      >
+        <div
+          ref={scrollRef}
+          className="flex gap-6 sm:gap-8 overflow-x-auto whitespace-nowrap px-4 sm:px-6 py-5 no-scrollbar touch-pan-x"
+        >
+          {duplicatedOffers.map((offer, i) => (
+            <div
+              key={i}
+              className="flex-none w-[75vw] sm:w-[50vw] md:w-[380px] lg:w-[420px] group"
+            >
+              <div className="space-y-5">
+                <motion.div
+                  className="relative h-[280px] sm:h-[350px] md:h-[400px] bg-white rounded-[32px] overflow-hidden shadow-sm border border-black/[0.03]"
+                  whileHover={{ y: -5 }}
+                >
+                  <img
+                    src={offer.image || offer.mainImage || "/placeholder-offer.jpg"}
+                    alt={offer.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+                  />
+
+                  {/* Category Tag */}
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1 bg-white/20 backdrop-blur-xl rounded-full text-white text-[10px] font-bold uppercase tracking-widest border border-white/10">
+                      {offer.category || "Exclusive"}
+                    </span>
+                  </div>
+
+                  {/* Shop Now Button — BOTTOM PLACED */}
+                <div className="absolute inset-0 flex items-end justify-start p-5">
+                  <button className="px-6 py-3 bg-[#f7ef22] text-black rounded-full font-bold text-xs uppercase tracking-widest shadow-xl flex items-center gap-2">
+                    Shop Now
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+
+                </motion.div>
+
+                {/* Content Below Card */}
+                <div className="px-2 space-y-2">
+                  <div className="flex items-center gap-2 text-black text-[10px] font-bold uppercase tracking-widest">
+                    <Timer size={12} />
+                    <span>Offer</span>
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold text-[#1d1d1f] tracking-tight leading-tight">
+                    {offer.title || offer.name}
+                  </h3>
+
+                  <p className="text-sm md:text-base text-[#86868b] font-medium line-clamp-2">
+                    {offer.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
   );
 };
+
+
+
 
 export default function Hero() {
   const { 
@@ -573,177 +534,244 @@ export default function Hero() {
       {/* Added pt-24 to push content below fixed header */}
       <div className="pt-0">
         {/* Top Hero Banner - Dynamic from Admin */}
-        <section className="relative w-full h-40 sm:h-48 md:h-[220px] lg:h-[260px] my-6">
-          <div className="relative h-full w-full overflow-hidden shadow-2xl bg-[#0a0a0a] group">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={slideIndex}
-                initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="absolute inset-0"
-              >
-                <motion.img
-                  initial={{ x: 20 }}
-                  animate={{ x: 0 }}
-                  transition={{ duration: 10, ease: "linear" }}
-                  src={heroBanners[slideIndex]?.image || "https://via.placeholder.com/1400x600"}
-                  alt={heroBanners[slideIndex]?.title}
-                  className="w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-[2000ms]"
-                />
-
-                {/* Vignette Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent flex items-center">
-                  <div className="px-6 sm:px-10 md:px-16 w-full md:w-2/3">
-                    <motion.div
-                      initial={{ opacity: 0, x: -30 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2, duration: 0.6 }}
-                    >
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="h-[1px] w-6 bg-[#f7ef22]" />
-                        <span className="text-[#f7ef22] text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em]">
-                          Limited Drop
-                        </span>
-                      </div>
-
-                      {/* <h2 className="text-xl sm:text-3xl md:text-4xl font-black text-white mb-2 leading-none tracking-tighter uppercase italic">
-                        {heroBanners[slideIndex]?.title || "New Arrivals"}
-                      </h2> */}
-
-                      <p className="text-[10px] sm:text-xs md:text-sm text-gray-400 mb-4 max-w-[280px] line-clamp-1 font-medium tracking-wide">
-                        {heroBanners[slideIndex]?.description || "Experience premium quality"}
-                      </p>
-
-                      <a
-                        href="/models"
-                        className="inline-flex items-center gap-3 px-6 py-2 bg-[#f7ef22] text-black rounded-full text-[10px] font-black hover:bg-white transition-all shadow-xl active:scale-95 uppercase tracking-widest"
-                      >
-                        Explore
-                        <div className="w-5 h-5 rounded-full bg-black/10 flex items-center justify-center">
-                          <ChevronRight size={12} />
-                        </div>
-                      </a>
-                    </motion.div>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Navigation Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-30">
-              {heroBanners.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSlideIndex(idx)}
-                  className={`h-1 transition-all duration-500 rounded-full ${
-                    idx === slideIndex
-                      ? "w-8 bg-[#f7ef22]"
-                      : "w-2 bg-white/20 hover:bg-white/40"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* Side Controls */}
-            <div className="absolute inset-y-0 w-full flex justify-between items-center px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-              <button
-                onClick={() =>
-                  setSlideIndex((prev) => (prev - 1 + heroBanners.length) % heroBanners.length)
-                }
-                className="pointer-events-auto p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-[#f7ef22] hover:text-black transition-all"
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              <button
-                onClick={() =>
-                  setSlideIndex((prev) => (prev + 1) % heroBanners.length)
-                }
-                className="pointer-events-auto p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-[#f7ef22] hover:text-black transition-all"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Shop By Category - Dynamic */}
-        <section className="max-w-7xl mx-auto px-4 py-12 bg-[#fafafa]">
-          {/* SECTION HEADER */}
-          <div className="flex items-end justify-between mb-10">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="h-px w-6 bg-amber-500" />
-                <span className="text-[10px] font-bold tracking-[0.3em] text-amber-600 uppercase">
-                  Premium Studio
-                </span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter uppercase">
-                Shop <span className="text-amber-500">Categories</span>
-              </h2>
-            </div>
-            
-            <Link 
-              to="/models" 
-              className="group flex items-center gap-2 text-[11px] font-black tracking-widest text-slate-400 hover:text-slate-900 transition-colors uppercase"
-            >
-              View Collection <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          {/* E-COMMERCE PRODUCT GRID */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-  {shopCategories.map((cat, index) => (
-    <motion.div
-      key={cat.id}
-      initial={{ opacity: 0, y: 15 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      viewport={{ once: true }}
-      className="group bg-white rounded-2xl p-2 border border-slate-100 hover:border-amber-400 hover:shadow-lg transition-all duration-300"
-    >
-      <Link to={`/models?category=${cat.name}`} className="block">
-        {/* Image Block - Smaller & Square */}
-        <div className="relative aspect-square overflow-hidden rounded-xl bg-slate-50">
+    <section className="relative w-full bg-white pt-1 pb-4 overflow-hidden">
+  {/* Ultra-Compact height: Maxes at 380px for a sleek, modern look */}
+  <div className="relative h-[260px] sm:h-[320px] md:h-[380px] w-full max-w-[1300px] mx-auto overflow-hidden sm:rounded-[32px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] group">
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={slideIndex}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+        className="absolute inset-0 bg-white"
+      >
+        {/* Background Image */}
+        <motion.div 
+          className="absolute inset-0"
+          initial={{ scale: 1.05 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 5, ease: "easeOut" }}
+        >
           <img
-            src={cat.image}
-            alt={cat.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            src={heroBanners[slideIndex]?.image}
+            alt={heroBanners[slideIndex]?.title}
+            className="w-full h-full object-cover"
           />
-          
-          {/* Subtle Category Tag */}
-          <div className="absolute top-2 left-2">
-            <span className="bg-black/80 backdrop-blur-sm text-[8px] text-white px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
-              Collection
-            </span>
-          </div>
-        </div>
+          {/* Subtle responsive gradients */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-gradient-to-r md:from-white/90 md:via-white/10 md:to-transparent" />
+        </motion.div>
 
-        {/* Product Info Block - Condensed */}
-        <div className="mt-3 px-1">
-          {/* <div className="flex items-center gap-1 mb-1">
-            <Star size={8} className="fill-amber-400 text-amber-400" />
-            <span className="text-[9px] text-slate-400 font-bold">4.8</span>
-          </div> */}
-          
-          <h3 className="text-sm font-black text-slate-900 leading-tight uppercase truncate">
-            {cat.name}
-          </h3>
-          
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-50">
-            <span className="text-[9px] font-bold text-slate-400 uppercase">Explore More</span>
-            <div className="h-5 w-5 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
-              <ArrowRight size={10} />
-            </div>
+        {/* Content Area - Optimized Padding */}
+        <div className="relative h-full flex items-center px-6 sm:px-12 md:px-16">
+          <div className="max-w-lg">
+            <motion.div
+              initial={{ opacity: 0, x: -15 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+            >
+              <span className="inline-block text-[9px] md:text-[11px] font-black text-white md:text-black/40 bg-black/20 md:bg-transparent px-2 py-0.5 rounded md:p-0 tracking-[0.2em] mb-3 uppercase">
+                Featured
+              </span>
+              
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white md:text-black leading-[1] tracking-tighter mb-4">
+                {heroBanners[slideIndex]?.title || "The future of style."}
+              </h2>
+
+              <p className="text-xs md:text-base text-white/80 md:text-black/60 mb-6 max-w-xs font-medium leading-snug line-clamp-2">
+                {heroBanners[slideIndex]?.description || "Experience next-gen premium design."}
+              </p>
+
+              <div className="flex items-center gap-4">
+                <a
+                  href="/models"
+                  className="px-6 py-2.5 bg-black text-white rounded-xl text-[12px] font-bold hover:scale-105 transition-all shadow-lg active:scale-95"
+                >
+                  Buy Now
+                </a>
+                <a
+                  href="/learn-more"
+                  className="hidden sm:flex text-white md:text-black/60 hover:text-black text-[13px] font-bold items-center gap-1 group"
+                >
+                  Learn More 
+                  <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </a>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </Link>
-    </motion.div>
-  ))}
-</div>
-        </section>
+      </motion.div>
+    </AnimatePresence>
+
+    {/* Compact Navigation Pill - Smaller and centered */}
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-30 bg-white/10 backdrop-blur-md p-1.5 rounded-full border border-white/20">
+      {heroBanners.map((_, idx) => (
+        <button
+          key={idx}
+          onClick={() => setSlideIndex(idx)}
+          className="relative h-1 rounded-full bg-white/40 overflow-hidden transition-all duration-500"
+          style={{ width: idx === slideIndex ? '24px' : '6px' }}
+        >
+          {idx === slideIndex && (
+            <motion.div 
+              className="absolute inset-0 bg-white md:bg-black"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              transition={{ duration: 8, ease: "linear" }}
+            />
+          )}
+        </button>
+      ))}
+    </div>
+  </div>
+</section>
+
+ <section className="bg-[#f5f5f7] py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+  <div className="max-w-[1440px] mx-auto">
+    {/* Header */}
+    <header className="mb-8 sm:mb-12 lg:mb-16 max-w-3xl lg:max-w-4xl">
+      <motion.h2
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+        viewport={{ once: true }}
+        className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-[#1d1d1f] leading-tight"
+      >
+        Shop by Category.
+        <span className="text-[#86868b] block sm:inline"> Selection made simple.</span>
+      </motion.h2>
+    </header>
+
+    {/* Updated Grid – lg:grid-cols-4 for 4 cards on desktop */}
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-6">
+      {shopCategories.map((cat, index) => (
+        <motion.div
+          key={cat.id}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{
+            delay: index * 0.1,
+            duration: 0.9,
+            ease: [0.21, 0.45, 0.32, 0.9],
+          }}
+          viewport={{ once: true }}
+          className="relative group h-full"
+        >
+          <Link to={`/models?category=${cat.name}`} className="block h-full touch-manipulation">
+            {/* Card container – rounded corners REMOVED for sharp square look */}
+            <div className="
+              relative overflow-hidden bg-white
+              transition-all duration-700 ease-out
+              group-hover:shadow-xl group-hover:shadow-black/10
+              group-hover:-translate-y-1 sm:group-hover:-translate-y-2
+              aspect-square
+            ">
+              {/* Text overlay */}
+              <div className="
+                absolute inset-0 z-20 flex flex-col justify-end
+                pb-5 sm:pb-8
+                pl-4 sm:pl-6
+                pr-4 sm:pr-6
+                pointer-events-none
+              ">
+                <motion.p
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.6 }}
+                  className="text-[10px] sm:text-xs font-bold text-white uppercase tracking-widest mb-1 drop-shadow-md"
+                >
+                  {cat.series || ""}
+                </motion.p>
+                <h3 className="
+                  text-lg sm:text-xl lg:text-2xl
+                  font-semibold text-white leading-tight tracking-tight
+                  drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]
+                ">
+                  {cat.name}
+                </h3>
+              </div>
+
+              {/* Image */}
+              <img
+                src={cat.image}
+                alt={cat.name}
+                className="
+                  absolute inset-0 w-full h-full object-cover object-center
+                  transition-transform duration-[1.1s] ease-out
+                  group-hover:scale-105 sm:group-hover:scale-110
+                "
+              />
+
+              {/* Gradient overlays */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent pointer-events-none z-10" />
+
+              <div className="
+                absolute inset-0 z-15 opacity-0 group-hover:opacity-100
+                transition-opacity duration-700 pointer-events-none
+                bg-gradient-to-tr from-transparent via-white/10 to-transparent
+                -translate-x-full group-hover:translate-x-full
+              " />
+
+              {/* Arrow indicator */}
+              <div className="
+                absolute bottom-3 right-3 sm:bottom-5 sm:right-5
+                z-30 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100
+                transition-all duration-500 ease-out
+              ">
+                <div className="
+                  w-8 h-8 sm:w-10 sm:h-10
+                  rounded-full bg-white/90 backdrop-blur-md shadow-md
+                  flex items-center justify-center text-[#1d1d1f]
+                ">
+                  <ArrowUpRight size={18} className="sm:size-5" strokeWidth={2.5} />
+                </div>
+              </div>
+            </div>
+
+            {/* Below-card text */}
+            <div className="mt-3 sm:mt-4 px-1">
+              <div className="flex items-center justify-between text-[11px] sm:text-xs">
+                <div className="flex flex-col">
+                  <span className="font-semibold text-[#1d1d1f]">Explore</span>
+                  <div className="
+                    h-[1.5px] w-0 bg-[#1d1d1f] transition-all duration-500
+                    group-hover:w-10 sm:group-hover:w-12
+                  " />
+                </div>
+                <span className="text-[#86868b]">Learn more</span>
+              </div>
+            </div>
+          </Link>
+        </motion.div>
+      ))}
+    </div>
+
+    {/* Footer */}
+    <footer className="
+      mt-12 sm:mt-16 border-t border-[#d2d2d7] pt-8
+      flex flex-col sm:flex-row items-center justify-between gap-4
+    ">
+      {/* <p className="text-[#86868b] text-sm sm:text-base font-medium">
+        Looking for something specific?
+      </p> */}
+ {/* <Link
+  to="/models"
+  className="
+    mx-auto flex items-center gap-2 w-fit
+    px-6 py-2.5 rounded-full bg-[#292d31] text-white text-sm
+    font-medium hover:bg-[#24292e] transition-all
+    shadow-md whitespace-nowrap group
+  "
+>
+  <span>See all collections</span>
+  <ArrowRight 
+    size={16} 
+    className="transition-transform duration-300 group-hover:translate-x-1" 
+  />
+</Link> */}
+    </footer>
+  </div>
+</section>
 
         {/* Search Results or Carousels */}
         {searchTerm ? (
@@ -779,7 +807,7 @@ export default function Hero() {
         ) : (
           <>
             <CarouselSection title="Trending Now" products={trendingProducts} trendingProductIds={trendingProductIds} bestSellerProductIds={bestSellerProductIds} />
-            <SpecialOffersCarousel />
+            <SpecialOffersCarousel specialOffers={specialOffers} />
             <CarouselSection title="Best Sellers" products={bestSellers} trendingProductIds={trendingProductIds} bestSellerProductIds={bestSellerProductIds} />
           </>
         )}

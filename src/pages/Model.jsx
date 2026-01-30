@@ -1,15 +1,13 @@
-// src/pages/ProductsShop.jsx
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link, useSearchParams } from "react-router-dom";
-import { Search, Sparkles } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Search, SlidersHorizontal, X, Sparkles, LayoutGrid } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProducts } from "../Context/ProductContext";
 import ProductCard from "../components/common/ProductCard";
 
-// WhatsApp config
 const whatsappNumber = "9746683778";
 
-export const WhatsAppIcon = ({ size = 24, className = "" }) => (
+export const WhatsAppIcon = ({ size = 20, className = "" }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className={className}>
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.884 3.088" />
   </svg>
@@ -21,191 +19,182 @@ export default function ProductsShop() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedFilter, setSelectedFilter] = useState('All');
+  const [isFilterVisible, setIsFilterVisible] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
-  // Sync category from URL ?category=...
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) setIsFilterVisible(false);
+  }, [isMobile]);
+
   useEffect(() => {
     const cat = searchParams.get('category');
-    if (cat && shopCategories.some(c => c.name === cat)) {
-      setSelectedCategory(cat);
-    }
+    if (cat && shopCategories.some(c => c.name === cat)) setSelectedCategory(cat);
   }, [searchParams, shopCategories]);
 
-  // All available category buttons (dynamic + All)
-  const categoryButtons = useMemo(() => {
-    const names = shopCategories.map(c => c.name);
-    return ['All', ...names];
-  }, [shopCategories]);
+  const categoryButtons = useMemo(() => ['All', ...shopCategories.map(c => c.name)], [shopCategories]);
 
-  // Filtered & searched products
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      const matchesSearch =
-        !searchQuery ||
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.description || '').toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesCategory =
-        selectedCategory === 'All' ||
-        p.category?.toLowerCase() === selectedCategory.toLowerCase() ||
-        shopCategories.some(cat => cat.name === selectedCategory && p.category?.toLowerCase().includes(cat.name.toLowerCase()));
-
-      const matchesFeatured =
-        selectedFilter === 'All' ||
+      const matchesSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'All' || p.category?.toLowerCase() === selectedCategory.toLowerCase();
+      const matchesFeatured = selectedFilter === 'All' ||
         (selectedFilter === 'Trending' && trendingProductIds?.includes(p._id || p.id)) ||
         (selectedFilter === 'Best Sellers' && bestSellerProductIds?.includes(p._id || p.id));
-
       return matchesSearch && matchesCategory && matchesFeatured;
     });
-  }, [
-    products,
-    searchQuery,
-    selectedCategory,
-    selectedFilter,
-    trendingProductIds,
-    bestSellerProductIds,
-    shopCategories
-  ]);
-
-  const hasProducts = products.length > 0;
-  const hasResults = filteredProducts.length > 0;
+  }, [products, searchQuery, selectedCategory, selectedFilter, trendingProductIds, bestSellerProductIds]);
 
   return (
-    <div className="min-h-screen bg-gray-50/40">
-      {/* Hero Banner */}
-      <section className="px-4 pt-20 pb-8 md:pt-28">
-        <div className="max-w-7xl mx-auto relative rounded-3xl overflow-hidden shadow-2xl h-64 md:h-80 bg-zinc-900 group">
-          <img
-            src="https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&q=80&w=2070"
-            alt="Shop banner - Premium photo products"
-            className="absolute inset-0 w-full h-full object-cover opacity-75 transition-transform duration-1000 group-hover:scale-110"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-
-          <div className="absolute inset-0 flex items-center px-8 md:px-16">
-            <div className="max-w-lg text-white">
-              <span className="inline-block px-4 py-1.5 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider mb-4">
-                New Season
-              </span>
-              <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-none mb-3">
-                <span className="text-yellow-400">20%</span> OFF
+    <div className="min-h-screen bg-[#FBFBFD] text-[#1d1d1f]">
+      
+      {/* 1. MINIMALIST HERO HEADER */}
+      <section className="px-6 pt-12 pb-6">
+        <div className="max-w-[1440px] mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="space-y-4">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-orange-600 font-bold text-[10px] uppercase tracking-[0.2em]">
+                <Sparkles size={14} fill="currentColor" />
+                <span>The 2026 Collection</span>
+              </motion.div>
+              <h1 className="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.9]">
+                Shop Studio.
+                <span className="text-[#86868b] block opacity-80 font-medium">Museum-grade excellence.</span>
               </h1>
-              <p className="text-lg md:text-xl text-gray-200 mb-6">
-                Premium frames, albums & photo books
-              </p>
-              <button className="bg-yellow-400 text-black font-bold px-8 py-3.5 rounded-2xl hover:bg-yellow-300 transition transform hover:scale-105 active:scale-100">
-                Shop Now
-              </button>
+            </div>
+            
+            <div className="flex items-center gap-4">
+               <div className="bg-white border border-black/5 rounded-full px-6 py-2 shadow-sm flex items-center gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#86868b]">Showing</span>
+                  <span className="text-sm font-bold">{filteredProducts.length} Results</span>
+               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Sticky Filter Bar */}
-      <div className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl border-b border-gray-200/80 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
-          {/* Search */}
-          <div className="relative w-full sm:w-80 lg:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+      {/* 2. FLOATING UTILITY BAR (Sticky) */}
+      <div className="sticky top-0 z-[100] bg-white/70 backdrop-blur-2xl border-b border-black/[0.03] py-4">
+        <div className="max-w-[1440px] mx-auto px-6 flex items-center justify-between gap-6">
+          <button
+            onClick={() => setIsFilterVisible(!isFilterVisible)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl"
+          >
+            <SlidersHorizontal size={14} /> {isFilterVisible ? 'Close Sidebar' : 'Filters'}
+          </button>
+
+          <div className="relative flex-1 max-w-xl group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#86868b] group-focus-within:text-orange-600 transition-colors" size={18} />
             <input
-              type="search"
-              placeholder="Search products..."
+              type="text"
+              placeholder="Search our masterpiece catalog..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-100/80 border border-gray-200 rounded-2xl py-3 pl-12 pr-5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400/50 transition-all"
-              aria-label="Search products"
+              className="w-full bg-[#f5f5f7] border-none rounded-full py-3.5 pl-14 pr-6 text-sm font-medium focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
             />
-          </div>
-
-          {/* Category filters */}
-          <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide w-full sm:w-auto">
-            {categoryButtons.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide whitespace-nowrap transition-all border
-                  ${selectedCategory === cat
-                    ? 'bg-black text-white border-black shadow-md'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:text-gray-900'
-                  }`}
-                aria-pressed={selectedCategory === cat}
-              >
-                {cat}
-              </button>
-            ))}
           </div>
         </div>
       </div>
 
-      {/* Products Section */}
-      <section className="max-w-7xl mx-auto px-4 py-10 md:py-14">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-            {selectedCategory === 'All' ? 'All Products' : selectedCategory}
-            <span className="text-gray-500 text-xl ml-3">({filteredProducts.length})</span>
-          </h2>
-
-          {/* Optional featured filter dropdown - can expand later */}
-          {/* <select ... /> */}
-        </div>
-
-        {!hasProducts ? (
-          <div className="text-center py-20 text-gray-500">
-            <p className="text-xl font-medium">No products available yet.</p>
-            <p className="mt-2">Check back soon or contact us on WhatsApp!</p>
-          </div>
-        ) : !hasResults ? (
-          <div className="text-center py-16 text-gray-600">
-            <p className="text-lg">No products match your search or filter.</p>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('All');
-              }}
-              className="mt-4 text-yellow-600 hover:text-yellow-700 font-medium"
+      <div className="max-w-[1440px] mx-auto px-6 py-12 flex flex-col lg:flex-row gap-16">
+        
+        {/* 3. SIDEBAR (Apple Editorial Style) */}
+        <AnimatePresence>
+          {isFilterVisible && (
+            <motion.aside
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -50, opacity: 0 }}
+              className={`
+                ${isMobile ? 'fixed inset-0 z-[200] bg-white p-8 overflow-y-auto' : 'w-72 sticky top-32 h-fit'}
+              `}
             >
-              Clear filters
-            </button>
-          </div>
-        ) : (
-          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            <AnimatePresence>
-              {filteredProducts.map(product => {
-                const discount = product.originalPrice
-                  ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-                  : 0;
+              {isMobile && (
+                <div className="flex justify-between items-center mb-12">
+                  <h2 className="text-3xl font-bold tracking-tighter">Filter By</h2>
+                  <button onClick={() => setIsFilterVisible(false)} className="p-3 bg-[#f5f5f7] rounded-full"><X size={24} /></button>
+                </div>
+              )}
 
-                return (
+              <div className="space-y-16">
+                {/* Collection Group */}
+                <section>
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#86868b] mb-8">Collections</h3>
+                  <div className="grid grid-cols-1 gap-1">
+                    {categoryButtons.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => { setSelectedCategory(cat); if (isMobile) setIsFilterVisible(false); }}
+                        className={`text-left px-5 py-4 rounded-2xl text-[13px] font-bold transition-all flex justify-between items-center group
+                          ${selectedCategory === cat ? 'bg-white shadow-[0_10px_30px_rgba(0,0,0,0.05)] text-orange-600' : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'}`}
+                      >
+                        {cat}
+                        {selectedCategory === cat && <motion.div layoutId="dot" className="w-2 h-2 rounded-full bg-orange-600" />}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Featured Group */}
+                <section>
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#86868b] mb-8">Featured</h3>
+                  <div className="flex flex-wrap lg:flex-col gap-3">
+                    {['All', 'Trending', 'Best Sellers'].map(filter => (
+                      <button
+                        key={filter}
+                        onClick={() => setSelectedFilter(filter)}
+                        className={`px-6 py-3 rounded-xl text-[13px] font-bold border transition-all 
+                          ${selectedFilter === filter ? 'bg-[#1d1d1f] text-white border-transparent' : 'bg-transparent text-[#1d1d1f] border-black/10 hover:border-black'}`}
+                      >
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* 4. PRODUCT GRID (Optimized Spacing) */}
+        <main className="flex-1">
+          {filteredProducts.length === 0 ? (
+            <div className="h-[50vh] flex flex-col items-center justify-center text-center">
+              <LayoutGrid size={48} className="text-[#86868b] mb-6 opacity-20" />
+              <h2 className="text-2xl font-bold tracking-tight text-[#1d1d1f]">No masterpieces found</h2>
+              <p className="text-[#86868b] mt-2 max-w-xs">Adjust your search or filters to explore other works.</p>
+            </div>
+          ) : (
+            <motion.div layout className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-12">
+              <AnimatePresence>
+                {filteredProducts.map(product => (
                   <motion.div
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3 }}
                     key={product._id || product.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <ProductCard
                       product={product}
                       whatsappNumber={whatsappNumber}
                       WhatsAppIcon={WhatsAppIcon}
-                      showDiscountBadge={discount > 0}
-                      discountPercentage={discount}
-                      // Add these if your ProductCard supports them:
-                      // isTrending={trendingProductIds?.includes(product.id)}
-                      // isBestSeller={bestSellerProductIds?.includes(product.id)}
+                      trendingProductIds={trendingProductIds}
+                      bestSellerProductIds={bestSellerProductIds}
                     />
                   </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </motion.div>
-        )}
-      </section>
-
-      {/* Hide scrollbar for horizontal scroll */}
-      <style jsx global>{`
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,8 @@
 import { useParams, Link } from "react-router-dom";
 import { useProducts } from "../Context/ProductContext";
 import { 
-  ArrowLeft, ChevronRight, ShieldCheck, Truck, RefreshCw, Share2, Star, Clock ,CreditCard
+  ArrowLeft, ShieldCheck, Truck, Share2, Star, Clock, 
+  CreditCard, Sparkles, ChevronRight, Zap, Info
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
@@ -19,358 +20,225 @@ export default function ProductDetail() {
   const product = products.find((p) => p._id === id || p.id === id);
   
   const [currentImg, setCurrentImg] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("M");
   const [activeTab, setActiveTab] = useState("details");
-
   const topRef = useRef(null);
 
   useEffect(() => {
-    if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id]);
 
-  if (!product) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-screen flex items-center justify-center bg-gray-50"
-      >
-        <p className="text-lg font-medium text-gray-600">Loading premium collection...</p>
-      </motion.div>
-    );
-  }
+  if (!product) return null;
 
-  // Handle images from database (images array or single image field)
-  const allImages = product.images && product.images.length > 0 
-    ? product.images 
-    : (product.image ? [product.image] : []);
-  
-  console.log('[ProductDetail] Product:', product.name, 'Images:', allImages.length, 'All Images:', allImages);
-  const sizes = ["S", "M", "L", "XL"];
-
+  const allImages = product.images?.length > 0 ? product.images : [product.image];
   const suggestedProducts = products
     .filter(p => (p._id || p.id) !== (product._id || product.id))
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 8);
-
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert("Link copied!");
-  };
+    .slice(0, 4);
 
   return (
     <LayoutGroup>
       <motion.div
-        ref={topRef}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="min-h-screen bg-gray-50/80 pt-12 pb-24 px-4 sm:px-6"
+        className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] font-sans overflow-x-hidden"
       >
-        <div className="max-w-6xl mx-auto">
-
-          {/* Breadcrumb + Share */}
-          <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="flex items-center justify-between mb-6"
-          >
-            <Link to="/models" className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-black transition">
-              <ArrowLeft size={16} /> <span className="hidden sm:inline">Back to Shop</span>
+        {/* TOP NAVIGATION BAR */}
+        <nav className="sticky top-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-black/[0.03] px-6 py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <Link to="/models" className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest">
+              <div className="p-2 rounded-full group-hover:bg-black group-hover:text-white transition-all">
+                <ArrowLeft size={16} />
+              </div>
+              Back
             </Link>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={handleShare}
-              className="p-2 hover:bg-white rounded-full transition border hover:border-gray-200"
-            >
-              <Share2 size={18} className="text-gray-600" />
-            </motion.button>
-          </motion.div>
+            <div className="hidden md:block text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">
+              Premium Collection / {product.category || "Masterpiece"}
+            </div>
+            <button className="p-2.5 bg-gray-50 rounded-full hover:bg-black hover:text-white transition-all">
+              <Share2 size={18} />
+            </button>
+          </div>
+        </nav>
 
-          <div className="grid lg:grid-cols-12 gap-8 items-start">
-
-            {/* Image Gallery - Sticky */}
-            <motion.div
-              layout
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="lg:col-span-7 space-y-4 lg:sticky lg:top-20"
-            >
-              <div className="relative w-[260px] h-[340px] bg-white rounded-xl overflow-hidden border border-gray-200 mx-auto shadow-lg">
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={currentImg}
-                    src={allImages[currentImg]}
-                    initial={{ opacity: 0, scale: 1.08 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className="w-full h-full object-cover"
-                  />
-                </AnimatePresence>
-
-                <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/80 text-white px-2 py-0.5 rounded text-[9px] font-bold">
-                  <Clock size={9} /> Fast Delivery
-                </div>
-              </div>
-
-              {/* Thumbnails with smooth selection */}
-              <div className="flex gap-3 justify-center">
-                {allImages.map((img, i) => (
-                  <motion.button
-                    key={i}
-                    onClick={() => setCurrentImg(i)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`w-16 h-20 rounded-xl overflow-hidden border-2 transition-all ${
-                      i === currentImg ? "border-amber-500 shadow-md" : "border-transparent opacity-60"
-                    }`}
-                  >
-                    <img src={img} className="w-full h-full object-cover" alt="" />
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Product Info */}
-            <motion.div
-              layout
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="lg:col-span-5 space-y-8"
-            >
-              <div className="space-y-3">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="flex items-center gap-2 text-amber-500"
-                >
-                  {/* {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} fill="currentColor" className="drop-shadow-sm" />
-                  ))} */}
-                  {/* <span className="text-xs font-bold text-gray-400">(4.8 / 124)</span> */}
-                </motion.div>
-
-                <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight">
-                  {product.name}
-                </h1>
-
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl font-light text-gray-900 font-mono">₹{product.price}</span>
-                  {product.originalPrice && (
-                    <motion.span
-                      initial={{ scale: 0.8 }}
-                      animate={{ scale: 1 }}
-                      className="bg-green-50 text-green-600 text-[10px] font-black px-2 py-1 rounded-md uppercase"
-                    >
-                      Save ₹{product.originalPrice - product.price}
-                    </motion.span>
-                  )}
-                </div>
-              </div>
-
-              {/* Size Selector */}
-              {/* <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold uppercase text-gray-500">Select Size</span>
-                  <button className="text-[10px] font-bold text-amber-600 underline underline-offset-4">
-                    Size Guide
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  {sizes.map((size) => (
-                    <motion.button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      whileTap={{ scale: 0.9 }}
-                      animate={{
-                        scale: selectedSize === size ? 1.08 : 1,
-                      }}
-                      className={`h-12 w-12 rounded-xl text-sm font-bold border-2 transition-all ${
-                        selectedSize === size
-                          ? "border-black bg-black text-white shadow-lg"
-                          : "border-gray-200 text-gray-500 hover:border-gray-400"
-                      }`}
-                    >
-                      {size}
-                    </motion.button>
-                  ))}
-                </div>
-              </div> */}
-
-              {/* Tabs with Animated Underline */}
-              <div className="border-t border-gray-100 pt-6">
-                <div className="flex gap-8 border-b border-gray-100 mb-4 relative">
-                  {['details', 'shipping'].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className="pb-3 text-xs font-bold uppercase tracking-widest relative"
-                    >
-                      {tab}
-                      {activeTab === tab && (
-                        <motion.div
-                          layoutId="activeTabUnderline"
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full"
-                          initial={false}
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        />
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-sm text-gray-600 leading-relaxed"
-                  >
-                    {activeTab === 'details'
-                      ? (product.description || "Premium handcrafted item with reinforced stitching and ethically sourced materials.")
-                      : "Free express shipping over ₹999. Estimated delivery: 3–5 business days."}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Trust Badges */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="bg-gray-50 rounded-2xl p-4 grid grid-cols-3 gap-2"
-              >
-                {[
-                  { icon: Truck, label: "Fast Delivery" },
-                  { icon: CreditCard,   label: "COD Available" },     // ← most requested replacement
-                  { icon: ShieldCheck, label: "Secure Deal" },
-                ].map(({ icon: Icon, label }, i) => (
-                  <div key={i} className="flex flex-col items-center text-center gap-1">
-                    <Icon size={18} className="text-gray-700" />
-                    <span className="text-[9px] font-bold text-gray-500 uppercase">{label}</span>
-                  </div>
-                ))}
-              </motion.div>
-
-              {/* Desktop CTA */}
-          <motion.a
-  href={`https://wa.me/9746683778?text=Hi, I want to order ${product.name} in size ${selectedSize}`}
-  whileHover={{ scale: 1.02 }}
-  whileTap={{ scale: 0.98 }}
-  className="hidden lg:flex items-center justify-center gap-3 w-full 
-             bg-yellow-400 text-black 
-             py-4 rounded-2xl font-bold 
-             shadow-lg hover:bg-yellow-500 hover:shadow-xl 
-             transition-all"
->
-  <WhatsAppIcon />
-  CHAT TO ORDER NOW
-</motion.a>
-
-            </motion.div>
+       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
+  <div className="grid lg:grid-cols-12 gap-10 lg:gap-14">
+    
+    {/* LEFT: CINEMATIC GALLERY — smaller version */}
+    <div className="lg:col-span-7">
+      <div className="sticky top-24 space-y-6">
+        <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-[#f5f5f7] shadow-xl group">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={currentImg}
+              src={allImages[currentImg]}
+              initial={{ opacity: 0, scale: 1.08 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full h-full object-cover"
+            />
+          </AnimatePresence>
+          
+          {/* Floating Badges — smaller */}
+          <div className="absolute top-6 left-6 flex flex-col gap-2">
+            <span className="flex items-center gap-1.5 bg-black/85 text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md">
+              <Zap size={10} fill="currentColor" />
+            </span>
           </div>
         </div>
 
-        {/* Suggested Products */}
-        <section className="max-w-6xl mx-auto mt-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="mb-6 flex items-center justify-between"
-          >
-            <div>
-              <h3 className="text-xl md:text-2xl font-black">Suggested for you</h3>
-              <p className="text-sm text-gray-500">Fresh picks every time</p>
-            </div>
+        {/* Thumbnails — smaller */}
+        <div className="flex gap-3 px-1 overflow-x-auto no-scrollbar justify-center">
+          {allImages.map((img, i) => (
             <button
-              onClick={() => window.location.reload()}
-              className="text-sm font-bold text-amber-600 underline underline-offset-4"
+              key={i}
+              onClick={() => setCurrentImg(i)}
+              className={`relative flex-shrink-0 w-16 h-20 rounded-xl overflow-hidden transition-all duration-400 ${
+                i === currentImg 
+                  ? "ring-2 ring-black ring-offset-3 scale-105" 
+                  : "opacity-50 grayscale"
+              }`}
             >
-              Refresh
+              <img src={img} className="w-full h-full object-cover" alt="" />
             </button>
-          </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
 
-          <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <AnimatePresence>
-              {suggestedProducts.map((p, index) => (
-                <motion.div
-                  key={p._id || p.id}
-                  layout
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Link to={`/product/${p._id || p.id}`} className="block">
-                    <motion.div
-                      whileHover={{ y: -6 }}
-                      className="bg-white rounded-[24px] overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all flex flex-col h-full"
-                    >
-                      <div className="aspect-[4/5] relative overflow-hidden bg-gray-50">
-                        <img
-                          src={p.image || p.images?.[0] || 'https://via.placeholder.com/600'}
-                          alt={p.name}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        />
-                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-full text-[9px] font-black uppercase">
-                          {p.category || "New"}
-                        </div>
-                        {p.originalPrice && (
-                          <div className="absolute top-3 right-3 bg-red-600 text-white text-[9px] font-black px-2 py-1 rounded-full">
-                            {Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}% OFF
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4 text-center">
-                        <h4 className="font-black text-sm uppercase tracking-tight mb-2 line-clamp-2">{p.name}</h4>
-                        <p className="text-xl font-black mb-1">₹{p.price}</p>
-                        {p.originalPrice && <p className="text-sm line-through text-gray-400">₹{p.originalPrice}</p>}
-                        <a
-                          href={`https://wa.me/9746683778?text=Hi! Interested in ${p.name} (₹${p.price})`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-black text-white py-2 rounded-2xl text-[10px] font-black uppercase hover:bg-amber-500 hover:text-black transition"
-                        >
-                          <WhatsAppIcon size={14} /> Order
-                        </a>
-                      </div>
-                    </motion.div>
-                  </Link>
-                </motion.div>
+    {/* RIGHT: EDITORIAL PRODUCT INFO — more compact */}
+    <div className="lg:col-span-5 flex flex-col justify-center">
+      <motion.div 
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-8"
+      >
+        {/* Header Section */}
+        <header className="space-y-3">
+          <div className="flex items-center gap-2 text-orange-600 font-black text-[9px] uppercase tracking-[0.25em]">
+            <Sparkles size={12} fill="currentColor" /> Exclusive Edition
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight text-[#1d1d1f]">
+            {product.name}
+          </h1>
+          <div className="flex items-baseline gap-3 pt-3">
+            <span className="text-3xl font-medium tracking-tight">₹{product.price}</span>
+            {product.originalPrice && (
+              <span className="text-lg text-gray-400 line-through">
+                ₹{product.originalPrice}
+              </span>
+            )}
+          </div>
+        </header>
+
+        {/* Description Tabs */}
+        <div className="pt-8 border-t border-black/[0.06]">
+          <div className="flex gap-8 mb-6">
+            {['details', 'shipping'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`text-[10px] font-black uppercase tracking-[0.22em] relative pb-1.5 transition-colors ${
+                  activeTab === tab ? "text-black" : "text-gray-500"
+                }`}
+              >
+                {tab}
+                {activeTab === tab && (
+                  <motion.div layoutId="underline" className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-black" />
+                )}
+              </button>
+            ))}
+          </div>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={activeTab}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-base text-gray-600 leading-relaxed max-w-lg"
+            >
+              {activeTab === 'details' 
+                ? (product.description || "Handcrafted with premium materials for lasting quality and precision fit.")
+                : "Free shipping on orders over ₹1,999. Delivered in eco-friendly packaging."}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+
+        {/* Trust Badges — smaller */}
+        <div className="grid grid-cols-3 gap-3 bg-[#f5f5f7] p-6 rounded-2xl">
+          {[
+            { icon: Truck, text: "Fast Ship" },
+            { icon: CreditCard, text: "COD" },
+            { icon: ShieldCheck, text: "Verified" }
+          ].map((item, i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <div className="p-2.5 bg-white rounded-xl shadow-sm text-gray-700">
+                <item.icon size={18} />
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">{item.text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* PRIMARY ACTION — more compact */}
+        <motion.a
+          href={`https://wa.me/9746683778?text=I want to order ${product.name}`}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="flex items-center justify-center gap-3 w-full bg-[#1d1d1f] text-white py-4 rounded-full font-bold text-sm tracking-wide uppercase hover:bg-orange-600 transition-colors shadow-xl shadow-black/10"
+        >
+          <WhatsAppIcon size={18} /> CHAT TO BUY NOW
+        </motion.a>
+      </motion.div>
+    </div>
+  </div>
+</main>
+
+        {/* RELATED PIECES */}
+        <section className="bg-white py-24 px-6 border-t border-black/[0.03]">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-end justify-between mb-16">
+              <div className="space-y-4">
+                <span className="text-orange-600 font-black text-[10px] uppercase tracking-[0.3em]">Complementary</span>
+                <h3 className="text-4xl md:text-6xl font-semibold tracking-tighter">You might also love.</h3>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+              {suggestedProducts.map((p) => (
+                <Link to={`/product/${p._id || p.id}`} key={p._id} className="group">
+                  <div className="relative aspect-[3/4] rounded-[32px] overflow-hidden mb-6 bg-[#f5f5f7]">
+                    <img src={p.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-[9px] font-black uppercase">
+                       {p.category}
+                    </div>
+                  </div>
+                  <h4 className="text-xl font-bold tracking-tight mb-2 truncate">{p.name}</h4>
+                  <p className="text-gray-400 font-medium">₹{p.price}</p>
+                </Link>
               ))}
-            </AnimatePresence>
-          </motion.div>
+            </div>
+          </div>
         </section>
 
-        {/* Mobile Floating Bar - Slides Up */}
-        <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          transition={{ delay: 0.6, type: "spring", stiffness: 100 }}
-          className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 flex items-center gap-4 shadow-2xl"
-        >
-          <div className="flex-1">
-            <p className="text-[10px] font-bold text-gray-400 uppercase">Total</p>
-            <p className="text-lg font-bold">₹{product.price}</p>
-          </div>
-          <a
-            href={`https://wa.me/9746683778?text=Hi, I want to order ${product.name} in size ${selectedSize}`}
-            className="flex-[2] flex items-center justify-center gap-2 bg-[#128c7e] text-white h-12 rounded-xl font-bold text-sm shadow-lg"
+        {/* MOBILE FLOATING FOOTER */}
+        <AnimatePresence>
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-black/[0.05] p-6 z-[200] flex items-center gap-6"
           >
-            <WhatsAppIcon /> ORDER NOW
-          </a>
-        </motion.div>
+            <div className="flex-1">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</span>
+              <p className="text-2xl font-bold">₹{product.price}</p>
+            </div>
+            <a
+              href={`https://wa.me/9746683778?text=Order:${product.name}`}
+              className="flex-[2] flex items-center justify-center gap-3 bg-black text-white py-4 rounded-full font-black text-xs uppercase tracking-widest shadow-xl"
+            >
+              <WhatsAppIcon size={18} /> ORDER
+            </a>
+          </motion.div>
+        </AnimatePresence>
       </motion.div>
     </LayoutGroup>
   );
