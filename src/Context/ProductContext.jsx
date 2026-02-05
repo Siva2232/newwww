@@ -72,7 +72,11 @@ export const ProductProvider = ({ children }) => {
     [saveToStorage]
   );
 
-  // ─── State ───────────────────────────────────────────────────────────────
+
+  // Special Offers state
+  const [specialOffers, setSpecialOffers] = useState([]);
+
+  // ...existing state...
   const [products, setProducts] = useState(() => loadFromStorage("products", []));
   const [heroBanners, setHeroBanners] = useState(() => loadFromStorage("heroBanners", []));
   const [shopCategories, setShopCategories] = useState(() => loadFromStorage("shopCategories", []));
@@ -82,27 +86,20 @@ export const ProductProvider = ({ children }) => {
   const [bestSellerProductIds, setBestSellerProductIds] = useState(() =>
     loadFromStorage("bestSellerProductIds", [])
   );
-
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => localStorage.getItem("isAdminLoggedIn") === "true"
   );
 
-  // ─── Fetch products and categories from backend on mount ──────────────────────────────────
+  // ─── Fetch products, categories, banners, and special offers from backend on mount ──────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       try {
         const productsData = await api.getProducts();
         if (Array.isArray(productsData)) {
           setProducts(productsData);
-          
           // Extract featured product IDs from database
-          const trendingIds = productsData
-            .filter(p => p.isTrending)
-            .map(p => p._id);
-          const bestSellerIds = productsData
-            .filter(p => p.isBestSeller)
-            .map(p => p._id);
-          
+          const trendingIds = productsData.filter(p => p.isTrending).map(p => p._id);
+          const bestSellerIds = productsData.filter(p => p.isBestSeller).map(p => p._id);
           if (trendingIds.length > 0) setTrendingProductIds(trendingIds);
           if (bestSellerIds.length > 0) setBestSellerProductIds(bestSellerIds);
         }
@@ -127,8 +124,17 @@ export const ProductProvider = ({ children }) => {
       } catch (error) {
         console.warn("Failed to fetch banners from backend, using localStorage:", error);
       }
-    };
 
+      // Fetch special offers
+      try {
+        const offersData = await api.getSpecialOffers();
+        if (Array.isArray(offersData)) {
+          setSpecialOffers(offersData);
+        }
+      } catch (error) {
+        console.warn("Failed to fetch special offers from backend:", error);
+      }
+    };
     fetchData();
   }, []);
 
@@ -623,6 +629,9 @@ export const ProductProvider = ({ children }) => {
     isAuthenticated,
     login,
     logout,
+    // Special Offers
+    specialOffers,
+    setSpecialOffers,
   };
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;

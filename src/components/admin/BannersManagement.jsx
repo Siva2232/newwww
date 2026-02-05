@@ -1,6 +1,7 @@
 // src/components/admin/BannersManagement.jsx
 import { useState, useRef } from "react";
 import { useProducts } from "../../Context/ProductContext";
+import { uploadImage, BACKEND_URL } from "../../api";
 import { Plus, Upload, Trash2, X, Image as ImageIcon } from "lucide-react";
 
 export default function BannersManagement() {
@@ -9,8 +10,8 @@ export default function BannersManagement() {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    imageBase64: null,
     preview: null,
+    imageFile: null,
   });
 
   const [isDragging, setIsDragging] = useState(false);
@@ -18,7 +19,7 @@ export default function BannersManagement() {
   const fileInputRef = useRef(null);
 
   const resetForm = () => {
-    setForm({ title: "", description: "", imageBase64: null, preview: null });
+    setForm({ title: "", description: "", preview: null, imageFile: null });
     setError("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -40,13 +41,14 @@ export default function BannersManagement() {
     reader.onloadend = () => {
       setForm((prev) => ({
         ...prev,
-        imageBase64: reader.result,
         preview: reader.result,
+        imageFile: file,
       }));
       setError("");
     };
     reader.readAsDataURL(file);
   };
+
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -78,7 +80,7 @@ export default function BannersManagement() {
       setError("Banner title is required");
       return;
     }
-    if (!form.imageBase64) {
+    if (!form.imageFile) {
       setError("Please upload a banner image");
       return;
     }
@@ -90,11 +92,24 @@ export default function BannersManagement() {
     }
 
     try {
+      // 1. Upload image to server
+      const uploadResult = await uploadImage(form.imageFile);
+      const imagePath = uploadResult.path;
+
+      // 2. Add banner with image path
       const payload = {
         title: form.title.trim(),
         description: form.description.trim(),
-        imageBase64: form.imageBase64,
+        // Pass path instead of base64
+        imageBase64: imagePath, 
+        // Note: keeping the key 'imageBase64' because ProductContext/api might map it to 'image'
+        // or we need to check ProductContext.jsx. 
+        // Let's verify ProductContext's addHeroBanner.
       };
+      
+      // In ProductContext lines 525:
+      // const payload = { ..., image: data.imageBase64 || null };
+      // So passing imagePath as imageBase64 works fine there.
 
       await addHeroBanner(payload);
       resetForm();
@@ -226,7 +241,7 @@ export default function BannersManagement() {
 
           <button
             onClick={handleSubmit}
-            disabled={!form.title.trim() || !form.imageBase64}
+            disabled={!form.title.trim() || !form.imageFile}
             className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 
                      disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2.5 text-lg"
           >
@@ -251,14 +266,14 @@ export default function BannersManagement() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {heroBanners.map((banner) => (
+            {heroBanners.map((banner, index) => (
               <div
-                key={banner.id}
+                key={banner._id || banner.id || index}
                 className="group bg-white rounded-2xl shadow border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative overflow-hidden">
                   <img
-                    src={banner.image}
+                    src={banner.image?.startsWith('data:') || banner.image?.startsWith('http') ? banner.image : `${BACKEND_URL}${banner.image}`}
                     alt={banner.title}
                     className="w-full h-56 object-cover transition-transform duration-700 group-hover:scale-110"
                   />
@@ -274,7 +289,7 @@ export default function BannersManagement() {
                   </p>
 
                   <button
-                    onClick={() => handleDelete(banner.id)}
+                    onClick={() => handleDelete(banner._id || banner.id)}
                     className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 font-medium py-3 rounded-xl transition-colors"
                   >
                     <Trash2 size={18} />

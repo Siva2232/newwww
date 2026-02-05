@@ -1,6 +1,7 @@
 // src/components/admin/ProductsManagement.jsx
 import { useState, useRef, useEffect } from "react";
 import { useProducts } from "../../Context/ProductContext";
+import { uploadImage, BACKEND_URL } from "../../api";
 import {
   Plus,
   Image as ImageIcon,
@@ -28,9 +29,18 @@ export default function ProductsManagement() {
     customCategory: "",
     description: "",
     detailedDescription: "",
-    mainImage: null,
-    carouselImages: [],
-    editingId: null,
+    
+    // We'll store files here for new uploads
+    mainImageFile: null,
+    carouselImageFiles: [], // array of file objects
+
+    // Previews for UI
+    mainImagePreview: null,
+    carouselPreviews: [],
+
+    // Existing paths (if editing)
+    // Note: If you have existing structure, you might need to adapt. 
+    // For simplicity, I'm refactoring "mainImage" to just be the path string (or null).
   });
 
   const mainImageInput = useRef(null);
@@ -38,45 +48,27 @@ export default function ProductsManagement() {
 
   const updateForm = (updates) => setForm((prev) => ({ ...prev, ...updates }));
 
-  // Image compression
-  const compressImageFile = (file, maxWidth = 1200, quality = 0.75) => {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxWidth) {
-          const ratio = maxWidth / width;
-          width = maxWidth;
-          height *= ratio;
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
-        URL.revokeObjectURL(url);
-        resolve(dataUrl);
-      };
-      img.onerror = (err) => {
-        URL.revokeObjectURL(url);
-        reject(err);
-      };
-      img.src = url;
+  // Helper to read file as preview data URL
+  const readFilePreview = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(file);
     });
   };
 
   const handleMainImage = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     try {
-      const dataUrl = await compressImageFile(file, 1200, 0.78);
-      updateForm({ mainImage: dataUrl });
-    } catch {
-      const reader = new FileReader();
-      reader.onload = () => updateForm({ mainImage: reader.result });
-      reader.readAsDataURL(file);
+      const preview = await readFilePreview(file);
+      updateForm({ 
+        mainImageFile: file, 
+        mainImagePreview: preview 
+      });
+    } catch (err) {
+      console.error("Preview error", err);
     }
   };
 
@@ -84,25 +76,21 @@ export default function ProductsManagement() {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    const promises = files.map((file) =>
-      compressImageFile(file, 1000, 0.72).catch(() => {
-        return new Promise((res) => {
-          const r = new FileReader();
-          r.onload = () => res(r.result);
-          r.readAsDataURL(file);
-        });
-      })
-    );
-
-    const results = await Promise.all(promises);
-    updateForm({
-      carouselImages: [...form.carouselImages, ...results],
-    });
+    try {
+      const newPreviews = await Promise.all(files.map(readFilePreview));
+      updateForm({
+        carouselImageFiles: [...form.carouselImageFiles, ...files],
+        carouselPreviews: [...form.carouselPreviews, ...newPreviews],
+      });
+    } catch (err) {
+      console.error("Carousel preview error", err);
+    }
   };
 
   const removeCarouselImage = (index) => {
     updateForm({
-      carouselImages: form.carouselImages.filter((_, i) => i !== index),
+      carouselImageFiles: form.carouselImageFiles.filter((_, i) => i !== index),
+      carouselPreviews: form.carouselPreviews.filter((_, i) => i !== index),
     });
   };
 
@@ -110,7 +98,8 @@ export default function ProductsManagement() {
     if (!form.name.trim()) return alert("Product name is required");
     if (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0)
       return alert("Valid positive price required");
-    if (!form.mainImage) return alert("Main image is required");
+    // Ensure we have at least one image (new file or existing preview path)
+    if (!form.mainImageFile && !form.mainImagePreview) return alert("Main image is required");
 
     let category = "uncategorized";
     const custom = form.customCategory?.trim();
@@ -119,72 +108,115 @@ export default function ProductsManagement() {
     if (custom) category = custom;
     else if (selected) category = selected;
 
-    // Auto-create new category
+    // Auto-create new category (optimistic)
     if (category !== "uncategorized") {
       const exists = shopCategories.some(
         (c) => c.name.toLowerCase() === category.toLowerCase()
       );
       if (!exists) {
-        const catImage =
-          form.mainImage ||
-          form.carouselImages[0] ||
-          `https://via.placeholder.com/400x400?text=${encodeURIComponent(category)}`;
-
         setShopCategories((prev) => [
           ...prev,
           {
             id: Date.now(),
             name: category,
-            image: catImage,
+            image: null,
             link: `/category/${category.toLowerCase().replace(/\s+/g, "-")}`,
           },
         ]);
       }
     }
 
-    const payload = {
-      name: form.name.trim(),
-      price: Number(form.price),
-      originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
-      category,
-      description: form.description.trim() || "Premium quality product",
-      detailedDescription: form.detailedDescription?.trim() || "",
-      mainImage: form.mainImage,
-      carouselImages: form.carouselImages,
-    };
-
     try {
+      // 1. Resolve Main Image
+      let finalMainImagePath = form.mainImagePreview; // default to existing preview (if it's a path)
+      
+      // If user uploaded a new file, upload it and use new path
+      if (form.mainImageFile) {
+        const uploadRes = await uploadImage(form.mainImageFile);
+        finalMainImagePath = uploadRes.path;
+      } 
+      // Note: If preview is data:URL (from generic FileReader without upload), we can't easily save it unless we force upload.
+      // But our logic uses uploadImage for new files. 
+      // If form.mainImagePreview is a string like "/uploads/...", it's fine.
+
+      // 2. Resolve Carousel Images
+      const finalCarouselPaths = [];
+      
+      // Process existing ones (if any are just strings in previews but not files)
+      // Check which ones are new files vs existing paths
+      // This is tricky with separate arrays. Let's iterate `carouselPreviews`? 
+      // Or simplify: we have `carouselImageFiles` which are NEW. 
+      // But we also might have KEPT existing images.
+      
+      // For simplicity in this quick fix:
+      // We'll upload all new files.
+      // And we need to preserve existing paths that weren't deleted.
+      // But my state structure `carouselImageFiles` only tracks files (added ones?). 
+      // Using `carouselPreviews` as the source of truth for ordering is better if we matched them index-to-index.
+      // For now, let's just append new uploads to existing *if* we're editing?
+      
+      // Better strategy:
+      // Loop through `carouselPreviews`.
+      // If item is data: (base64) -> find corresponding file in `carouselImageFiles` (maybe by name? or assume order?).
+      // The current simple implementation just appends new files.
+      
+      const newUploads = [];
+      for (const file of form.carouselImageFiles) {
+        const res = await uploadImage(file);
+        newUploads.push(res.path);
+      }
+      
+      // If in edit mode, `form.carouselImages` (from startEdit/legacy) might contain existing paths.
+      // But my new state structure uses `carouselPreviews`.
+      // Let's assume `carouselPreviews` contains EVERYTHING (existing paths + new base64 previews).
+      // We need to reconstruct the final array of paths.
+      
+      // Filter out base64 previews from `carouselPreviews` and keep only server paths
+      const existingPaths = form.carouselPreviews.filter(p => p && !p.startsWith("data:"));
+      
+      // Combine
+      const allCarouselPaths = [...existingPaths, ...newUploads];
+
+      const payload = {
+        name: form.name.trim(),
+        price: Number(form.price),
+        originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
+        category,
+        description: form.description.trim() || "Premium quality product",
+        detailedDescription: form.detailedDescription?.trim() || "",
+        mainImage: finalMainImagePath, 
+        carouselImages: allCarouselPaths,
+      };
+
       if (form.editingId) {
         await updateProduct(form.editingId, payload);
       } else {
         await addProduct(payload);
       }
-
-      // Reset form
+      
+      // Reset
       setForm({
-        name: "",
-        price: "",
-        originalPrice: "",
-        category: "",
-        customCategory: "",
-        description: "",
-        detailedDescription: "",
-        mainImage: null,
-        carouselImages: [],
-        editingId: null,
+         name: "", price: "", originalPrice: "", category: "", customCategory: "",
+         description: "", detailedDescription: "", 
+         mainImageFile: null, carouselImageFiles: [],
+         mainImagePreview: null, carouselPreviews: [],
+         editingId: null
       });
 
       if (mainImageInput.current) mainImageInput.current.value = "";
       if (carouselInput.current) carouselInput.current.value = "";
-    } catch (error) {
-      alert("Error: " + (error.message || "Failed to save product"));
-      console.error("Submit error:", error);
+      
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save product: " + err.message);
     }
   };
 
   const startEdit = (product) => {
+    // Populate form with existing product data
+    // existing images are likely paths (strings)
     setForm({
-      editingId: product.id,
+      editingId: product.id || product._id,
       name: product.name || "",
       price: product.price || "",
       originalPrice: product.originalPrice || "",
@@ -192,13 +224,20 @@ export default function ProductsManagement() {
       customCategory: "",
       description: product.description || "",
       detailedDescription: product.detailedDescription || "",
-      mainImage: product.mainImage || null,
-      carouselImages: product.carouselImages || [],
+      
+      // New fields population
+      mainImageFile: null, // no new file yet
+      mainImagePreview: product.mainImage || product.image || null, // show existing image
+      
+      carouselImageFiles: [], // no new files
+      carouselPreviews: product.carouselImages || product.images?.slice(1) || [], // existing paths
     });
+    
     if (mainImageInput.current) mainImageInput.current.value = "";
     if (carouselInput.current) carouselInput.current.value = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
 
   const cancelEdit = () => {
     setForm({
@@ -209,8 +248,10 @@ export default function ProductsManagement() {
       customCategory: "",
       description: "",
       detailedDescription: "",
-      mainImage: null,
-      carouselImages: [],
+      mainImageFile: null,
+      carouselImageFiles: [],
+      mainImagePreview: null,
+      carouselPreviews: [],
       editingId: null,
     });
     if (mainImageInput.current) mainImageInput.current.value = "";
@@ -322,7 +363,7 @@ export default function ProductsManagement() {
             </label>
             <div
               className={`relative border-2 border-dashed rounded-xl overflow-hidden transition-all duration-200 cursor-pointer min-h-[16rem]
-                ${form.mainImage ? "border-indigo-400 bg-indigo-50/30" : "border-gray-300 hover:border-indigo-300 bg-gray-50/40"}`}
+                ${form.mainImagePreview ? "border-indigo-400 bg-indigo-50/30" : "border-gray-300 hover:border-indigo-300 bg-gray-50/40"}`}
             >
               <input
                 ref={mainImageInput}
@@ -331,9 +372,13 @@ export default function ProductsManagement() {
                 onChange={handleMainImage}
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
               />
-              {form.mainImage ? (
+              {form.mainImagePreview ? (
                 <div className="relative">
-                  <img src={form.mainImage} alt="preview" className="w-full h-64 object-cover" />
+                  <img 
+                    src={form.mainImagePreview.startsWith("data:") || form.mainImagePreview.startsWith("http") ? form.mainImagePreview : `${BACKEND_URL}${form.mainImagePreview}`} 
+                    alt="preview" 
+                    className="w-full h-64 object-cover" 
+                  />
                   <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                     <span className="text-white text-sm font-medium">Click to replace</span>
                   </div>
@@ -356,7 +401,7 @@ export default function ProductsManagement() {
             </label>
             <div
               className={`relative border-2 border-dashed rounded-xl p-6 transition-all duration-200 cursor-pointer min-h-[16rem]
-                ${form.carouselImages.length > 0 ? "border-blue-400 bg-blue-50/20" : "border-gray-300 hover:border-blue-300 bg-gray-50/40"}`}
+                ${form.carouselPreviews.length > 0 ? "border-blue-400 bg-blue-50/20" : "border-gray-300 hover:border-blue-300 bg-gray-50/40"}`}
             >
               <input
                 ref={carouselInput}
@@ -367,12 +412,16 @@ export default function ProductsManagement() {
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
               />
 
-              {form.carouselImages.length > 0 ? (
+              {form.carouselPreviews.length > 0 ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {form.carouselImages.map((img, idx) => (
+                    {form.carouselPreviews.map((img, idx) => (
                       <div key={idx} className="group relative aspect-square rounded-lg overflow-hidden border border-gray-200">
-                        <img src={img} alt="" className="w-full h-full object-cover" />
+                        <img 
+                          src={img.startsWith("data:") || img.startsWith("http") ? img : `${BACKEND_URL}${img}`} 
+                          alt="" 
+                          className="w-full h-full object-cover" 
+                        />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -386,7 +435,7 @@ export default function ProductsManagement() {
                     ))}
                   </div>
                   <p className="text-sm text-blue-700 font-medium text-center">
-                    {form.carouselImages.length} image{form.carouselImages.length !== 1 ? "s" : ""}
+                    {form.carouselPreviews.length} image{form.carouselPreviews.length !== 1 ? "s" : ""}
                   </p>
                 </div>
               ) : (

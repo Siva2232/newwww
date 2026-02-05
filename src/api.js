@@ -1,11 +1,12 @@
-const BASE_URL = "https://newweb11.onrender.com/api";
+// src/api.js  (or wherever you keep your API helpers)
 
-// Helper to get auth token
-const getAuthToken = () => {
-  return localStorage.getItem("adminToken");
-};
+export const BASE_URL = "http://localhost:5000/api";
+export const BACKEND_URL = "http://localhost:5000";
 
-// Helper to get auth headers
+// Helper to get admin token from localStorage
+const getAuthToken = () => localStorage.getItem("adminToken");
+
+// Helper to generate headers (with optional auth)
 const getAuthHeaders = () => {
   const token = getAuthToken();
   return {
@@ -14,22 +15,41 @@ const getAuthHeaders = () => {
   };
 };
 
+// ────────────────────────────────────────────────
+// Generic error handler
+// ────────────────────────────────────────────────
+const handleResponse = async (res) => {
+  if (!res.ok) {
+    let errorMessage = "Request failed";
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.message || errorMessage;
+    } catch {
+      // fallback if not JSON
+    }
+    throw new Error(errorMessage);
+  }
+  return res.json();
+};
+
+// ────────────────────────────────────────────────
+// Auth
+// ────────────────────────────────────────────────
 export const loginAdmin = async (email, password) => {
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || "Login failed");
-  }
-  return res.json();
+  return handleResponse(res);
 };
 
+// ────────────────────────────────────────────────
+// Products
+// ────────────────────────────────────────────────
 export const getProducts = async () => {
   const res = await fetch(`${BASE_URL}/products`);
-  return res.json();
+  return handleResponse(res);
 };
 
 export const createProduct = async (productData) => {
@@ -38,8 +58,7 @@ export const createProduct = async (productData) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(productData),
   });
-  if (!res.ok) throw new Error("Failed to create product");
-  return res.json();
+  return handleResponse(res);
 };
 
 export const updateProduct = async (productId, productData) => {
@@ -48,8 +67,7 @@ export const updateProduct = async (productId, productData) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(productData),
   });
-  if (!res.ok) throw new Error("Failed to update product");
-  return res.json();
+  return handleResponse(res);
 };
 
 export const deleteProduct = async (productId) => {
@@ -57,14 +75,32 @@ export const deleteProduct = async (productId) => {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete product");
-  return res.json();
+  return handleResponse(res);
 };
 
-// Category APIs
+// Toggle trending / best-seller
+export const toggleProductTrending = async (productId) => {
+  const res = await fetch(`${BASE_URL}/products/${productId}/trending`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+};
+
+export const toggleProductBestSeller = async (productId) => {
+  const res = await fetch(`${BASE_URL}/products/${productId}/best-seller`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+};
+
+// ────────────────────────────────────────────────
+// Categories
+// ────────────────────────────────────────────────
 export const getCategories = async () => {
   const res = await fetch(`${BASE_URL}/categories`);
-  return res.json();
+  return handleResponse(res);
 };
 
 export const createCategory = async (categoryData) => {
@@ -73,8 +109,7 @@ export const createCategory = async (categoryData) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(categoryData),
   });
-  if (!res.ok) throw new Error("Failed to create category");
-  return res.json();
+  return handleResponse(res);
 };
 
 export const updateCategory = async (categoryId, categoryData) => {
@@ -83,8 +118,7 @@ export const updateCategory = async (categoryId, categoryData) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(categoryData),
   });
-  if (!res.ok) throw new Error("Failed to update category");
-  return res.json();
+  return handleResponse(res);
 };
 
 export const deleteCategory = async (categoryId) => {
@@ -92,14 +126,15 @@ export const deleteCategory = async (categoryId) => {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete category");
-  return res.json();
+  return handleResponse(res);
 };
 
-// Hero Banner APIs
+// ────────────────────────────────────────────────
+// Hero Banners
+// ────────────────────────────────────────────────
 export const getHeroBanners = async () => {
   const res = await fetch(`${BASE_URL}/hero-banners`);
-  return res.json();
+  return handleResponse(res);
 };
 
 export const createHeroBanner = async (bannerData) => {
@@ -108,8 +143,7 @@ export const createHeroBanner = async (bannerData) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(bannerData),
   });
-  if (!res.ok) throw new Error("Failed to create banner");
-  return res.json();
+  return handleResponse(res);
 };
 
 export const updateHeroBanner = async (bannerId, bannerData) => {
@@ -118,8 +152,7 @@ export const updateHeroBanner = async (bannerId, bannerData) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(bannerData),
   });
-  if (!res.ok) throw new Error("Failed to update banner");
-  return res.json();
+  return handleResponse(res);
 };
 
 export const deleteHeroBanner = async (bannerId) => {
@@ -127,25 +160,149 @@ export const deleteHeroBanner = async (bannerId) => {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete banner");
+  return handleResponse(res);
+};
+
+// ────────────────────────────────────────────────
+// Special Offers (new)
+// ────────────────────────────────────────────────
+export const getSpecialOffers = async () => {
+  const res = await fetch(`${BASE_URL}/special-offers`);
+  return handleResponse(res);
+};
+
+export const createSpecialOffer = async (offerData) => {
+  const res = await fetch(`${BASE_URL}/special-offers`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(offerData),
+  });
+  return handleResponse(res);
+};
+
+export const updateSpecialOffer = async (offerId, offerData) => {
+  const res = await fetch(`${BASE_URL}/special-offers/${offerId}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(offerData),
+  });
+  return handleResponse(res);
+};
+
+export const deleteSpecialOffer = async (offerId) => {
+  const res = await fetch(`${BASE_URL}/special-offers/${offerId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+};
+
+// ────────────────────────────────────────────────
+// Custom Products (for bespoke/custom books)
+// ────────────────────────────────────────────────
+// ────────────────────────────────────────────────
+// Custom Products (for bespoke/custom books)
+// ────────────────────────────────────────────────
+export const getCustomProducts = async () => {
+  const res = await fetch(`${BASE_URL}/custom-products`);
+  return handleResponse(res);
+};
+
+export const createCustomProduct = async (productData) => {
+  const res = await fetch(`${BASE_URL}/custom-products`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(productData),
+  });
+  return handleResponse(res);
+};
+
+export const updateCustomProduct = async (productId, productData) => {
+  const res = await fetch(`${BASE_URL}/custom-products/${productId}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(productData),
+  });
+  return handleResponse(res);
+};
+
+export const deleteCustomProduct = async (productId) => {
+  const res = await fetch(`${BASE_URL}/custom-products/${productId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (res.status === 204) return { message: "Deleted" };
+  return handleResponse(res);
+};
+
+
+
+// src/api.js — append at the end
+
+export const submitCustomBookOrder = async (formData) => {
+  const res = await fetch(`${BASE_URL}/custom-book-orders`, {
+    method: "POST",
+    // NO Content-Type header — browser sets multipart/form-data + boundary
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let msg = "Submission failed";
+    try {
+      const err = await res.json();
+      msg = err.message || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+
   return res.json();
 };
 
-// Product Toggle APIs
-export const toggleProductTrending = async (productId) => {
-  const res = await fetch(`${BASE_URL}/products/${productId}/trending`, {
-    method: "PATCH",
+// Optional: admin list
+export const getCustomBookOrders = async () => {
+  const res = await fetch(`${BASE_URL}/custom-book-orders`, {
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to toggle trending status");
-  return res.json();
+  return handleResponse(res);
 };
 
-export const toggleProductBestSeller = async (productId) => {
-  const res = await fetch(`${BASE_URL}/products/${productId}/best-seller`, {
-    method: "PATCH",
+export const getCustomBookOrderById = async (orderId) => {
+  const res = await fetch(`${BASE_URL}/custom-book-orders/${orderId}`, {
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to toggle best seller status");
-  return res.json();
+  return handleResponse(res);
 };
+
+export const updateCustomBookOrder = async (orderId, data) => {
+  const res = await fetch(`${BASE_URL}/custom-book-orders/${orderId}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+};
+
+// ────────────────────────────────────────────────
+// File Upload Helper
+// ────────────────────────────────────────────────
+export const uploadImage = async (file) => {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await fetch(`${BASE_URL}/uploads`, {
+    method: "POST",
+    body: formData,
+    // Note: Do NOT set Content-Type header for FormData, browser does it with boundary
+  });
+  
+  if (!res.ok) {
+    const errorBody = await res.text();
+    throw new Error(errorBody || "Image upload failed");
+  }
+  
+  return res.json(); // Expected { path: "/uploads/filename.ext" }
+};
+
+
+
+

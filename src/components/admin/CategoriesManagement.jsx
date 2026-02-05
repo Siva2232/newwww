@@ -1,7 +1,9 @@
 // src/components/admin/CategoriesManagement.jsx
 import { useState, useRef } from "react";
 import { useProducts } from "../../Context/ProductContext";
+import { uploadImage } from "../../api";
 import { Plus, Upload, Trash2, X, Image as ImageIcon, Link2 } from "lucide-react";
+import { BACKEND_URL } from "../../api"; // fallback if needed, but we use path in DB
 
 export default function CategoriesManagement() {
   const { shopCategories, addCategory, deleteCategory } = useProducts();
@@ -9,8 +11,8 @@ export default function CategoriesManagement() {
   const [form, setForm] = useState({
     name: "",
     link: "",
-    imageBase64: null,
     preview: null,
+    imageFile: null,
   });
 
   const [isDragging, setIsDragging] = useState(false);
@@ -18,7 +20,7 @@ export default function CategoriesManagement() {
   const fileInputRef = useRef(null);
 
   const resetForm = () => {
-    setForm({ name: "", link: "", imageBase64: null, preview: null });
+    setForm({ name: "", link: "", preview: null, imageFile: null });
     setError("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -40,13 +42,14 @@ export default function CategoriesManagement() {
     reader.onloadend = () => {
       setForm((prev) => ({
         ...prev,
-        imageBase64: reader.result,
         preview: reader.result,
+        imageFile: file,
       }));
       setError("");
     };
     reader.readAsDataURL(file);
   };
+
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -87,7 +90,7 @@ export default function CategoriesManagement() {
       setError("Category name is required");
       return;
     }
-    if (!form.imageBase64) {
+    if (!form.imageFile) {
       setError("Please upload a category image");
       return;
     }
@@ -101,10 +104,13 @@ export default function CategoriesManagement() {
     const slug = form.link.trim() || generateSlug(form.name);
 
     try {
+      // 1. Upload
+      const uploadResult = await uploadImage(form.imageFile);
+      
       const payload = {
         name: form.name.trim(),
         link: slug,
-        imageBase64: form.imageBase64,
+        imageBase64: uploadResult.path, // Maps to 'image' in ProductContext
         description: "",
       };
 
@@ -115,6 +121,7 @@ export default function CategoriesManagement() {
       console.error("Submit error:", error);
     }
   };
+
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this category?\n\nProducts using it will fall back to 'uncategorized'.")) {
@@ -174,7 +181,7 @@ export default function CategoriesManagement() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+              <label className="flex text-sm font-medium text-gray-700 items-center gap-2">
                 <Link2 size={16} />
                 Custom Link <span className="text-gray-500 text-xs">(optional)</span>
               </label>
@@ -251,7 +258,7 @@ export default function CategoriesManagement() {
 
           <button
             onClick={handleSubmit}
-            disabled={!form.name.trim() || !form.imageBase64}
+            disabled={!form.name.trim() || !form.imageFile}
             className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 
                      disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2.5 text-lg"
           >
@@ -283,7 +290,7 @@ export default function CategoriesManagement() {
               >
                 <div className="relative aspect-square overflow-hidden">
                   <img
-                    src={cat.image}
+                    src={cat.image?.startsWith('http') || cat.image?.startsWith('data:') ? cat.image : `${BACKEND_URL}${cat.image}`}
                     alt={cat.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />

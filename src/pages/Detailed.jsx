@@ -123,7 +123,7 @@ Can you provide more details, customization options, and confirm availability?`
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       {/* Back Bar */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur shadow-sm py-4">
+      <div className="top-0 z-40 bg-white/95 backdrop-blur shadow-sm py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <Link to="/" className="inline-flex items-center gap-3 text-gray-700 hover:text-amber-700 font-semibold transition">
             <ArrowLeft size={28} />

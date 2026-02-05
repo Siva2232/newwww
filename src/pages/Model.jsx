@@ -79,7 +79,7 @@ export default function ProductsShop() {
       </section>
 
       {/* 2. FLOATING UTILITY BAR (Sticky) */}
-      <div className="sticky top-0 z-[100] bg-white/70 backdrop-blur-2xl border-b border-black/[0.03] py-4">
+      <div className="top-0 z-[100] bg-white/70 backdrop-blur-2xl border-b border-black/[0.03] py-4">
         <div className="max-w-[1440px] mx-auto px-6 flex items-center justify-between gap-6">
           <button
             onClick={() => setIsFilterVisible(!isFilterVisible)}

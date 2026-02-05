@@ -1,6 +1,7 @@
 // src/pages/ProductDetail.jsx
 import { useParams, Link } from "react-router-dom";
 import { useProducts } from "../Context/ProductContext";
+import { getImageUrl } from "../utils/imageUrl";
 import { 
   ArrowLeft, ShieldCheck, Truck, Share2, Star, Clock, 
   CreditCard, Sparkles, ChevronRight, Zap, Info
@@ -42,7 +43,7 @@ export default function ProductDetail() {
         className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] font-sans overflow-x-hidden"
       >
         {/* TOP NAVIGATION BAR */}
-        <nav className="sticky top-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-black/[0.03] px-6 py-4">
+        <nav className="top-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-black/[0.03] px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <Link to="/models" className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest">
               <div className="p-2 rounded-full group-hover:bg-black group-hover:text-white transition-all">
@@ -69,7 +70,7 @@ export default function ProductDetail() {
           <AnimatePresence mode="wait">
             <motion.img
               key={currentImg}
-              src={allImages[currentImg]}
+              src={getImageUrl(allImages[currentImg])}
               initial={{ opacity: 0, scale: 1.08 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -98,7 +99,7 @@ export default function ProductDetail() {
                   : "opacity-50 grayscale"
               }`}
             >
-              <img src={img} className="w-full h-full object-cover" alt="" />
+              <img src={getImageUrl(img)} className="w-full h-full object-cover" alt="" />
             </button>
           ))}
         </div>

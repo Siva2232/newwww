@@ -1,6 +1,7 @@
 // src/components/admin/FeaturedManagement.jsx
 import { useState, useEffect } from "react";
 import { useProducts } from "../../Context/ProductContext";
+import { getImageUrl } from "../../utils/imageUrl";
 import { Star, Award, Search, X, TrendingUp, DollarSign, Loader2 } from "lucide-react";
 
 export default function FeaturedManagement() {
@@ -94,7 +95,7 @@ export default function FeaturedManagement() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
             {filteredProducts.map((product) => {
-              const id = product.id;
+              const id = product._id || product.id;
               const isFeatured = trendingProductIds.includes(id);
               const isLoading = loadingIds.has(id);
 
@@ -110,9 +111,7 @@ export default function FeaturedManagement() {
                   <div className="aspect-square relative">
                     <img
                       src={
-                        product.mainImage ||
-                        product.images?.[0] ||
-                        product.image ||
+                        getImageUrl(product.mainImage || product.images?.[0] || product.image) ||
                         "https://via.placeholder.com/300?text=No+Image"
                       }
                       alt={product.name}
@@ -205,7 +204,7 @@ export default function FeaturedManagement() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
             {filteredProducts.map((product) => {
-              const id = product.id;
+              const id = product._id || product.id;
               const isFeatured = bestSellerProductIds.includes(id);
               const isLoading = loadingIds.has(id);
 
@@ -221,9 +220,7 @@ export default function FeaturedManagement() {
                   <div className="aspect-square relative">
                     <img
                       src={
-                        product.mainImage ||
-                        product.images?.[0] ||
-                        product.image ||
+                        getImageUrl(product.mainImage || product.images?.[0] || product.image) ||
                         "https://via.placeholder.com/300?text=No+Image"
                       }
                       alt={product.name}
