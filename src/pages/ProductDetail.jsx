@@ -33,6 +33,18 @@ export default function ProductDetail() {
 
   const [product, setProduct] = useState(contextProduct || null);
   const [loading, setLoading] = useState(!contextProduct?.description); // Load if description missing
+  
+  // State to track if the main navbar menu is open
+  const [isNavMenuOpen, setIsNavMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleMenuChange = (e) => {
+      setIsNavMenuOpen(e.detail.isOpen);
+    };
+
+    window.addEventListener('nav-mobile-menu-change', handleMenuChange);
+    return () => window.removeEventListener('nav-mobile-menu-change', handleMenuChange);
+  }, []);
 
   // Fetch full details if needed
   useEffect(() => {
@@ -76,9 +88,21 @@ export default function ProductDetail() {
   const [activeTab, setActiveTab] = useState("details");
   const topRef = useRef(null);
 
-  // Reset image index when product changes
+  // Zoom Effect State
+  const [isHovering, setIsHovering] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 }); // Normalized 0-1
+
+  const handleMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - left) / width;
+    const y = (e.clientY - top) / height;
+    setMousePos({ x, y });
+  };
+
+  // Reset image index and hover state when product changes
   useEffect(() => {
     setCurrentImg(0);
+    setIsHovering(false);
   }, [id]);
 
   useEffect(() => {
@@ -145,25 +169,43 @@ export default function ProductDetail() {
             {/* LEFT: CINEMATIC GALLERY — smaller version */}
             <div className="lg:col-span-7">
               <div className="sticky top-24 space-y-6">
-                <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-[#f5f5f7] shadow-xl group">
+                <div 
+                  className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-[#f5f5f7] shadow-xl group"
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                  onMouseMove={handleMouseMove}
+                >
                   <AnimatePresence mode="wait">
                     <motion.img
                       key={currentImg}
                       src={getImageUrl(allImages[currentImg])}
-                      initial={{ opacity: 0, scale: 1.08 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      initial={{ opacity: 0, scale: 1.05 }}
+                      animate={{ 
+                        opacity: 1, 
+                        scale: isHovering ? 2.5 : 1, // Increased zoom scale
+                        originX: isHovering ? mousePos.x : 0.5,
+                        originY: isHovering ? mousePos.y : 0.5
+                      }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                      className="w-full h-full object-cover"
+                      transition={{ 
+                        opacity: { duration: 0.5 },
+                        scale: { duration: 0.4, ease: "easeOut" },
+                        originX: { duration: 0.1, ease: "linear" }, // Fast tracking
+                        originY: { duration: 0.1, ease: "linear" }
+                      }}
+                      className="w-full h-full object-cover will-change-transform"
                     />
                   </AnimatePresence>
 
-                  {/* Floating Badges — smaller */}
-                  <div className="absolute top-6 left-6 flex flex-col gap-2">
+                  {/* Floating Badges — smaller (Hide on zoom) */}
+                  <motion.div 
+                    animate={{ opacity: isHovering ? 0 : 1 }}
+                    className="absolute top-6 left-6 flex flex-col gap-2 pointer-events-none"
+                  >
                     <span className="flex items-center gap-1.5 bg-black/85 text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md">
                       <Zap size={10} fill="currentColor" />
                     </span>
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* Thumbnails — smaller */}
@@ -385,9 +427,11 @@ export default function ProductDetail() {
 
         {/* MOBILE FLOATING FOOTER */}
         <AnimatePresence>
+          {!isNavMenuOpen && (
           <motion.div
             initial={{ y: 100 }}
             animate={{ y: 0 }}
+            exit={{ y: 100 }} // animate out when hiding
             className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-black/[0.05] p-6 z-[200] flex items-center gap-6"
           >
             <div className="flex-1">
@@ -403,6 +447,7 @@ export default function ProductDetail() {
               <WhatsAppIcon size={18} /> ORDER
             </a>
           </motion.div>
+          )}
         </AnimatePresence>
       </motion.div>
     </LayoutGroup>

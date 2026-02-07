@@ -21,6 +21,15 @@ export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // Expose mobileOpen to window/context if feasible, or use a custom event to communicate with ProductDetail
+  useEffect(() => {
+    // Dispatch a custom event when mobile menu state changes
+    const event = new CustomEvent('nav-mobile-menu-change', { 
+      detail: { isOpen: mobileOpen } 
+    });
+    window.dispatchEvent(event);
+  }, [mobileOpen]);
+
   const { products = [], shopCategories = [] } = useProducts();
   const searchRef = useRef(null);
   const location = useLocation();
@@ -255,26 +264,33 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-[60] bg-white px-4 pt-4 md:hidden"
+            className="fixed top-24 left-0 right-0 bottom-0 z-[40] bg-white/95 backdrop-blur-sm px-4 pt-6 md:hidden border-t border-gray-100"
           >
             <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-              <button onClick={() => setIsDropdownOpen(false)}>
-                <X size={24} className="text-gray-500" />
-              </button>
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus
-                className="flex-1 text-lg outline-none placeholder:text-gray-400"
-              />
-              {searchTerm && (
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  autoFocus
+                  className="w-full text-lg outline-none placeholder:text-gray-400 pl-2 py-1"
+                />
+              </div>
+              
+              {searchTerm ? (
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="text-xs font-bold uppercase bg-gray-100 px-2 py-1 rounded"
+                  className="p-2 bg-gray-100 rounded-full"
                 >
-                  Clear
+                  <X size={18} className="text-gray-500" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsDropdownOpen(false)}
+                   className="p-2"
+                >
+                  <span className="text-sm font-medium text-gray-500">Cancel</span>
                 </button>
               )}
             </div>
@@ -330,7 +346,7 @@ export default function Navbar() {
               <div className="space-y-6">
                 <button
                   onClick={() => handleNavClick("/")}
-                  className="block text-2xl font-bold"
+                  className="block text-2xl font-bold w-full text-left"
                 >
                   Home
                 </button>
@@ -353,6 +369,37 @@ export default function Navbar() {
                       <ArrowRight size={16} className="text-gray-300" />
                     </button>
                   ))}
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-gray-100">
+                   <button
+                    onClick={() => handleNavClick("/models")}
+                    className="block text-lg font-medium w-full text-left text-gray-900"
+                  >
+                    Our Products
+                  </button>
+
+                  <button
+                    onClick={() => handleNavClick("/services")}
+                    className="block text-lg font-medium w-full text-left text-gray-900"
+                  >
+                    Our Services
+                  </button>
+
+                  <button
+                    onClick={() => handleNavClick("/contact")}
+                    className="block text-lg font-medium w-full text-left text-gray-900"
+                  >
+                    Contact Us
+                  </button>
+
+                  <button
+                    onClick={() => handleNavClick("/custom-book")}
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg text-lg font-bold shadow-md active:scale-95 transition-transform"
+                  >
+                    <span>Create Custom Book</span>
+                    <ArrowRight size={20} />
+                  </button>
                 </div>
               </div>
             </div>

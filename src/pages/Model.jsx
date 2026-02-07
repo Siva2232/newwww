@@ -29,12 +29,22 @@ export default function ProductsShop() {
   }, []);
 
   useEffect(() => {
-    if (isMobile) setIsFilterVisible(false);
+    // If we're on desktop, make sure filter is VISIBLE by default or forced visible
+    // if you want "always show" on desktop, we can just enforce it here.
+    if (!isMobile) {
+      setIsFilterVisible(true);
+    } else {
+      setIsFilterVisible(false);
+    }
   }, [isMobile]);
 
   useEffect(() => {
     const cat = searchParams.get('category');
-    if (cat && shopCategories.some(c => c.name === cat)) setSelectedCategory(cat);
+    if (cat && shopCategories.some(c => c.name === cat)) {
+      setSelectedCategory(cat);
+    } else {
+      setSelectedCategory('All');
+    }
   }, [searchParams, shopCategories]);
 
   const categoryButtons = useMemo(() => ['All', ...shopCategories.map(c => c.name)], [shopCategories]);
@@ -81,12 +91,20 @@ export default function ProductsShop() {
       {/* 2. FLOATING UTILITY BAR (Sticky) */}
       <div className="top-0 z-[100] bg-white/70 backdrop-blur-2xl border-b border-black/[0.03] py-4">
         <div className="max-w-[1440px] mx-auto px-6 flex items-center justify-between gap-6">
-          <button
-            onClick={() => setIsFilterVisible(!isFilterVisible)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl"
-          >
-            <SlidersHorizontal size={14} /> {isFilterVisible ? 'Close Sidebar' : 'Filters'}
-          </button>
+          {/* Only show/hide button on mobile. On desktop, sidebar is always there. */}
+          {isMobile ? (
+            <button
+              onClick={() => setIsFilterVisible(!isFilterVisible)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl"
+            >
+              <SlidersHorizontal size={14} /> {isFilterVisible ? 'Close Sidebar' : 'Filters'}
+            </button>
+          ) : (
+             // On desktop, maybe show a static label or nothing
+             <div className="hidden lg:flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-500 rounded-full text-[10px] font-black uppercase tracking-widest cursor-default">
+                <SlidersHorizontal size={14} /> Filters Active
+             </div>
+          )}
 
           <div className="relative flex-1 max-w-xl group">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#86868b] group-focus-within:text-orange-600 transition-colors" size={18} />
