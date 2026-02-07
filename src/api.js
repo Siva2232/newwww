@@ -1,7 +1,8 @@
 // src/api.js  (or wherever you keep your API helpers)
 
-export const BASE_URL = "http://localhost:5000/api";
-export const BACKEND_URL = "http://localhost:5000";
+// Use env var or default to production backend
+export const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "https://api.aktech.sbs";
+export const BASE_URL = `${BACKEND_URL}/api`;
 
 // Helper to get admin token from localStorage
 const getAuthToken = () => localStorage.getItem("adminToken");
@@ -47,8 +48,14 @@ export const loginAdmin = async (email, password) => {
 // ────────────────────────────────────────────────
 // Products
 // ────────────────────────────────────────────────
-export const getProducts = async () => {
-  const res = await fetch(`${BASE_URL}/products`);
+export const getProducts = async (query = "") => {
+  const url = query ? `${BASE_URL}/products?${query}` : `${BASE_URL}/products`;
+  const res = await fetch(url);
+  return handleResponse(res);
+};
+
+export const getProductById = async (id) => {
+  const res = await fetch(`${BASE_URL}/products/${id}`);
   return handleResponse(res);
 };
 

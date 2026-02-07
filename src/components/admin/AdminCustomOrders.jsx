@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, User, Phone, Image as ImageIcon, Loader2 } from "lucide-react";
+import {
+  ChevronDown,
+  User,
+  Phone,
+  Image as ImageIcon,
+  Loader2,
+} from "lucide-react";
 import { getCustomBookOrders } from "../../api"; // from your api.js
 import AdminOrderDetail from "./AdminOrderDetail";
 
@@ -71,12 +77,17 @@ export default function AdminCustomOrders() {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Custom Photo Book Orders</h2>
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">
+        Custom Photo Book Orders
+      </h2>
 
       <div className="space-y-4">
         {orders.map((order) => {
           // Debug log – helps you see real paths coming from backend
-          console.log(`Order ${order._id.slice(-6)} → cover:`, order.coverImage);
+          console.log(
+            `Order ${order._id.slice(-6)} → cover:`,
+            order.coverImage,
+          );
 
           return (
             <div
@@ -138,8 +149,8 @@ export default function AdminCustomOrders() {
                         order.status === "Pending"
                           ? "bg-yellow-100 text-yellow-800"
                           : order.status === "Delivered"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-blue-100 text-blue-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-blue-100 text-blue-800"
                       }`}
                     >
                       {order.status || "Pending"}
@@ -147,13 +158,18 @@ export default function AdminCustomOrders() {
                   </div>
                 </div>
 
-                <ChevronDown size={20} className="text-gray-400 hidden sm:block" />
+                <ChevronDown
+                  size={20}
+                  className="text-gray-400 hidden sm:block"
+                />
               </div>
 
               {/* Quick info row */}
               <div className="px-5 py-3 bg-white border-t text-sm text-gray-600 flex justify-between items-center">
                 <div>{order.photos?.length || 0} photos uploaded</div>
-                {order.coverImage && <div className="text-indigo-600">Cover image included</div>}
+                {order.coverImage && (
+                  <div className="text-indigo-600">Cover image included</div>
+                )}
               </div>
             </div>
           );

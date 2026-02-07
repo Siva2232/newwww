@@ -20,7 +20,7 @@ import LoginPage from "../pages/LoginPage";
 import Debug from "../pages/Debug";
 
 // NEW: Import the scroll component
-import ScrollToTop from "../components/common/ScrollToTop";   // adjust path if needed
+import ScrollToTop from "../components/common/ScrollToTop"; // adjust path if needed
 
 // Context
 import { useProducts } from "../Context/ProductContext";
@@ -49,7 +49,7 @@ export default function AppRoutes() {
       )}
 
       {/* Main Content */}
-      <main className={isAdminRoute ? "pt-0" : "pt-20"}>
+      <main className={isAdminRoute ? "pt-0" : "pt-36"}>
         {/* ADD IT HERE — runs on every navigation */}
         <ScrollToTop />
 
@@ -69,11 +69,7 @@ export default function AppRoutes() {
           <Route
             path="/admin/login"
             element={
-              isAuthenticated ? (
-                <Navigate to="/admin" replace />
-              ) : (
-                <LoginPage />
-              )
+              isAuthenticated ? <Navigate to="/admin" replace /> : <LoginPage />
             }
           />
 

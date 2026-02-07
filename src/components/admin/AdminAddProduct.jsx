@@ -7,6 +7,7 @@ export default function AdminAddProduct() {
   const [form, setForm] = useState({
     name: "",
     price: "",
+    originalPrice: "",
     shortDesc: "",
     fullDesc: "",
     tag: "Signature",
@@ -64,6 +65,7 @@ export default function AdminAddProduct() {
       const productData = {
         name: form.name.trim(),
         price: Number(form.price),
+        originalPrice: form.originalPrice ? Number(form.originalPrice) : 0,
         shortDesc: form.shortDesc.trim(),
         fullDesc: form.fullDesc.trim(),
         tag: form.tag,
@@ -77,6 +79,7 @@ export default function AdminAddProduct() {
       setForm({
         name: "",
         price: "",
+        originalPrice: "",
         shortDesc: "",
         fullDesc: "",
         tag: "Signature",
@@ -94,9 +97,7 @@ export default function AdminAddProduct() {
 
   return (
     <div className="p-6 bg-white rounded-xl shadow border max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">
-        Add New Custom Photo Book
-      </h2>
+      <h2 className="text-2xl font-bold mb-6">Add New Custom Photo Book</h2>
 
       {error && (
         <div className="mb-5 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2">
@@ -120,14 +121,24 @@ export default function AdminAddProduct() {
           className="w-full px-4 py-2 border rounded-lg"
         />
 
-        <input
-          type="number"
-          name="price"
-          value={form.price}
-          onChange={handleChange}
-          placeholder="Price"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <input
+            type="number"
+            name="price"
+            value={form.price}
+            onChange={handleChange}
+            placeholder="Price"
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+          <input
+            type="number"
+            name="originalPrice"
+            value={form.originalPrice}
+            onChange={handleChange}
+            placeholder="Original Price (Optional)"
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
 
         <input
           name="shortDesc"

@@ -4,14 +4,27 @@ import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { getCustomProducts } from "../../api";
 
-export default function ProductSelection({ setSelectedProduct, fadeInUp }) {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function ProductSelection({
+  setSelectedProduct,
+  fadeInUp,
+  products: propProducts,
+}) {
+  const [products, setProducts] = useState(propProducts || []);
+  const [loading, setLoading] = useState(
+    !propProducts || propProducts.length === 0,
+  );
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
+    if (propProducts && propProducts.length > 0) {
+      setProducts(propProducts);
+      setLoading(false);
+      return;
+    }
+
     const fetchProducts = async () => {
       try {
+        setLoading(true);
         const data = await getCustomProducts();
         // Optional: ensure image has correct path (especially useful in dev vs prod)
         const updatedProducts = data.map((product) => ({
@@ -30,7 +43,7 @@ export default function ProductSelection({ setSelectedProduct, fadeInUp }) {
       }
     };
     fetchProducts();
-  }, []);
+  }, [propProducts]);
 
   if (loading) {
     return (
@@ -98,7 +111,9 @@ export default function ProductSelection({ setSelectedProduct, fadeInUp }) {
 
                 <div className="p-4">
                   <h3 className="text-xl font-bold mb-1">{product.name}</h3>
-                  <p className="text-zinc-700 font-medium mb-2">{product.price}</p>
+                  <p className="text-zinc-700 font-medium mb-2">
+                    {product.price}
+                  </p>
 
                   <p className="text-sm text-zinc-600 mb-3 line-clamp-2">
                     {product.shortDesc || "Premium custom photo book"}
@@ -113,7 +128,11 @@ export default function ProductSelection({ setSelectedProduct, fadeInUp }) {
                       className="text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 mt-1"
                     >
                       {isExpanded ? "Less" : "More"}
-                      {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      {isExpanded ? (
+                        <ChevronUp size={14} />
+                      ) : (
+                        <ChevronDown size={14} />
+                      )}
                     </button>
                   )}
 

@@ -77,8 +77,16 @@ export default function StudioForm({
     }
 
     // 2. Ensure bookName and bookPrice are present
-    const finalBookName = (formData.bookName || selectedProduct?.name || "").trim();
-    const finalBookPrice = (formData.bookPrice || selectedProduct?.price || "").trim();
+    const finalBookName = (
+      formData.bookName ||
+      selectedProduct?.name ||
+      ""
+    ).trim();
+    const finalBookPrice = (
+      formData.bookPrice ||
+      selectedProduct?.price ||
+      ""
+    ).trim();
 
     if (!finalBookName) {
       toast.error("Product name is missing. Please select a product.");
@@ -114,7 +122,10 @@ export default function StudioForm({
       data.append("bookName", finalBookName);
       data.append("bookPrice", finalBookPrice);
 
-      data.append("bookDescription", formData.bookDescription || selectedProduct?.shortDesc || "");
+      data.append(
+        "bookDescription",
+        formData.bookDescription || selectedProduct?.shortDesc || "",
+      );
       data.append("notes", formData.notes || "");
 
       if (selectedProduct?._id) {
@@ -151,7 +162,10 @@ export default function StudioForm({
 
   return (
     <div className="pt-20 px-5 sm:px-6 pb-16 max-w-3xl mx-auto">
-      <motion.div layout className="bg-white rounded-2xl border border-zinc-200 shadow-lg overflow-hidden">
+      <motion.div
+        layout
+        className="bg-white rounded-2xl border border-zinc-200 shadow-lg overflow-hidden"
+      >
         {selectedProduct && (
           <div className="bg-zinc-50 px-5 py-4 border-b">
             <div className="flex items-center gap-4">
@@ -164,11 +178,15 @@ export default function StudioForm({
               </div>
               <div>
                 <h3 className="font-bold text-lg">{selectedProduct.name}</h3>
-                <p className="text-zinc-700 font-medium">{selectedProduct.price}</p>
+                <p className="text-zinc-700 font-medium">
+                  {selectedProduct.price}
+                </p>
               </div>
             </div>
             {selectedProduct.shortDesc && (
-              <p className="mt-2 text-sm text-zinc-600">{selectedProduct.shortDesc}</p>
+              <p className="mt-2 text-sm text-zinc-600">
+                {selectedProduct.shortDesc}
+              </p>
             )}
           </div>
         )}
@@ -184,7 +202,9 @@ export default function StudioForm({
                 className="space-y-7"
               >
                 <div className="flex justify-between items-center pb-4 border-b">
-                  <h2 className="text-2xl sm:text-3xl font-bold">Your Details</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold">
+                    Your Details
+                  </h2>
                   <span className="text-xs font-black text-zinc-400 uppercase tracking-wider">
                     Step 1/2
                   </span>
@@ -200,7 +220,9 @@ export default function StudioForm({
                       className="w-full text-lg font-medium outline-none"
                       placeholder="Enter your full name"
                       value={formData.name || ""}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -214,7 +236,9 @@ export default function StudioForm({
                       className="w-full text-lg font-medium outline-none"
                       placeholder="+91 ..."
                       value={formData.phone || ""}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -231,7 +255,9 @@ export default function StudioForm({
                 className="space-y-7"
               >
                 <div className="flex justify-between items-center pb-4 border-b">
-                  <h2 className="text-2xl sm:text-3xl font-bold">Upload Content</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold">
+                    Upload Content
+                  </h2>
                   <span className="text-xs font-black text-zinc-400 uppercase tracking-wider">
                     Step 2/2
                   </span>
@@ -239,10 +265,17 @@ export default function StudioForm({
 
                 {/* Cover Image */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Cover Image (optional)</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Cover Image (optional)
+                  </label>
                   <div className="flex flex-col sm:flex-row gap-4 items-start">
                     <label className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-300 rounded-xl w-full sm:w-64 h-48 cursor-pointer hover:border-zinc-500 transition">
-                      <input type="file" accept="image/*" hidden onChange={handleCoverChange} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={handleCoverChange}
+                      />
                       <Camera size={28} className="text-zinc-500 mb-2" />
                       <p className="text-sm font-medium">Upload cover</p>
                       <p className="text-xs text-zinc-500">PNG / JPG</p>
@@ -268,7 +301,9 @@ export default function StudioForm({
 
                 {/* Photos */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Photos for inside pages *</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Photos for inside pages *
+                  </label>
                   <label className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-300 rounded-xl h-48 cursor-pointer hover:border-zinc-500 transition">
                     <input
                       type="file"
@@ -278,14 +313,19 @@ export default function StudioForm({
                       onChange={handlePhotoChange}
                     />
                     <Camera size={28} className="text-zinc-500 mb-3" />
-                    <p className="font-medium text-base">Click or drag photos here</p>
-                    <p className="text-xs text-zinc-500 mt-1">Max 50 images • JPG / PNG</p>
+                    <p className="font-medium text-base">
+                      Click or drag photos here
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      Max 50 images • JPG / PNG
+                    </p>
                   </label>
 
                   {previews.length > 0 && (
                     <div className="mt-6">
                       <p className="text-sm font-medium mb-3">
-                        {previews.length} photo{previews.length !== 1 ? "s" : ""} selected
+                        {previews.length} photo
+                        {previews.length !== 1 ? "s" : ""} selected
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 max-h-80 overflow-y-auto p-2 bg-zinc-50 rounded-lg">
                         {previews.map((src, i) => (
@@ -316,7 +356,9 @@ export default function StudioForm({
         <div className="bg-zinc-50 px-5 py-4 flex items-center justify-between border-t">
           <button
             onClick={() =>
-              currentStep === 1 ? setSelectedProduct(null) : setCurrentStep((s) => s - 1)
+              currentStep === 1
+                ? setSelectedProduct(null)
+                : setCurrentStep((s) => s - 1)
             }
             className="text-sm font-medium text-zinc-600 hover:text-zinc-900 flex items-center gap-1"
           >
@@ -325,10 +367,13 @@ export default function StudioForm({
           </button>
 
           <button
-            onClick={() => (currentStep === 1 ? setCurrentStep(2) : handleSubmit())}
+            onClick={() =>
+              currentStep === 1 ? setCurrentStep(2) : handleSubmit()
+            }
             disabled={
               submitting ||
-              (currentStep === 1 && (!formData?.name?.trim() || !formData?.phone?.trim())) ||
+              (currentStep === 1 &&
+                (!formData?.name?.trim() || !formData?.phone?.trim())) ||
               (currentStep === 2 && files.length === 0)
             }
             className="px-6 py-2.5 bg-zinc-900 text-white rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"

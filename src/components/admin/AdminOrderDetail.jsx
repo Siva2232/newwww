@@ -133,7 +133,9 @@ export default function AdminOrderDetail({ order, onClose }) {
               </div>
               <div className="md:col-span-2">
                 <div className="text-sm text-gray-600">Description</div>
-                <div className="mt-1">{book.description || "No description"}</div>
+                <div className="mt-1">
+                  {book.description || "No description"}
+                </div>
               </div>
               {order.productReference && (
                 <div className="md:col-span-2 text-sm text-gray-500 italic">
@@ -152,11 +154,15 @@ export default function AdminOrderDetail({ order, onClose }) {
             <div className="bg-gray-50 p-5 rounded-xl border grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <div className="text-sm text-gray-600">Name</div>
-                <div className="text-lg font-medium">{customer.name || "—"}</div>
+                <div className="text-lg font-medium">
+                  {customer.name || "—"}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600">Phone</div>
-                <div className="text-lg font-medium">{customer.phone || "—"}</div>
+                <div className="text-lg font-medium">
+                  {customer.phone || "—"}
+                </div>
               </div>
               {order.notes && (
                 <div className="md:col-span-2">
@@ -203,7 +209,9 @@ export default function AdminOrderDetail({ order, onClose }) {
                   <div className="bg-gray-50 px-5 py-3 font-medium border-b flex justify-between items-center">
                     <span>Cover Image</span>
                     <button
-                      onClick={() => handleDownloadSingle(coverImage, "cover.jpg")}
+                      onClick={() =>
+                        handleDownloadSingle(coverImage, "cover.jpg")
+                      }
                       className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 text-sm"
                     >
                       <Download size={16} />
@@ -244,7 +252,10 @@ export default function AdminOrderDetail({ order, onClose }) {
                           <button
                             onClick={() =>
                               // Fixed: backticks for filename
-                              handleDownloadSingle(photo, `photo-${index + 1}.jpg`)
+                              handleDownloadSingle(
+                                photo,
+                                `photo-${index + 1}.jpg`,
+                              )
                             }
                             className="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium shadow hover:bg-gray-100 flex items-center gap-2"
                           >
@@ -261,7 +272,7 @@ export default function AdminOrderDetail({ order, onClose }) {
                 </div>
               )}
 
-              {(!coverImage && photos.length === 0) && (
+              {!coverImage && photos.length === 0 && (
                 <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
                   No images uploaded for this order
                 </div>
@@ -278,7 +289,9 @@ export default function AdminOrderDetail({ order, onClose }) {
             {order.adminNotes && (
               <div className="mt-3">
                 <div className="text-sm text-gray-600">Admin Notes:</div>
-                <div className="mt-1 whitespace-pre-line">{order.adminNotes}</div>
+                <div className="mt-1 whitespace-pre-line">
+                  {order.adminNotes}
+                </div>
               </div>
             )}
           </section>
