@@ -13,6 +13,7 @@ import {
 import { useProducts } from "../Context/ProductContext";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../assets/hhhh.jpg";
+import { getImageUrl } from "../utils/imageUrl";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -131,7 +132,7 @@ export default function Navbar() {
                           className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-none"
                         >
                           <img
-                            src={product.image || "/placeholder-product.jpg"}
+                            src={getImageUrl(product.image) || "/placeholder-product.jpg"}
                             alt={product.name}
                             className="w-10 h-10 object-cover rounded bg-gray-100"
                             onError={(e) => {
@@ -286,7 +287,7 @@ export default function Navbar() {
                   className="flex gap-4"
                 >
                   <img
-                    src={product.image || "/placeholder-product.jpg"}
+                    src={getImageUrl(product.image) || "/placeholder-product.jpg"}
                     className="w-16 h-16 bg-gray-100 rounded object-cover"
                     onError={(e) => (e.target.src = "/placeholder-product.jpg")}
                   />

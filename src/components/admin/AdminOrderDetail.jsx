@@ -7,9 +7,14 @@ import {
   Image as ImageIcon,
   FileArchive,
   Loader2,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Save,
 } from "lucide-react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { updateCustomBookOrder } from "../../api"; // Make sure to import the update function
 
 // Fixed: proper template literal with backticks
 const getImageUrl = (path) => {
@@ -24,6 +29,11 @@ const getImageUrl = (path) => {
 export default function AdminOrderDetail({ order, onClose }) {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Local state for editing
+  const [status, setStatus] = useState(order.status || "Pending");
+  const [adminNotes, setAdminNotes] = useState(order.adminNotes || "");
+  const [updating, setUpdating] = useState(false);
 
   if (!order) return null;
 
@@ -31,6 +41,20 @@ export default function AdminOrderDetail({ order, onClose }) {
   const book = order.book || {};
   const coverImage = order.coverImage;
   const photos = order.photos || [];
+
+  const handleUpdateOrder = async () => {
+    setUpdating(true);
+    try {
+      await updateCustomBookOrder(order._id, { status, adminNotes });
+      // Optionally notify parent to refresh list, or just show success
+      alert("Order updated successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update order");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const handleDownloadSingle = (imagePath, fileName = "image.jpg") => {
     const url = getImageUrl(imagePath);
@@ -114,6 +138,62 @@ export default function AdminOrderDetail({ order, onClose }) {
             </div>
           )}
 
+          {/* Quick Actions / Status */}
+          <section className="bg-indigo-50/50 p-5 rounded-xl border border-indigo-100">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-indigo-900">
+              <CheckCircle size={22} className="text-indigo-600" />
+              Order Status & Management
+            </h3>
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              <div className="flex-1 w-full">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="Processing">Processing</option>
+                  <option value="In Production">In Production</option>
+                  <option value="Ready">Ready</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div className="flex-1 w-full">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Admin Notes (Internal)
+                </label>
+                <textarea
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  placeholder="Private notes about this order..."
+                  className="w-full p-2.5 bg-white border border-gray-300 rounded-lg h-[42px] min-h-[42px] leading-tight focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div className="self-end">
+                <button
+                  onClick={handleUpdateOrder}
+                  disabled={updating}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-70 transition font-medium"
+                >
+                  {updating ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                  Save Changes
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+              <Clock size={16} />
+              Ordered on:{" "}
+              {new Date(order.createdAt).toLocaleString("en-IN", {
+                dateStyle: "full",
+                timeStyle: "short",
+              })}
+            </div>
+          </section>
+
           {/* Book / Product Info */}
           <section>
             <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -136,6 +216,10 @@ export default function AdminOrderDetail({ order, onClose }) {
                 <div className="mt-1">
                   {book.description || "No description"}
                 </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">Pages</div>
+                <div className="text-lg font-medium">{book.pages || "20"}</div>
               </div>
               {order.productReference && (
                 <div className="md:col-span-2 text-sm text-gray-500 italic">

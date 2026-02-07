@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 
 /* Layout */
 import Navbar from "../layouts/Navbar";
@@ -21,6 +22,7 @@ import Debug from "../pages/Debug";
 
 // NEW: Import the scroll component
 import ScrollToTop from "../components/common/ScrollToTop"; // adjust path if needed
+import PageTransition from "../components/common/PageTransition";
 
 // Context
 import { useProducts } from "../Context/ProductContext";
@@ -50,45 +52,46 @@ export default function AppRoutes() {
 
       {/* Main Content */}
       <main className={isAdminRoute ? "pt-0" : "pt-36"}>
-        {/* ADD IT HERE — runs on every navigation */}
-        <ScrollToTop />
+        {/* ScrollToTop logic handled inside PageTransition now */}
+        
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            {/* Public Routes */}
+            <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+            <Route path="/about" element={<PageTransition><AboutPage /></PageTransition>} />
+            <Route path="/custom-book" element={<PageTransition><CustomBook /></PageTransition>} />
+            <Route path="/services" element={<PageTransition><ServicesPage /></PageTransition>} />
+            <Route path="/portfolio" element={<PageTransition><PortfolioPage /></PageTransition>} />
+            <Route path="/models" element={<PageTransition><Model /></PageTransition>} />
+            <Route path="/product/:id" element={<PageTransition><ProductDetail /></PageTransition>} />
+            <Route path="/album/:id" element={<PageTransition><Detailed /></PageTransition>} />
+            <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
 
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/custom-book" element={<CustomBook />} />
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path="/portfolio" element={<PortfolioPage />} />
-          <Route path="/models" element={<Model />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/album/:id" element={<Detailed />} />
-          <Route path="/contact" element={<ContactPage />} />
+            {/* Admin Login Route */}
+            <Route
+              path="/admin/login"
+              element={
+                isAuthenticated ? <Navigate to="/admin" replace /> : <PageTransition><LoginPage /></PageTransition>
+              }
+            />
 
-          {/* Admin Login Route */}
-          <Route
-            path="/admin/login"
-            element={
-              isAuthenticated ? <Navigate to="/admin" replace /> : <LoginPage />
-            }
-          />
+            {/* Protected Admin Panel */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedAdminRoute>
+                  <PageTransition><AdminPanel /></PageTransition>
+                </ProtectedAdminRoute>
+              }
+            />
 
-          {/* Protected Admin Panel */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedAdminRoute>
-                <AdminPanel />
-              </ProtectedAdminRoute>
-            }
-          />
+            {/* Debug Page */}
+            <Route path="/debug" element={<Debug />} />
 
-          {/* Debug Page */}
-          <Route path="/debug" element={<Debug />} />
-
-          {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AnimatePresence>
       </main>
 
       {!isAdminRoute && <Footer />}
