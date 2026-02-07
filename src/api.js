@@ -1,7 +1,16 @@
-// src/api.js  (or wherever you keep your API helpers)
+// src/api.js
 
+<<<<<<< HEAD
 // Use env var or default to production backend
 export const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "https://api.aktech.sbs";
+=======
+const PRODUCTION_API_URL = "https://api.aktech.sbs";
+
+// Automatically switch between Localhost (dev) and Production (Hostinger VPS)
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+export const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || (isLocal ? "http://localhost:5000" : PRODUCTION_API_URL);
+>>>>>>> 75bcace (updated)
 export const BASE_URL = `${BACKEND_URL}/api`;
 
 // Helper to get admin token from localStorage
