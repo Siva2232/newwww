@@ -20,6 +20,8 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [previewProduct, setPreviewProduct] = useState(null);
 
   // Expose mobileOpen to window/context if feasible, or use a custom event to communicate with ProductDetail
   useEffect(() => {
@@ -70,6 +72,21 @@ export default function Navbar() {
       .filter((p) => p?.name?.toLowerCase()?.includes(term))
       .slice(0, 5);
   }, [products, searchTerm]);
+
+  const categoryProducts = useMemo(() => {
+    if (!activeCategory) return [];
+    return products
+      .filter((p) => p?.category?.trim().toLowerCase() === activeCategory.toLowerCase())
+      .slice(0, 5);
+  }, [products, activeCategory]);
+
+  useEffect(() => {
+    if (categoryProducts.length > 0) {
+      setPreviewProduct(categoryProducts[0]);
+    } else {
+      setPreviewProduct(null);
+    }
+  }, [categoryProducts]);
 
   return (
     <>
@@ -193,7 +210,7 @@ export default function Navbar() {
         {/* BOTTOM ROW: Categories (Desktop Only) */}
         <div className="hidden md:block flex justify-center border-t border-gray-100 bg-white">
           <div className="max-w-[1440px] mx-auto px-2 sm:px-4">
-            <nav className="flex items-center justify-center gap-4 py-2 overflow-x-auto no-scrollbar">
+            <nav className="flex items-center justify-center gap-4 py-2">
               <Link
                 to="/"
                 className={`text-xs font-bold uppercase tracking-wide whitespace-nowrap px-2 py-1 rounded-md transition-colors ${
@@ -206,21 +223,120 @@ export default function Navbar() {
               </Link>
 
               {shopCategories.length > 0 ? (
-                shopCategories.map((cat) => {
+                shopCategories.map((cat, index) => {
                   const isActive = location.search.includes(cat.name);
+                  // Dynamic positioning to prevent overflow
+                  const isLast = index === shopCategories.length - 1;
+                  const isFirst = index === 0;
+                  const dropdownClasses = isLast
+                    ? "right-0 origin-top-right"
+                    : isFirst
+                    ? "left-0 origin-top-left"
+                    : "left-1/2 -translate-x-1/2 origin-top";
+
                   return (
-                    <Link
+                    <div
                       key={cat._id || cat.id}
-                      to={`/models?category=${encodeURIComponent(cat.name)}`}
-                      className={`text-xs font-bold uppercase tracking-wide whitespace-nowrap px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
-                        isActive
-                          ? "text-amber-600"
-                          : "text-gray-700 hover:text-amber-600"
-                      }`}
+                      className="relative group h-full flex items-center"
+                      onMouseEnter={() => setActiveCategory(cat.name)}
+                      onMouseLeave={() => setActiveCategory(null)}
                     >
-                      {cat.name}
-                      <ChevronDown size={12} className="opacity-50" />
-                    </Link>
+                      <Link
+                        to={`/models?category=${encodeURIComponent(cat.name)}`}
+                        className={`text-xs font-bold uppercase tracking-wide whitespace-nowrap px-2 py-1 rounded-md transition-colors flex items-center gap-1 ${
+                          isActive
+                            ? "text-amber-600"
+                            : "text-gray-700 hover:text-amber-600"
+                        }`}
+                      >
+                        {cat.name}
+                        <ChevronDown size={12} className="opacity-50" />
+                      </Link>
+
+                      <AnimatePresence>
+                        {activeCategory === cat.name && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            transition={{ duration: 0.2 }}
+                            className={`absolute top-full mt-1 w-[550px] bg-white shadow-xl rounded-lg border border-gray-100 overflow-hidden z-50 flex ${dropdownClasses}`}
+                          >
+                            {/* Left Side: Product List */}
+                            <div className="w-1/2 py-2 bg-white">
+                              <div className="flex flex-col h-full">
+                                <div className="flex-1">
+                                  {categoryProducts.length > 0 ? (
+                                    categoryProducts.map((product) => (
+                                      <Link
+                                        key={product._id || product.id}
+                                        to={`/product/${product._id || product.id}`}
+                                        className="flex items-center justify-between px-4 py-3 hover:bg-amber-50 border-l-4 border-transparent hover:border-amber-500 transition-all group/item"
+                                        onMouseEnter={() => setPreviewProduct(product)}
+                                        onClick={() => setActiveCategory(null)}
+                                      >
+                                        <span className="text-sm font-medium text-gray-700 group-hover/item:text-amber-700 line-clamp-1">
+                                          {product.name}
+                                        </span>
+                                        <ArrowRight size={14} className="opacity-0 group-hover/item:opacity-100 text-amber-500 transition-opacity" />
+                                      </Link>
+                                    ))
+                                  ) : (
+                                    <p className="text-sm text-gray-400 text-center py-8">
+                                      No products found in this category
+                                    </p>
+                                  )}
+                                </div>
+                                {categoryProducts.length > 0 && (
+                                  <div className="px-4 pt-2 border-t border-gray-100 mt-auto">
+                                    <Link
+                                      to={`/models?category=${encodeURIComponent(cat.name)}`}
+                                      className="block text-center text-xs font-bold uppercase tracking-wider text-amber-600 hover:text-white hover:bg-amber-600 transition-colors py-2 rounded border border-amber-600"
+                                      onClick={() => setActiveCategory(null)}
+                                    >
+                                      View All {cat.name}
+                                    </Link>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Right Side: Preview */}
+                            <div className="w-1/2 bg-gray-50 border-l border-gray-100 p-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                                {previewProduct ? (
+                                  <Link 
+                                    to={`/product/${previewProduct._id || previewProduct.id}`}
+                                    onClick={() => setActiveCategory(null)}
+                                    className="w-full h-full flex flex-col items-center justify-center group/preview"
+                                  >
+                                    <div className="relative w-48 h-48 mb-4 rounded-lg overflow-hidden bg-white shadow-sm group-hover/preview:shadow-md transition-shadow">
+                                      <img
+                                        src={getImageUrl(previewProduct.image) || "/placeholder-product.jpg"}
+                                        alt={previewProduct.name}
+                                        className="w-full h-full object-cover transform group-hover/preview:scale-105 transition-transform duration-500"
+                                        onError={(e) => {
+                                          e.target.src = "/placeholder-product.jpg";
+                                        }}
+                                      />
+                                    </div>
+                                    <h4 className="text-base font-bold text-gray-900 line-clamp-2 px-2 mb-1">
+                                      {previewProduct.name}
+                                    </h4>
+                                    <p className="text-lg font-bold text-amber-600">
+                                      ₹{previewProduct.price}
+                                    </p>
+                                  </Link>
+                                ) : (
+                                   <div className="flex flex-col items-center justify-center text-gray-400 opacity-50">
+                                     <ShoppingBag size={48} className="mb-2" />
+                                     <p className="text-sm">Hover a product to preview</p>
+                                   </div>
+                                )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   );
                 })
               ) : (
