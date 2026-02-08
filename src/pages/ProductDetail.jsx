@@ -28,13 +28,10 @@ export default function ProductDetail() {
   const { id } = useParams();
   const { products } = useProducts();
 
-  // Try to find in context first (might be lightweight)
   const contextProduct = products.find((p) => p._id === id || p.id === id);
 
   const [product, setProduct] = useState(contextProduct || null);
-  const [loading, setLoading] = useState(!contextProduct?.description); // Load if description missing
-  
-  // State to track if the main navbar menu is open
+  const [loading, setLoading] = useState(!contextProduct?.description);
   const [isNavMenuOpen, setIsNavMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -46,9 +43,7 @@ export default function ProductDetail() {
     return () => window.removeEventListener('nav-mobile-menu-change', handleMenuChange);
   }, []);
 
-  // Fetch full details if needed
   useEffect(() => {
-    // If we have a product but it's lightweight (no description), fetch full
     if (contextProduct && !contextProduct.description) {
       setLoading(true);
       import("../api").then((api) => {
@@ -67,7 +62,6 @@ export default function ProductDetail() {
       setProduct(contextProduct);
       setLoading(false);
     } else {
-      // Not in context at all (direct link visit)
       setLoading(true);
       import("../api").then((api) => {
         api
@@ -86,15 +80,13 @@ export default function ProductDetail() {
 
   const [currentImg, setCurrentImg] = useState(0);
   const [previewImage, setPreviewImage] = useState(null);
-  const [activeTab, setActiveTab] = useState("details");
+  const [activeTab, setActiveTab] = useState("specifications");
   const topRef = useRef(null);
 
-  // Clear preview when product changes
   useEffect(() => setPreviewImage(null), [id]);
 
-  // Zoom Effect State
   const [isHovering, setIsHovering] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 }); // Normalized 0-1
+  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
 
   const handleMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -103,7 +95,6 @@ export default function ProductDetail() {
     setMousePos({ x, y });
   };
 
-  // Reset image index and hover state when product changes
   useEffect(() => {
     setCurrentImg(0);
     setIsHovering(false);
@@ -128,8 +119,6 @@ export default function ProductDetail() {
       </div>
     );
 
-  // Prioritize product.image (main thumbnail) first, then append carousel images
-  // This ensures ProductDetail shows the SAME main image as ProductCard
   const allImages = product.image
     ? [product.image, ...(product.images || [])]
     : product.images?.length > 0
@@ -145,10 +134,9 @@ export default function ProductDetail() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="min-h-screen bg-[#fcfcfc] text-[#1d1d1f] font-sans overflow-x-hidden"
+        className="min-h-[100vh] bg-[#fcfcfc] text-[#1d1d1f] font-sans overflow-x-hidden"
       >
-        {/* TOP NAVIGATION BAR */}
-        <nav className="top-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-black/[0.03] px-6 py-4">
+        <nav className="top-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-black/[0.03] px-5 py-3">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <Link
               to="/models"
@@ -168,13 +156,14 @@ export default function ProductDetail() {
           </div>
         </nav>
 
-        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-          <div className="grid lg:grid-cols-12 gap-10 lg:gap-14">
-            {/* LEFT: CINEMATIC GALLERY — smaller version */}
-            <div className="lg:col-span-7">
-              <div className="sticky top-24 space-y-6">
-                <div 
-                  className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-[#f5f5f7] shadow-xl group"
+        <main className="max-w-5xl mx-auto px-4 sm:px-5 lg:px-6 py-6 lg:py-8">
+          <div className="grid lg:grid-cols-12 gap-6 lg:gap-10">
+
+            {/* LEFT: EVEN SMALLER IMAGE AREA */}
+            <div className="lg:col-span-5">
+              <div className="sticky top-[72px] space-y-3">
+                <div
+                  className="relative aspect-[5/6] lg:aspect-[5/6] xl:aspect-[6/7] max-h-[480px] lg:max-h-[520px] mx-auto w-full max-w-[380px] lg:max-w-[420px] rounded-xl overflow-hidden bg-[#f5f5f7] shadow-md group"
                   onMouseEnter={() => setIsHovering(true)}
                   onMouseLeave={() => setIsHovering(false)}
                   onMouseMove={handleMouseMove}
@@ -184,36 +173,35 @@ export default function ProductDetail() {
                       key={currentImg + "-preview-" + (previewImage ? 1 : 0)}
                       src={getImageUrl(previewImage || allImages[currentImg])}
                       initial={{ opacity: 0, scale: 1.05 }}
-                      animate={{ 
-                        opacity: 1, 
-                        scale: isHovering ? 2.5 : 1, // Increased zoom scale
+                      animate={{
+                        opacity: 1,
+                        scale: isHovering ? 2.4 : 1,
                         originX: isHovering ? mousePos.x : 0.5,
                         originY: isHovering ? mousePos.y : 0.5
                       }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ 
+                      transition={{
                         opacity: { duration: 0.5 },
-                        scale: { duration: 0.4, ease: "easeOut" },
-                        originX: { duration: 0.1, ease: "linear" }, // Fast tracking
+                        scale: { duration: 0.35, ease: "easeOut" },
+                        originX: { duration: 0.1, ease: "linear" },
                         originY: { duration: 0.1, ease: "linear" }
                       }}
                       className="w-full h-full object-cover will-change-transform"
                     />
                   </AnimatePresence>
 
-                  {/* Floating Badges — smaller (Hide on zoom) */}
-                  <motion.div 
+                  <motion.div
                     animate={{ opacity: isHovering ? 0 : 1 }}
-                    className="absolute top-6 left-6 flex flex-col gap-2 pointer-events-none"
+                    className="absolute top-4 left-4 pointer-events-none"
                   >
-                    <span className="flex items-center gap-1.5 bg-black/85 text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md">
-                      <Zap size={10} fill="currentColor" />
+                    <span className="flex items-center gap-1 bg-black/80 text-white px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm">
+                      <Zap size={8} fill="currentColor" />
                     </span>
                   </motion.div>
                 </div>
 
-                {/* Thumbnails — smaller */}
-                <div className="flex gap-3 px-1 overflow-x-auto no-scrollbar justify-center">
+                {/* Much smaller thumbnails */}
+                <div className="flex gap-2 justify-center px-1 overflow-x-auto no-scrollbar">
                   {allImages.map((img, i) => {
                     const isActive = !previewImage ? i === currentImg : previewImage === img;
                     return (
@@ -224,10 +212,10 @@ export default function ProductDetail() {
                         onMouseLeave={() => setPreviewImage(null)}
                         onFocus={() => setPreviewImage(img)}
                         onBlur={() => setPreviewImage(null)}
-                        className={`relative flex-shrink-0 w-16 h-20 rounded-xl overflow-hidden transition-all duration-400 ${
+                        className={`relative flex-shrink-0 w-10 h-14 lg:w-11 lg:h-15 rounded-md overflow-hidden transition-all duration-300 ${
                           isActive
-                            ? "ring-2 ring-black ring-offset-3 scale-105"
-                            : "opacity-50 grayscale"
+                            ? "ring-2 ring-black ring-offset-2 scale-110"
+                            : "opacity-60 grayscale hover:opacity-90 hover:grayscale-0"
                         }`}
                         aria-label={`View image ${i + 1}`}
                       >
@@ -243,24 +231,23 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* RIGHT: EDITORIAL PRODUCT INFO — more compact */}
-            <div className="lg:col-span-5 flex flex-col justify-center">
+            {/* RIGHT: PRODUCT INFO */}
+            <div className="lg:col-span-7 flex flex-col justify-center">
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="space-y-8"
+                className="space-y-6"
               >
-                {/* Header Section */}
-                <header className="space-y-3">
+                <header className="space-y-2">
                   <div className="flex items-center gap-2 text-orange-600 font-black text-[9px] uppercase tracking-[0.25em]">
                     <Sparkles size={12} fill="currentColor" /> Exclusive Edition
                   </div>
-                  <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight text-[#1d1d1f]">
+                  <h1 className="text-3xl sm:text-4xl lg:text-4xl font-semibold tracking-tight leading-tight text-[#1d1d1f]">
                     {product.name}
                   </h1>
-                  <div className="flex items-baseline gap-3 pt-3">
-                    <span className="text-3xl font-medium tracking-tight">
+                  <div className="flex items-baseline gap-3 pt-2">
+                    <span className="text-2xl sm:text-2.5xl lg:text-3xl font-medium tracking-tight">
                       ₹{product.price}
                     </span>
                     {product.originalPrice && (
@@ -271,10 +258,9 @@ export default function ProductDetail() {
                   </div>
                 </header>
 
-                {/* Description Tabs */}
-                <div className="pt-8 border-t border-black/[0.06]">
-                  <div className="flex gap-8 mb-6 overflow-x-auto no-scrollbar">
-                    {["details", "specifications", "shipping"].map((tab) => (
+                <div className="pt-4 border-t border-black/[0.05]">
+                  <div className="flex gap-6 mb-4 overflow-x-auto no-scrollbar">
+                    {["specifications", "details", "shipping"].map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -297,7 +283,7 @@ export default function ProductDetail() {
                       key={activeTab}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="text-base text-gray-600 leading-relaxed max-w-lg min-h-[100px]"
+                      className="text-[15px] text-gray-600 leading-relaxed max-w-lg min-h-[90px]"
                     >
                       {activeTab === "details" && (
                         <p>
@@ -307,36 +293,23 @@ export default function ProductDetail() {
                       )}
 
                       {activeTab === "specifications" && (
-                        <ul className="space-y-3 mt-2">
-                          {[
-                            {
-                              label: "Paper Quality",
-                              value: "300gsm Premium Matte",
-                            },
-                            {
-                              label: "Binding",
-                              value: "Layflat / Perfect Bind",
-                            },
-                            {
-                              label: "Cover",
-                              value: "Hardcover / Softcover with Foil Stamping",
-                            },
-                            {
-                              label: "Production Time",
-                              value: "3-5 Business Days",
-                            },
-                            { label: "Origin", value: "Made in India" },
-                          ].map((spec, i) => (
+                        <ul className="space-y-2.5 mt-1">
+                          {(product.specifications && product.specifications.length > 0
+                            ? product.specifications
+                            : [
+                                { label: "Paper Quality", value: "300gsm Premium Matte" },
+                                { label: "Binding", value: "Layflat / Perfect Bind" },
+                                { label: "Cover", value: "Hardcover / Softcover with Foil Stamping" },
+                                { label: "Production Time", value: "3-5 Business Days" },
+                                { label: "Origin", value: "Made in India" },
+                              ]
+                          ).map((spec, i) => (
                             <li
                               key={i}
-                              className="flex justify-between items-center text-sm border-b border-gray-100 pb-2"
+                              className="flex justify-between items-center text-sm border-b border-gray-100 pb-1.5"
                             >
-                              <span className="font-semibold text-gray-900">
-                                {spec.label}
-                              </span>
-                              <span className="text-gray-500">
-                                {spec.value}
-                              </span>
+                              <span className="font-semibold text-gray-900">{spec.label}</span>
+                              <span className="text-gray-500">{spec.value}</span>
                             </li>
                           ))}
                         </ul>
@@ -344,123 +317,106 @@ export default function ProductDetail() {
 
                       {activeTab === "shipping" && (
                         <p>
-                          Free shipping on orders over ₹1,999. Delivered in
-                          eco-friendly packaging within 5-7 days.
+                          Free shipping on orders over ₹1,999. Delivered in eco-friendly packaging within 5-7 days.
                         </p>
                       )}
                     </motion.div>
                   </AnimatePresence>
                 </div>
 
-                {/* Trust Badges — smaller */}
-                <div className="grid grid-cols-3 gap-3 bg-[#f5f5f7] p-6 rounded-2xl">
+                <div className="grid grid-cols-3 gap-2.5 bg-[#f5f5f7] p-4 rounded-xl">
                   {[
                     { icon: Truck, text: "Fast Ship" },
                     { icon: CreditCard, text: "COD" },
                     { icon: ShieldCheck, text: "Verified" },
                   ].map((item, i) => (
-                    <div key={i} className="flex flex-col items-center gap-2">
-                      <div className="p-2.5 bg-white rounded-xl shadow-sm text-gray-700">
+                    <div key={i} className="flex flex-col items-center gap-1.5">
+                      <div className="p-2 bg-white rounded-lg shadow-sm text-gray-700">
                         <item.icon size={18} />
                       </div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-gray-500">
                         {item.text}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                {/* PRIMARY ACTION — more compact */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <motion.a
                     href={`https://wa.me/9746683778?text=I want to order ${product.name}`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex items-center justify-center gap-3 w-full bg-[#1d1d1f] text-white py-4 rounded-full font-bold text-sm tracking-wide uppercase hover:bg-orange-600 transition-colors shadow-xl shadow-black/10"
+                    className="flex items-center justify-center gap-3 w-full bg-[#1d1d1f] text-white py-3.5 rounded-full font-bold text-xs tracking-wide uppercase hover:bg-orange-600 transition-colors shadow-xl shadow-black/10"
                   >
                     <WhatsAppIcon size={18} /> Enquire Now
                   </motion.a>
-
-                  {/* B2B BULK INQUIRY BUTTON */}
-                  {/* <motion.a
-                    href={`https://wa.me/9746683778?text=I am interested in a bulk order for ${product.name}. Please provide a quote.`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex items-center justify-center gap-2 w-full border-2 border-gray-200 text-gray-600 py-3.5 rounded-full font-bold text-xs tracking-widest uppercase hover:border-black hover:text-black transition-all"
-                  >
-                    Request Bulk Quote
-                  </motion.a> */}
                 </div>
               </motion.div>
             </div>
           </div>
         </main>
 
-        {/* RELATED PIECES */}
-        <section className="bg-white py-24 px-6 border-t border-black/[0.03]">
+        <section className="bg-white py-16 px-5 border-t border-black/[0.03]">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between mb-16">
-              <div className="space-y-4">
+            <div className="flex items-end justify-between mb-12">
+              <div className="space-y-3">
                 <span className="text-orange-600 font-black text-[10px] uppercase tracking-[0.3em]">
                   Complementary
                 </span>
-                <h3 className="text-4xl md:text-6xl font-semibold tracking-tighter">
+                <h3 className="text-4xl md:text-5xl font-semibold tracking-tighter">
                   You might also love.
                 </h3>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
               {suggestedProducts.map((p) => (
                 <Link
                   to={`/product/${p._id || p.id}`}
                   key={p._id}
                   className="group"
-                  onMouseEnter={() => setPreviewImage(p.image || p.mainImage || p.images?.[0] || null)}
-                  onMouseLeave={() => setPreviewImage(null)}
                 >
-                  <div className="relative aspect-[3/4] rounded-[32px] overflow-hidden mb-6 bg-[#f5f5f7]">
+                  <div className="relative aspect-[3/4] rounded-[28px] overflow-hidden mb-4 bg-[#f5f5f7]">
                     <img
                       src={getImageUrl(p.image)}
                       alt=""
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     />
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-[9px] font-black uppercase">
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-[9px] font-black uppercase">
                       {p.category}
                     </div>
                   </div>
-                  <h4 className="text-xl font-bold tracking-tight mb-2 truncate">
+                  <h4 className="text-lg font-bold tracking-tight mb-1 truncate">
                     {p.name}
                   </h4>
-                  <p className="text-gray-400 font-medium">₹{p.price}</p>
+                  <p className="text-gray-500 font-medium">₹{p.price}</p>
                 </Link>
               ))}
             </div>
           </div>
         </section>
 
-        {/* MOBILE FLOATING FOOTER */}
         <AnimatePresence>
           {!isNavMenuOpen && (
-          <motion.div
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            exit={{ y: 100 }} // animate out when hiding
-            className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-black/[0.05] p-6 z-[200] flex items-center gap-6"
-          >
-            <div className="flex-1">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                Price
-              </span>
-              <p className="text-2xl font-bold">₹{product.price}</p>
-            </div>
-            <a
-              href={`https://wa.me/9746683778?text=Order:${product.name}`}
-              className="flex-[2] flex items-center justify-center gap-3 bg-black text-white py-4 rounded-full font-black text-xs uppercase tracking-widest shadow-xl"
+            <motion.div
+              initial={{ y: 100 }}
+              animate={{ y: 0 }}
+              exit={{ y: 100 }}
+              className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-black/[0.05] p-5 z-[200] flex items-center gap-5"
             >
-              <WhatsAppIcon size={18} /> ORDER
-            </a>
-          </motion.div>
+              <div className="flex-1">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Price
+                </span>
+                <p className="text-xl font-bold">₹{product.price}</p>
+              </div>
+              <a
+                href={`https://wa.me/9746683778?text=Order:${product.name}`}
+                className="flex-[2] flex items-center justify-center gap-3 bg-black text-white py-4 rounded-full font-black text-xs uppercase tracking-widest shadow-xl"
+              >
+                <WhatsAppIcon size={18} /> ORDER
+              </a>
+            </motion.div>
           )}
         </AnimatePresence>
       </motion.div>

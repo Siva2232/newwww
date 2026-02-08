@@ -4,6 +4,7 @@ import { Search, SlidersHorizontal, X, Sparkles, LayoutGrid } from "lucide-react
 import { motion, AnimatePresence } from "framer-motion";
 import { useProducts } from "../Context/ProductContext";
 import ProductCard from "../components/common/ProductCard";
+import { getImageUrl } from "../utils/imageUrl";
 
 const whatsappNumber = "9746683778";
 
@@ -64,7 +65,7 @@ export default function ProductsShop() {
     <div className="min-h-screen bg-[#FBFBFD] text-[#1d1d1f]">
       
       {/* 1. MINIMALIST HERO HEADER */}
-      <section className="px-6 pt-12 pb-6">
+      <section className="px-6">
         <div className="max-w-[1440px] mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div className="space-y-4">
@@ -116,6 +117,46 @@ export default function ProductsShop() {
               className="w-full bg-[#f5f5f7] border-none rounded-full py-3.5 pl-14 pr-6 text-sm font-medium focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
             />
           </div>
+        </div>
+      </div>
+
+      {/* 2.5 CATEGORY STORIES (Swipeable) */}
+      <div className="max-w-[1440px] mx-auto px-6 pt-10 pb-4">
+        <div className="flex gap-4 sm:gap-8 overflow-x-auto pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 no-scrollbar snap-x">
+           <button
+             onClick={() => setSelectedCategory('All')}
+             className="flex flex-col items-center min-w-[72px] sm:min-w-[84px] gap-3 snap-start group"
+           >
+             <div className={`w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full p-[2px] transition-all duration-300 ${selectedCategory === 'All' ? 'bg-gradient-to-tr from-orange-500 to-amber-500' : 'bg-transparent group-hover:bg-gray-200'}`}>
+                <div className="w-full h-full rounded-full bg-white border-[3px] border-white overflow-hidden relative">
+                   <div className="absolute inset-0 bg-[#1d1d1f] flex items-center justify-center text-white font-bold text-[10px] tracking-widest uppercase">
+                      All
+                   </div>
+                </div>
+             </div>
+             <span className={`text-[11px] font-bold tracking-tight ${selectedCategory === 'All' ? 'text-orange-600' : 'text-[#1d1d1f]'}`}>View All</span>
+           </button>
+
+           {shopCategories.map((cat, idx) => (
+             <button
+               key={cat.id || idx}
+               onClick={() => setSelectedCategory(cat.name)}
+               className="flex flex-col items-center min-w-[72px] sm:min-w-[84px] gap-3 snap-start group"
+             >
+               <div className={`w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full p-[2px] transition-all duration-300 ${selectedCategory === cat.name ? 'bg-gradient-to-tr from-orange-500 to-amber-500' : 'bg-transparent group-hover:bg-gray-200'}`}>
+                  <div className="w-full h-full rounded-full bg-white border-[3px] border-white overflow-hidden relative">
+                     <img 
+                        src={getImageUrl(cat.image) || "/placeholder.jpg"} 
+                        alt={cat.name} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                     />
+                  </div>
+               </div>
+               <span className={`text-[11px] font-bold tracking-tight max-w-[80px] text-center truncate ${selectedCategory === cat.name ? 'text-orange-600' : 'text-[#1d1d1f]'}`}>
+                  {cat.name}
+               </span>
+             </button>
+           ))}
         </div>
       </div>
 

@@ -29,6 +29,13 @@ export default function ProductsManagement() {
     customCategory: "",
     description: "",
     detailedDescription: "",
+    specifications: [
+      { label: "Paper Quality", value: "300gsm Premium Matte" },
+      { label: "Binding", value: "Layflat / Perfect Bind" },
+      { label: "Cover", value: "Hardcover / Softcover with Foil Stamping" },
+      { label: "Production Time", value: "3-5 Business Days" },
+      { label: "Origin", value: "Made in India" }
+    ],
     
     // We'll store files here for new uploads
     mainImageFile: null,
@@ -92,6 +99,22 @@ export default function ProductsManagement() {
       carouselImageFiles: form.carouselImageFiles.filter((_, i) => i !== index),
       carouselPreviews: form.carouselPreviews.filter((_, i) => i !== index),
     });
+  };
+
+  const addSpecification = () => {
+    updateForm({ specifications: [...form.specifications, { label: "", value: "" }] });
+  };
+
+  const removeSpecification = (index) => {
+    updateForm({
+      specifications: form.specifications.filter((_, i) => i !== index),
+    });
+  };
+
+  const handleSpecificationChange = (index, field, value) => {
+    const newSpecs = [...form.specifications];
+    newSpecs[index][field] = value;
+    updateForm({ specifications: newSpecs });
   };
 
   const handleSubmit = async () => {
@@ -184,6 +207,7 @@ export default function ProductsManagement() {
         category,
         description: form.description.trim() || "Premium quality product",
         detailedDescription: form.detailedDescription?.trim() || "",
+        specifications: form.specifications.filter(s => s.label && s.value), // Only valid specs
         mainImage: finalMainImagePath, 
         carouselImages: allCarouselPaths,
       };
@@ -198,6 +222,13 @@ export default function ProductsManagement() {
       setForm({
          name: "", price: "", originalPrice: "", category: "", customCategory: "",
          description: "", detailedDescription: "", 
+         specifications: [
+            { label: "Paper Quality", value: "300gsm Premium Matte" },
+            { label: "Binding", value: "Layflat / Perfect Bind" },
+            { label: "Cover", value: "Hardcover / Softcover with Foil Stamping" },
+            { label: "Production Time", value: "3-5 Business Days" },
+            { label: "Origin", value: "Made in India" }
+         ],
          mainImageFile: null, carouselImageFiles: [],
          mainImagePreview: null, carouselPreviews: [],
          editingId: null
@@ -224,6 +255,15 @@ export default function ProductsManagement() {
       customCategory: "",
       description: product.description || "",
       detailedDescription: product.detailedDescription || "",
+      specifications: (product.specifications && product.specifications.length > 0) 
+        ? product.specifications 
+        : [
+            { label: "Paper Quality", value: "300gsm Premium Matte" },
+            { label: "Binding", value: "Layflat / Perfect Bind" },
+            { label: "Cover", value: "Hardcover / Softcover with Foil Stamping" },
+            { label: "Production Time", value: "3-5 Business Days" },
+            { label: "Origin", value: "Made in India" }
+          ],
       
       // New fields population
       mainImageFile: null, // no new file yet
@@ -248,6 +288,13 @@ export default function ProductsManagement() {
       customCategory: "",
       description: "",
       detailedDescription: "",
+      specifications: [
+        { label: "Paper Quality", value: "300gsm Premium Matte" },
+        { label: "Binding", value: "Layflat / Perfect Bind" },
+        { label: "Cover", value: "Hardcover / Softcover with Foil Stamping" },
+        { label: "Production Time", value: "3-5 Business Days" },
+        { label: "Origin", value: "Made in India" }
+      ],
       mainImageFile: null,
       carouselImageFiles: [],
       mainImagePreview: null,
@@ -351,6 +398,46 @@ export default function ProductsManagement() {
               rows={5}
               className="w-full px-5 py-3.5 bg-gray-50/60 border border-gray-300 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200/50 outline-none transition-all text-base"
             />
+          </div>
+
+          <div className="pt-2">
+             <label className="block text-sm font-medium text-gray-700 mb-3">
+               Product Specifications
+             </label>
+             
+             <div className="space-y-3">
+               {form.specifications.map((spec, index) => (
+                 <div key={index} className="flex gap-3 items-start">
+                   <input
+                     placeholder="Label (e.g. Material)"
+                     value={spec.label}
+                     onChange={(e) => handleSpecificationChange(index, "label", e.target.value)}
+                     className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:border-indigo-400 outline-none text-sm"
+                   />
+                   <input
+                     placeholder="Value (e.g. 100% Cotton)"
+                     value={spec.value}
+                     onChange={(e) => handleSpecificationChange(index, "value", e.target.value)}
+                     className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:border-indigo-400 outline-none text-sm"
+                   />
+                   <button
+                     onClick={() => removeSpecification(index)}
+                     className="p-2.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                     title="Remove specification"
+                   >
+                     <Trash2 size={18} />
+                   </button>
+                 </div>
+               ))}
+               
+               <button
+                 onClick={addSpecification}
+                 className="mt-2 text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-indigo-50 w-fit transition-colors"
+               >
+                 <Plus size={16} />
+                 Add Specification
+               </button>
+             </div>
           </div>
         </div>
 

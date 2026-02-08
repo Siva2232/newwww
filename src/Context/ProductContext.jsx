@@ -36,6 +36,7 @@ export const ProductProvider = ({ children }) => {
             p.longDescription?.trim() ||
             p.description?.trim() ||
             "",
+          specifications: p.specifications || [],
           mainImage: p.mainImage || p.image || p.images?.[0] || null,
           carouselImages: p.carouselImages || (Array.isArray(p.images) ? p.images.slice(1) : []),
           images: p.images || (p.mainImage ? [p.mainImage] : []),
@@ -205,6 +206,8 @@ export const ProductProvider = ({ children }) => {
         originalPrice: data.originalPrice ? Number(data.originalPrice) : null,
         category: data.category?.trim() || "uncategorized",
         description: data.description?.trim() || "",
+        detailedDescription: data.detailedDescription?.trim() || "",
+        specifications: data.specifications || [],
         image: mainImage,
         images: [mainImage, ...carouselImages].filter(Boolean),
         isTrending: false,
@@ -222,6 +225,8 @@ export const ProductProvider = ({ children }) => {
         originalPrice: data.originalPrice ? Number(data.originalPrice) : null,
         category: data.category?.trim() || "uncategorized",
         description: data.description?.trim() || "",
+        detailedDescription: data.detailedDescription?.trim() || "",
+        specifications: data.specifications || [],
         image: mainImage,
         images: [mainImage, ...carouselImages].filter(Boolean),
       };
@@ -237,6 +242,8 @@ export const ProductProvider = ({ children }) => {
                 _id: response._id,
                 id: response._id,
                 ...response,
+                specifications: response.specifications || payload.specifications || [],
+                detailedDescription: response.detailedDescription || payload.detailedDescription || "",
               }
             : p
         )
@@ -265,6 +272,8 @@ export const ProductProvider = ({ children }) => {
             originalPrice: updates.originalPrice ? Number(updates.originalPrice) : null,
             category: updates.category?.trim() || "uncategorized",
             description: updates.description?.trim() || "",
+            detailedDescription: updates.detailedDescription?.trim() || "",
+            specifications: updates.specifications || [],
             image: mainImage,
             images: [mainImage, ...carouselImages].filter(Boolean),
           };
@@ -278,6 +287,8 @@ export const ProductProvider = ({ children }) => {
         originalPrice: updates.originalPrice ? Number(updates.originalPrice) : null,
         category: updates.category?.trim() || "uncategorized",
         description: updates.description?.trim() || "",
+        detailedDescription: updates.detailedDescription?.trim() || "",
+        specifications: updates.specifications || [],
         image: mainImage,
         images: [mainImage, ...carouselImages].filter(Boolean),
       };
@@ -293,6 +304,9 @@ export const ProductProvider = ({ children }) => {
             _id: response._id,
             id: response._id,
             ...response,
+            // Ensure specifications persist even if backend didn't return them (e.g. server not restarted)
+            specifications: response.specifications || payload.specifications || [],
+            detailedDescription: response.detailedDescription || payload.detailedDescription || "",
           };
         })
       );

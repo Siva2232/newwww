@@ -11,7 +11,7 @@ import {
   LogOut,
   Gift,
   BookOpen,
-  PlusCircle,           // ← new icon for "Add Product"
+  PlusCircle,
 } from "lucide-react";
 
 import ProductsManagement from "../components/admin/ProductsManagement";
@@ -19,8 +19,8 @@ import BannersManagement from "../components/admin/BannersManagement";
 import CategoriesManagement from "../components/admin/CategoriesManagement";
 import FeaturedManagement from "../components/admin/FeaturedManagement";
 import SpecialOffersAdmin from "../components/admin/SpecialOffersAdmin";
-import AdminCustomOrders from "../components/admin/AdminCustomOrders";     // ← your orders list + modal
-import AdminAddProduct from "../components/admin/AdminAddProduct";       // ← add/edit product form
+import AdminCustomOrders from "../components/admin/AdminCustomOrders";
+import AdminAddProduct from "../components/admin/AdminAddProduct";
 
 export default function AdminPanel() {
   const {
@@ -33,7 +33,7 @@ export default function AdminPanel() {
   } = useProducts();
 
   const [activeTab, setActiveTab] = useState(
-    localStorage.getItem("adminActiveTab") || "products"
+    localStorage.getItem("adminActiveTab") ?? "products"
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -41,12 +41,12 @@ export default function AdminPanel() {
 
   const menuItems = [
     { id: "products", label: "Products", icon: Package, count: products.length },
-    { id: "add-product", label: "Add Product", icon: PlusCircle, count: null }, // ← NEW
+    { id: "add-product", label: "Add Product", icon: PlusCircle, count: null },
     { id: "banners", label: "Hero Banners", icon: ImageIcon, count: heroBanners.length },
     { id: "categories", label: "Shop Categories", icon: Grid3X3, count: shopCategories.length },
     { id: "featured", label: "Featured Products", icon: TrendingUp, count: trendingProductIds.length },
     { id: "special-offers", label: "Special Offers", icon: Gift, count: specialOffersCount },
-    { id: "custom-orders", label: "Custom Orders", icon: BookOpen, count: "New" }, // ← renamed & used
+    { id: "custom-orders", label: "Custom Orders", icon: BookOpen, count: "New" },
   ];
 
   const currentItem = menuItems.find((item) => item.id === activeTab);
@@ -65,16 +65,22 @@ export default function AdminPanel() {
 
   const getColorClasses = (name) => {
     const map = {
-      amber: { icon: 'text-amber-600', bg: 'bg-amber-100', text: 'text-amber-700' },
-      green: { icon: 'text-green-600', bg: 'bg-green-100', text: 'text-green-700' },
-      sky: { icon: 'text-sky-600', bg: 'bg-sky-100', text: 'text-sky-700' },
-      purple: { icon: 'text-purple-600', bg: 'bg-purple-100', text: 'text-purple-700' },
-      emerald: { icon: 'text-emerald-600', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-      orange: { icon: 'text-orange-600', bg: 'bg-orange-100', text: 'text-orange-700' },
-      indigo: { icon: 'text-indigo-600', bg: 'bg-indigo-100', text: 'text-indigo-700' },
-      gray: { icon: 'text-gray-600', bg: 'bg-gray-100', text: 'text-gray-700' },
+      amber: { icon: "text-amber-600", bg: "bg-amber-100", text: "text-amber-700" },
+      green: { icon: "text-green-600", bg: "bg-green-100", text: "text-green-700" },
+      sky: { icon: "text-sky-600", bg: "bg-sky-100", text: "text-sky-700" },
+      purple: { icon: "text-purple-600", bg: "bg-purple-100", text: "text-purple-700" },
+      emerald: { icon: "text-emerald-600", bg: "bg-emerald-100", text: "text-emerald-700" },
+      orange: { icon: "text-orange-600", bg: "bg-orange-100", text: "text-orange-700" },
+      indigo: { icon: "text-indigo-600", bg: "bg-indigo-100", text: "text-indigo-700" },
+      gray: { icon: "text-gray-600", bg: "bg-gray-100", text: "text-gray-700" },
     };
     return map[name] || map.gray;
+  };
+
+  const handleTabChange = (id) => {
+    setActiveTab(id);
+    localStorage.setItem("adminActiveTab", id);
+    setSidebarOpen(false);
   };
 
   return (
@@ -102,11 +108,7 @@ export default function AdminPanel() {
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  localStorage.setItem("adminActiveTab", item.id);
-                  setSidebarOpen(false);
-                }}
+                onClick={() => handleTabChange(item.id)}
                 className={`group w-full flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all duration-200 ${
                   activeTab === item.id
                     ? "bg-indigo-600 text-white shadow-lg"
@@ -173,7 +175,7 @@ export default function AdminPanel() {
           <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-gray-100 rounded-lg transition">
             <Menu size={26} />
           </button>
-          <h2 className="font-bold text-xl">{currentItem?.label}</h2>
+          <h2 className="font-bold text-xl">{currentItem?.label || "Admin Panel"}</h2>
           <div className="w-10" />
         </div>
 
@@ -193,18 +195,34 @@ export default function AdminPanel() {
             {currentItem && (
               <currentItem.icon size={48} className={getColorClasses(currentColor).icon} />
             )}
-            <h1 className="text-4xl font-extrabold text-gray-800">{currentItem?.label}</h1>
+            <h1 className="text-4xl font-extrabold text-gray-800">
+              {currentItem?.label || "Select a section"}
+            </h1>
           </div>
 
-          {/* Tab Content */}
+          {/* Tab Content - using CSS hiding instead of conditional mount */}
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden min-h-[70vh]">
-            {activeTab === "products" && <ProductsManagement />}
-            {activeTab === "add-product" && <AdminAddProduct />}
-            {activeTab === "banners" && <BannersManagement />}
-            {activeTab === "categories" && <CategoriesManagement />}
-            {activeTab === "featured" && <FeaturedManagement />}
-            {activeTab === "special-offers" && <SpecialOffersAdmin />}
-            {activeTab === "custom-orders" && <AdminCustomOrders />}
+            <div className={activeTab === "products" ? "" : "hidden"}>
+              <ProductsManagement />
+            </div>
+            <div className={activeTab === "add-product" ? "" : "hidden"}>
+              <AdminAddProduct />
+            </div>
+            <div className={activeTab === "banners" ? "" : "hidden"}>
+              <BannersManagement />
+            </div>
+            <div className={activeTab === "categories" ? "" : "hidden"}>
+              <CategoriesManagement />
+            </div>
+            <div className={activeTab === "featured" ? "" : "hidden"}>
+              <FeaturedManagement />
+            </div>
+            <div className={activeTab === "special-offers" ? "" : "hidden"}>
+              <SpecialOffersAdmin />
+            </div>
+            <div className={activeTab === "custom-orders" ? "" : "hidden"}>
+              <AdminCustomOrders />
+            </div>
           </div>
         </div>
       </main>
@@ -212,17 +230,17 @@ export default function AdminPanel() {
   );
 }
 
-// Reusable Stat Card
+// Reusable Stat Card (unchanged)
 function StatCard({ icon: Icon, color, count, label }) {
   const colorMap = {
-    amber: { bg: 'bg-amber-100', icon: 'text-amber-600', text: 'text-amber-700' },
-    sky: { bg: 'bg-sky-100', icon: 'text-sky-600', text: 'text-sky-700' },
-    purple: { bg: 'bg-purple-100', icon: 'text-purple-600', text: 'text-purple-700' },
-    emerald: { bg: 'bg-emerald-100', icon: 'text-emerald-600', text: 'text-emerald-700' },
-    orange: { bg: 'bg-orange-100', icon: 'text-orange-600', text: 'text-orange-700' },
-    indigo: { bg: 'bg-indigo-100', icon: 'text-indigo-600', text: 'text-indigo-700' },
-    green: { bg: 'bg-green-100', icon: 'text-green-600', text: 'text-green-700' },
-    gray: { bg: 'bg-gray-100', icon: 'text-gray-600', text: 'text-gray-700' },
+    amber: { bg: "bg-amber-100", icon: "text-amber-600", text: "text-amber-700" },
+    sky: { bg: "bg-sky-100", icon: "text-sky-600", text: "text-sky-700" },
+    purple: { bg: "bg-purple-100", icon: "text-purple-600", text: "text-purple-700" },
+    emerald: { bg: "bg-emerald-100", icon: "text-emerald-600", text: "text-emerald-700" },
+    orange: { bg: "bg-orange-100", icon: "text-orange-600", text: "text-orange-700" },
+    indigo: { bg: "bg-indigo-100", icon: "text-indigo-600", text: "text-indigo-700" },
+    green: { bg: "bg-green-100", icon: "text-green-600", text: "text-green-700" },
+    gray: { bg: "bg-gray-100", icon: "text-gray-600", text: "text-gray-700" },
   };
   const c = colorMap[color] || colorMap.gray;
   return (
