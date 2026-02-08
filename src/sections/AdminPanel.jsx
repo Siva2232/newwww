@@ -63,6 +63,20 @@ export default function AdminPanel() {
 
   const currentColor = tabColors[activeTab] || "gray";
 
+  const getColorClasses = (name) => {
+    const map = {
+      amber: { icon: 'text-amber-600', bg: 'bg-amber-100', text: 'text-amber-700' },
+      green: { icon: 'text-green-600', bg: 'bg-green-100', text: 'text-green-700' },
+      sky: { icon: 'text-sky-600', bg: 'bg-sky-100', text: 'text-sky-700' },
+      purple: { icon: 'text-purple-600', bg: 'bg-purple-100', text: 'text-purple-700' },
+      emerald: { icon: 'text-emerald-600', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+      orange: { icon: 'text-orange-600', bg: 'bg-orange-100', text: 'text-orange-700' },
+      indigo: { icon: 'text-indigo-600', bg: 'bg-indigo-100', text: 'text-indigo-700' },
+      gray: { icon: 'text-gray-600', bg: 'bg-gray-100', text: 'text-gray-700' },
+    };
+    return map[name] || map.gray;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
@@ -176,7 +190,9 @@ export default function AdminPanel() {
 
           {/* Page Title (Desktop) */}
           <div className="hidden md:flex items-end gap-5 mb-10">
-            {currentItem && <currentItem.icon size={48} className={`text-${currentColor}-600`} />}
+            {currentItem && (
+              <currentItem.icon size={48} className={getColorClasses(currentColor).icon} />
+            )}
             <h1 className="text-4xl font-extrabold text-gray-800">{currentItem?.label}</h1>
           </div>
 
@@ -198,12 +214,23 @@ export default function AdminPanel() {
 
 // Reusable Stat Card
 function StatCard({ icon: Icon, color, count, label }) {
+  const colorMap = {
+    amber: { bg: 'bg-amber-100', icon: 'text-amber-600', text: 'text-amber-700' },
+    sky: { bg: 'bg-sky-100', icon: 'text-sky-600', text: 'text-sky-700' },
+    purple: { bg: 'bg-purple-100', icon: 'text-purple-600', text: 'text-purple-700' },
+    emerald: { bg: 'bg-emerald-100', icon: 'text-emerald-600', text: 'text-emerald-700' },
+    orange: { bg: 'bg-orange-100', icon: 'text-orange-600', text: 'text-orange-700' },
+    indigo: { bg: 'bg-indigo-100', icon: 'text-indigo-600', text: 'text-indigo-700' },
+    green: { bg: 'bg-green-100', icon: 'text-green-600', text: 'text-green-700' },
+    gray: { bg: 'bg-gray-100', icon: 'text-gray-600', text: 'text-gray-700' },
+  };
+  const c = colorMap[color] || colorMap.gray;
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition">
-      <div className={`mx-auto mb-2 flex items-center justify-center w-10 h-10 rounded-full bg-${color}-100`}>
-        <Icon className={`w-5 h-5 text-${color}-600`} />
+      <div className={`mx-auto mb-2 flex items-center justify-center w-10 h-10 rounded-full ${c.bg}`}>
+        <Icon className={`${c.icon} w-5 h-5`} />
       </div>
-      <p className={`text-2xl font-bold text-${color}-700 leading-tight`}>{count}</p>
+      <p className={`${c.text} text-2xl font-bold leading-tight`}>{count}</p>
       <p className="text-xs font-medium text-gray-500">{label}</p>
     </div>
   );

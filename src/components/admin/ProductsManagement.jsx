@@ -479,61 +479,71 @@ export default function ProductsManagement() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow group"
-              >
-                <div className="relative aspect-square bg-gray-50">
-                  <img
-                    src={product.mainImage}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {product.carouselImages?.length > 0 && (
-                    <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-                      +{product.carouselImages.length}
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4">
-                  <h3 className="font-medium text-sm line-clamp-2 mb-1.5 h-10">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-lg font-bold text-indigo-700">
-                      ₹{Number(product.price).toLocaleString()}
-                    </span>
-                    {product.originalPrice && (
-                      <span className="text-sm text-gray-500 line-through">
-                        ₹{Number(product.originalPrice).toLocaleString()}
-                      </span>
+            {products.map((product) => {
+              const pid = product.id || product._id;
+              const mainImage = product.mainImage || product.image || product.images?.[0] || null;
+              const carouselCount = product.carouselImages?.length || (product.images ? Math.max(0, product.images.length - 1) : 0);
+              return (
+                <div
+                  key={pid}
+                  className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow group"
+                >
+                  <div className="relative aspect-square bg-gray-50">
+                    <img
+                      src={mainImage ? (mainImage.startsWith("data:") || mainImage.startsWith("http") ? mainImage : `${BACKEND_URL}${mainImage}`) : "https://via.placeholder.com/400x400?text=No+Image"}
+                      alt={product.name}
+                      onError={(e) => {
+                        e.target.onerror = null; 
+                        e.target.src = "https://via.placeholder.com/400x400?text=No+Image";
+                      }}
+                      style={{ willChange: "transform" }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    {carouselCount > 0 && (
+                      <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+                        +{carouselCount}
+                      </div>
                     )}
                   </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => startEdit(product)}
-                      className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-700 text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm("Delete this product?")) {
-                          deleteProduct(product.id);
-                        }
-                      }}
-                      className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <Trash2 size={16} />
-                      Delete
-                    </button>
+                  <div className="p-4">
+                    <h3 className="font-medium text-sm line-clamp-2 mb-1.5 h-10">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-baseline gap-2 mb-3">
+                      <span className="text-lg font-bold text-indigo-700">
+                        ₹{Number(product.price).toLocaleString()}
+                      </span>
+                      {product.originalPrice && (
+                        <span className="text-sm text-gray-500 line-through">
+                          ₹{Number(product.originalPrice).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEdit(product)}
+                        className="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-700 text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Delete this product?")) {
+                            deleteProduct(pid);
+                          }
+                        }}
+                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Trash2 size={16} />
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

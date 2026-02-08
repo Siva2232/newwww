@@ -211,7 +211,7 @@ export default function Navbar() {
         <div className="hidden md:block flex justify-center border-t border-gray-100 bg-white">
           <div className="max-w-[1440px] mx-auto px-2 sm:px-4">
             <nav className="flex items-center justify-center gap-4 py-2">
-              <Link
+              {/* <Link
                 to="/"
                 className={`text-xs font-bold uppercase tracking-wide whitespace-nowrap px-2 py-1 rounded-md transition-colors ${
                   location.pathname === "/"
@@ -220,7 +220,7 @@ export default function Navbar() {
                 }`}
               >
                 HOME
-              </Link>
+              </Link> */}
 
               {shopCategories.length > 0 ? (
                 shopCategories.map((cat, index) => {

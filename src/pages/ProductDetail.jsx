@@ -85,8 +85,12 @@ export default function ProductDetail() {
   }, [id, contextProduct]);
 
   const [currentImg, setCurrentImg] = useState(0);
+  const [previewImage, setPreviewImage] = useState(null);
   const [activeTab, setActiveTab] = useState("details");
   const topRef = useRef(null);
+
+  // Clear preview when product changes
+  useEffect(() => setPreviewImage(null), [id]);
 
   // Zoom Effect State
   const [isHovering, setIsHovering] = useState(false);
@@ -177,8 +181,8 @@ export default function ProductDetail() {
                 >
                   <AnimatePresence mode="wait">
                     <motion.img
-                      key={currentImg}
-                      src={getImageUrl(allImages[currentImg])}
+                      key={currentImg + "-preview-" + (previewImage ? 1 : 0)}
+                      src={getImageUrl(previewImage || allImages[currentImg])}
                       initial={{ opacity: 0, scale: 1.05 }}
                       animate={{ 
                         opacity: 1, 
@@ -210,23 +214,31 @@ export default function ProductDetail() {
 
                 {/* Thumbnails — smaller */}
                 <div className="flex gap-3 px-1 overflow-x-auto no-scrollbar justify-center">
-                  {allImages.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentImg(i)}
-                      className={`relative flex-shrink-0 w-16 h-20 rounded-xl overflow-hidden transition-all duration-400 ${
-                        i === currentImg
-                          ? "ring-2 ring-black ring-offset-3 scale-105"
-                          : "opacity-50 grayscale"
-                      }`}
-                    >
-                      <img
-                        src={getImageUrl(img)}
-                        className="w-full h-full object-cover"
-                        alt=""
-                      />
-                    </button>
-                  ))}
+                  {allImages.map((img, i) => {
+                    const isActive = !previewImage ? i === currentImg : previewImage === img;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentImg(i)}
+                        onMouseEnter={() => setPreviewImage(img)}
+                        onMouseLeave={() => setPreviewImage(null)}
+                        onFocus={() => setPreviewImage(img)}
+                        onBlur={() => setPreviewImage(null)}
+                        className={`relative flex-shrink-0 w-16 h-20 rounded-xl overflow-hidden transition-all duration-400 ${
+                          isActive
+                            ? "ring-2 ring-black ring-offset-3 scale-105"
+                            : "opacity-50 grayscale"
+                        }`}
+                        aria-label={`View image ${i + 1}`}
+                      >
+                        <img
+                          src={getImageUrl(img)}
+                          className="w-full h-full object-cover"
+                          alt={`Thumbnail ${i + 1}`}
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -366,18 +378,18 @@ export default function ProductDetail() {
                     whileTap={{ scale: 0.98 }}
                     className="flex items-center justify-center gap-3 w-full bg-[#1d1d1f] text-white py-4 rounded-full font-bold text-sm tracking-wide uppercase hover:bg-orange-600 transition-colors shadow-xl shadow-black/10"
                   >
-                    <WhatsAppIcon size={18} /> CHAT TO BUY NOW
+                    <WhatsAppIcon size={18} /> Enquire Now
                   </motion.a>
 
                   {/* B2B BULK INQUIRY BUTTON */}
-                  <motion.a
+                  {/* <motion.a
                     href={`https://wa.me/9746683778?text=I am interested in a bulk order for ${product.name}. Please provide a quote.`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="flex items-center justify-center gap-2 w-full border-2 border-gray-200 text-gray-600 py-3.5 rounded-full font-bold text-xs tracking-widest uppercase hover:border-black hover:text-black transition-all"
                   >
                     Request Bulk Quote
-                  </motion.a>
+                  </motion.a> */}
                 </div>
               </motion.div>
             </div>
@@ -404,6 +416,8 @@ export default function ProductDetail() {
                   to={`/product/${p._id || p.id}`}
                   key={p._id}
                   className="group"
+                  onMouseEnter={() => setPreviewImage(p.image || p.mainImage || p.images?.[0] || null)}
+                  onMouseLeave={() => setPreviewImage(null)}
                 >
                   <div className="relative aspect-[3/4] rounded-[32px] overflow-hidden mb-6 bg-[#f5f5f7]">
                     <img

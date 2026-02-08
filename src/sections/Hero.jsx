@@ -372,7 +372,7 @@ const CarouselSection = ({
             return (
               <div
                 key={product._id || product.id || idx}
-                className="product-card-wrapper flex-none w-[85vw] sm:w-[340px] md:w-[400px] snap-start"
+                className="product-card-wrapper flex-none w-[85vw] sm:w-[300px] md:w-[330px] snap-start"
               >
                 <motion.div
                   whileTap={{ scale: 0.97 }}

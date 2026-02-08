@@ -77,16 +77,9 @@ export default function StudioForm({
     }
 
     // 2. Ensure bookName and bookPrice are present
-    const finalBookName = (
-      formData.bookName ||
-      selectedProduct?.name ||
-      ""
-    ).trim();
-    const finalBookPrice = (
-      formData.bookPrice ||
-      selectedProduct?.price ||
-      ""
-    ).trim();
+    // Convert to string before trimming to avoid calling .trim() on numbers
+    const finalBookName = String(formData.bookName ?? selectedProduct?.name ?? "").trim();
+    const finalBookPrice = String(formData.bookPrice ?? selectedProduct?.price ?? "").trim();
 
     if (!finalBookName) {
       toast.error("Product name is missing. Please select a product.");
