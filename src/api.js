@@ -137,6 +137,44 @@ export const deleteCategory = async (categoryId) => {
 };
 
 // ────────────────────────────────────────────────
+// Subcategories
+// ────────────────────────────────────────────────
+export const getSubCategories = async (categoryId) => {
+  let url = `${BASE_URL}/subcategories`;
+  if (categoryId) {
+    url += `?category=${encodeURIComponent(categoryId)}`;
+  }
+  const res = await fetch(url);
+  return handleResponse(res);
+};
+
+export const createSubCategory = async (subcatData) => {
+  const res = await fetch(`${BASE_URL}/subcategories`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(subcatData),
+  });
+  return handleResponse(res);
+};
+
+export const updateSubCategory = async (subcatId, subcatData) => {
+  const res = await fetch(`${BASE_URL}/subcategories/${subcatId}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(subcatData),
+  });
+  return handleResponse(res);
+};
+
+export const deleteSubCategory = async (subcatId) => {
+  const res = await fetch(`${BASE_URL}/subcategories/${subcatId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+};
+
+// ────────────────────────────────────────────────
 // Hero Banners
 // ────────────────────────────────────────────────
 export const getHeroBanners = async () => {

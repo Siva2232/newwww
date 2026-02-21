@@ -32,7 +32,7 @@ export default function Navbar() {
     window.dispatchEvent(event);
   }, [mobileOpen]);
 
-  const { products = [], shopCategories = [] } = useProducts();
+  const { products = [], shopCategories = [], shopSubCategories = [] } = useProducts();
   const searchRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -265,6 +265,29 @@ export default function Navbar() {
                             {/* Left Side: Product List */}
                             <div className="w-1/2 py-2 bg-white">
                               <div className="flex flex-col h-full">
+                                {/* subcategory links */}
+                                {shopSubCategories && shopSubCategories.filter(sc => {
+                                    const catName = typeof sc.category === 'string' ? sc.category : sc.category?.name;
+                                    return catName === cat.name;
+                                  }).length > 0 && (
+                                  <div className="px-4 pb-2 border-b border-gray-100">
+                                    <div className="flex flex-wrap gap-2">
+                                      {shopSubCategories.filter(sc => {
+                                        const catName = typeof sc.category === 'string' ? sc.category : sc.category?.name;
+                                        return catName === cat.name;
+                                      }).map(sc => (
+                                        <Link
+                                          key={sc._id || sc.id}
+                                          to={`/models?category=${encodeURIComponent(cat.name)}&subcategory=${encodeURIComponent(sc.name)}`}
+                                          className="text-xs px-2 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
+                                          onClick={() => setActiveCategory(null)}
+                                        >
+                                          {sc.name}
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                                 <div className="flex-1">
                                   {categoryProducts.length > 0 ? (
                                     categoryProducts.map((product) => (

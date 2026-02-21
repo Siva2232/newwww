@@ -73,6 +73,7 @@ export default function DetailedPage() {
   }
 
   const displayCategory = getDisplayCategory(product.category);
+  const displaySubcategory = product.subcategory ? ` / ${product.subcategory}` : "";
 
   // Generic description based on category
   let description = "Premium quality product crafted to preserve and showcase your cherished memories.";
@@ -112,12 +113,12 @@ export default function DetailedPage() {
 
   const whatsappMessage = (prod) => encodeURIComponent(
     `Hi! I'm interested in the ${prod.name} (₹${prod.price}).
-Category: ${getDisplayCategory(prod.category)}
+Category: ${getDisplayCategory(prod.category)}${prod.subcategory ? ` / ${prod.subcategory}` : ""}
 Can you provide more details, customization options, and confirm availability?`
   );
 
   const bottomWhatsappMessage = encodeURIComponent(
-    `Hi! I'm viewing the ${product.name} and want to place an order or discuss customization options.`
+    `Hi! I'm viewing the ${product.name}${product.subcategory ? ` (subcategory: ${product.subcategory})` : ""} and want to place an order or discuss customization options.`
   );
 
   return (

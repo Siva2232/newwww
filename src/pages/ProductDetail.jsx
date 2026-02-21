@@ -148,7 +148,7 @@ export default function ProductDetail() {
               Back
             </Link>
             <div className="hidden md:block text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">
-              Premium Collection / {product.category || "Masterpiece"}
+              Premium Collection / {product.category || "Masterpiece"}{product.subcategory ? ` / ${product.subcategory}` : ""}
             </div>
             <button className="p-2.5 bg-gray-50 rounded-full hover:bg-black hover:text-white transition-all">
               <Share2 size={18} />

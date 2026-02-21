@@ -15,10 +15,11 @@ export const WhatsAppIcon = ({ size = 20, className = "" }) => (
 );
 
 export default function ProductsShop() {
-  const { products, shopCategories, trendingProductIds, bestSellerProductIds } = useProducts();
+  const { products, shopCategories, shopSubCategories, trendingProductIds, bestSellerProductIds } = useProducts();
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [isFilterVisible, setIsFilterVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -46,20 +47,45 @@ export default function ProductsShop() {
     } else {
       setSelectedCategory('All');
     }
-  }, [searchParams, shopCategories]);
+    const sub = searchParams.get('subcategory');
+    if (sub && shopSubCategories.some(sc => {
+      const catName = typeof sc.category === 'string' ? sc.category : sc.category?.name;
+      return sc.name === sub && catName === cat;
+    })) {
+      setSelectedSubcategory(sub);
+    } else {
+      setSelectedSubcategory('All');
+    }
+  }, [searchParams, shopCategories, shopSubCategories]);
+
+  // reset subcategory whenever category changes
+  useEffect(() => {
+    setSelectedSubcategory('All');
+  }, [selectedCategory]);
 
   const categoryButtons = useMemo(() => ['All', ...shopCategories.map(c => c.name)], [shopCategories]);
+  const subcategoryButtons = useMemo(() => {
+    if (selectedCategory === 'All') return [];
+    return ['All', ...shopSubCategories
+      .filter(sc => {
+        const catName = typeof sc.category === 'string' ? sc.category : sc.category?.name;
+        return catName === selectedCategory;
+      })
+      .map(sc => sc.name)
+    ];
+  }, [shopSubCategories, selectedCategory]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchesSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'All' || p.category?.toLowerCase() === selectedCategory.toLowerCase();
+      const matchesSubcategory = selectedSubcategory === 'All' || p.subcategory?.toLowerCase() === selectedSubcategory.toLowerCase();
       const matchesFeatured = selectedFilter === 'All' ||
         (selectedFilter === 'Trending' && trendingProductIds?.includes(p._id || p.id)) ||
         (selectedFilter === 'Best Sellers' && bestSellerProductIds?.includes(p._id || p.id));
-      return matchesSearch && matchesCategory && matchesFeatured;
+      return matchesSearch && matchesCategory && matchesSubcategory && matchesFeatured;
     });
-  }, [products, searchQuery, selectedCategory, selectedFilter, trendingProductIds, bestSellerProductIds]);
+  }, [products, searchQuery, selectedCategory, selectedSubcategory, selectedFilter, trendingProductIds, bestSellerProductIds]);
 
   return (
     <div className="min-h-screen bg-[#FBFBFD] text-[#1d1d1f]">
@@ -198,6 +224,25 @@ export default function ProductsShop() {
                     ))}
                   </div>
                 </section>
+
+                {subcategoryButtons.length > 1 && (
+                  <section>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#86868b] mb-8">Subcollections</h3>
+                    <div className="grid grid-cols-1 gap-1">
+                      {subcategoryButtons.map(sub => (
+                        <button
+                          key={sub}
+                          onClick={() => { setSelectedSubcategory(sub); if (isMobile) setIsFilterVisible(false); }}
+                          className={`text-left px-5 py-4 rounded-2xl text-[13px] font-bold transition-all flex justify-between items-center group
+                            ${selectedSubcategory === sub ? 'bg-white shadow-[0_10px_30px_rgba(0,0,0,0.05)] text-orange-600' : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]'}`}
+                        >
+                          {sub}
+                          {selectedSubcategory === sub && <motion.div layoutId="dot" className="w-2 h-2 rounded-full bg-orange-600" />}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
 
                 {/* Featured Group */}
                 <section>

@@ -81,6 +81,7 @@ export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState(() => loadFromStorage("products", []));
   const [heroBanners, setHeroBanners] = useState(() => loadFromStorage("heroBanners", []));
   const [shopCategories, setShopCategories] = useState(() => loadFromStorage("shopCategories", []));
+  const [shopSubCategories, setShopSubCategories] = useState(() => loadFromStorage("shopSubCategories", []));
   const [trendingProductIds, setTrendingProductIds] = useState(() =>
     loadFromStorage("trendingProductIds", [])
   );
@@ -115,6 +116,16 @@ export const ProductProvider = ({ children }) => {
         }
       } catch (error) {
         console.warn("Failed to fetch categories from backend, using localStorage:", error);
+      }
+
+      // fetch subcategories
+      try {
+        const subcats = await api.getSubCategories();
+        if (Array.isArray(subcats)) {
+          setShopSubCategories(subcats);
+        }
+      } catch (error) {
+        console.warn("Failed to fetch subcategories from backend:", error);
       }
 
       try {
@@ -154,6 +165,9 @@ export const ProductProvider = ({ children }) => {
         case "shopCategories":
           setShopCategories(loadFromStorage("shopCategories", shopCategories));
           break;
+        case "shopSubCategories":
+          setShopSubCategories(loadFromStorage("shopSubCategories", shopSubCategories));
+          break;
         case "trendingProductIds":
           setTrendingProductIds(loadFromStorage("trendingProductIds", trendingProductIds));
           break;
@@ -178,6 +192,7 @@ export const ProductProvider = ({ children }) => {
   useEffect(() => debouncedSave("shopCategories", shopCategories), [shopCategories]);
   useEffect(() => debouncedSave("trendingProductIds", trendingProductIds), [trendingProductIds]);
   useEffect(() => debouncedSave("bestSellerProductIds", bestSellerProductIds), [bestSellerProductIds]);
+  useEffect(() => debouncedSave("shopSubCategories", shopSubCategories), [shopSubCategories]);
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   const login = () => {
@@ -205,6 +220,7 @@ export const ProductProvider = ({ children }) => {
         price: Number(data.price) || 0,
         originalPrice: data.originalPrice ? Number(data.originalPrice) : null,
         category: data.category?.trim() || "uncategorized",
+        subcategory: data.subcategory?.trim() || "",
         description: data.description?.trim() || "",
         detailedDescription: data.detailedDescription?.trim() || "",
         specifications: data.specifications || [],
@@ -224,6 +240,7 @@ export const ProductProvider = ({ children }) => {
         price: Number(data.price) || 0,
         originalPrice: data.originalPrice ? Number(data.originalPrice) : null,
         category: data.category?.trim() || "uncategorized",
+        subcategory: data.subcategory?.trim() || "",
         description: data.description?.trim() || "",
         detailedDescription: data.detailedDescription?.trim() || "",
         specifications: data.specifications || [],
@@ -286,6 +303,7 @@ export const ProductProvider = ({ children }) => {
         price: Number(updates.price) || 0,
         originalPrice: updates.originalPrice ? Number(updates.originalPrice) : null,
         category: updates.category?.trim() || "uncategorized",
+        subcategory: updates.subcategory?.trim() || "",
         description: updates.description?.trim() || "",
         detailedDescription: updates.detailedDescription?.trim() || "",
         specifications: updates.specifications || [],
@@ -437,6 +455,91 @@ export const ProductProvider = ({ children }) => {
       await api.deleteCategory(id);
     } catch (error) {
       console.error("Error deleting category:", error);
+      throw error;
+    }
+  };
+
+  // ─── Subcategory CRUD ──────────────────────────────────────────────────
+  const addSubCategory = async (data) => {
+    try {
+      const tempId = `subcat_${Date.now()}`;
+      const optimistic = {
+        _id: tempId,
+        id: tempId,
+        name: data.name?.trim() || "New Subcategory",
+        category: data.category || "",
+        image: data.imageBase64 || null,
+        description: data.description?.trim() || "",
+        createdAt: new Date().toISOString(),
+      };
+      setShopSubCategories((prev) => [optimistic, ...prev]);
+
+      const payload = {
+        name: data.name?.trim() || "New Subcategory",
+        category: data.category,
+        image: data.imageBase64 || null,
+        description: data.description?.trim() || "",
+      };
+
+      const response = await api.createSubCategory(payload);
+      setShopSubCategories((prev) =>
+        prev.map((sc) =>
+          sc._id === tempId
+            ? { _id: response._id, id: response._id, ...response }
+            : sc
+        )
+      );
+      return response;
+    } catch (error) {
+      setShopSubCategories((prev) => prev.filter((sc) => !sc._id.startsWith("subcat_")));
+      console.error("Error adding subcategory:", error);
+      throw error;
+    }
+  };
+
+  const updateSubCategory = async (id, data) => {
+    try {
+      setShopSubCategories((prev) =>
+        prev.map((sc) =>
+          sc._id === id || sc.id === id
+            ? {
+                ...sc,
+                name: data.name?.trim() || sc.name,
+                category: data.category || sc.category,
+                image: data.imageBase64 || sc.image,
+                description: data.description?.trim() || sc.description,
+              }
+            : sc
+        )
+      );
+
+      const payload = {
+        name: data.name?.trim() || "",
+        category: data.category,
+        image: data.imageBase64 || null,
+        description: data.description?.trim() || "",
+      };
+      const response = await api.updateSubCategory(id, payload);
+      setShopSubCategories((prev) =>
+        prev.map((sc) =>
+          sc._id === response._id || sc.id === response._id
+            ? { _id: response._id, id: response._id, ...response }
+            : sc
+        )
+      );
+      return response;
+    } catch (error) {
+      console.error("Error updating subcategory:", error);
+      throw error;
+    }
+  };
+
+  const deleteSubCategory = async (id) => {
+    try {
+      setShopSubCategories((prev) => prev.filter((sc) => sc._id !== id && sc.id !== id));
+      await api.deleteSubCategory(id);
+    } catch (error) {
+      console.error("Error deleting subcategory:", error);
       throw error;
     }
   };
@@ -627,6 +730,8 @@ export const ProductProvider = ({ children }) => {
     setHeroBanners,
     shopCategories,
     setShopCategories,
+    shopSubCategories,
+    setShopSubCategories,
     trendingProductIds,
     bestSellerProductIds,
     toggleTrending,
@@ -637,6 +742,9 @@ export const ProductProvider = ({ children }) => {
     addCategory,
     updateCategory,
     deleteCategory,
+    addSubCategory,
+    updateSubCategory,
+    deleteSubCategory,
     addHeroBanner,
     updateHeroBanner,
     deleteHeroBanner,

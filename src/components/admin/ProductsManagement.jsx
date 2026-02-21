@@ -18,6 +18,7 @@ export default function ProductsManagement() {
     updateProduct,
     deleteProduct,
     shopCategories,
+    shopSubCategories,
     setShopCategories,
   } = useProducts();
 
@@ -29,6 +30,8 @@ export default function ProductsManagement() {
     customCategory: "",
     description: "",
     detailedDescription: "",
+    subcategory: "",
+    customSubcategory: "",
     specifications: [
       { label: "Paper Quality", value: "300gsm Premium Matte" },
       { label: "Binding", value: "Layflat / Perfect Bind" },
@@ -131,6 +134,44 @@ export default function ProductsManagement() {
     if (custom) category = custom;
     else if (selected) category = selected;
 
+    // determine subcategory (selected or custom)
+    let subcategory = "";
+    const customSub = form.customSubcategory?.trim();
+    const selectedSub = form.subcategory?.trim();
+    if (customSub) subcategory = customSub;
+    else if (selectedSub) subcategory = selectedSub;
+
+    // auto-create new category/subcategory if needed
+    if (category !== "uncategorized") {
+      const exists = shopCategories.some(
+        (c) => c.name.toLowerCase() === category.toLowerCase()
+      );
+      if (!exists) {
+        setShopCategories((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            name: category,
+            image: null,
+            link: `/category/${category.toLowerCase().replace(/\s+/g, "-")}`,
+          },
+        ]);
+      }
+    }
+    if (subcategory && category) {
+      const existsSub = shopSubCategories.some(sc => {
+        const catName = typeof sc.category === 'string' ? sc.category : sc.category?.name;
+        return sc.name.toLowerCase() === subcategory.toLowerCase() && catName === category;
+      });
+      // optimistic add without image
+      if (!existsSub) {
+        setShopSubCategories((prev) => [
+          ...prev,
+          { id: Date.now(), name: subcategory, category, image: null, link: "" },
+        ]);
+      }
+    }
+
     // Auto-create new category (optimistic)
     if (category !== "uncategorized") {
       const exists = shopCategories.some(
@@ -205,6 +246,7 @@ export default function ProductsManagement() {
         price: Number(form.price),
         originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
         category,
+        subcategory,
         description: form.description.trim() || "Premium quality product",
         detailedDescription: form.detailedDescription?.trim() || "",
         specifications: form.specifications.filter(s => s.label && s.value), // Only valid specs
@@ -253,6 +295,8 @@ export default function ProductsManagement() {
       originalPrice: product.originalPrice || "",
       category: product.category || "",
       customCategory: "",
+      subcategory: product.subcategory || "",
+      customSubcategory: "",
       description: product.description || "",
       detailedDescription: product.detailedDescription || "",
       specifications: (product.specifications && product.specifications.length > 0) 
@@ -350,7 +394,7 @@ export default function ProductsManagement() {
             <label className="text-sm font-medium text-gray-700">Category</label>
             <select
               value={form.category}
-              onChange={(e) => updateForm({ category: e.target.value, customCategory: "" })}
+              onChange={(e) => updateForm({ category: e.target.value, customCategory: "", subcategory: "", customSubcategory: "" })}
               className="w-full px-5 py-3.5 bg-gray-50/60 border border-gray-300 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200/50 outline-none transition-all text-base"
             >
               <option value="">— Select existing —</option>
@@ -359,6 +403,28 @@ export default function ProductsManagement() {
                   {cat.name}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5 mt-4">
+            <label className="text-sm font-medium text-gray-700">Subcategory</label>
+            <select
+              value={form.subcategory}
+              onChange={(e) => updateForm({ subcategory: e.target.value, customSubcategory: "" })}
+              disabled={!form.category}
+              className="w-full px-5 py-3.5 bg-gray-50/60 border border-gray-300 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200/50 outline-none transition-all text-base disabled:opacity-50"
+            >
+              <option value="">— Select existing —</option>
+              {shopSubCategories
+                .filter((sc) => {
+                  const catName = typeof sc.category === 'string' ? sc.category : sc.category?.name;
+                  return catName === form.category;
+                })
+                .map((sc) => (
+                  <option key={sc._id || sc.id} value={sc.name}>
+                    {sc.name}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
@@ -372,6 +438,18 @@ export default function ProductsManagement() {
             value={form.customCategory}
             onChange={(e) => updateForm({ customCategory: e.target.value, category: "" })}
             className="w-full px-5 py-3.5 bg-blue-50/40 border border-blue-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-200/50 outline-none transition-all text-base"
+          />
+        </div>
+        <div className="mb-8">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Or create new subcategory
+          </label>
+          <input
+            placeholder="New subcategory name"
+            value={form.customSubcategory}
+            onChange={(e) => updateForm({ customSubcategory: e.target.value, subcategory: "" })}
+            className="w-full px-5 py-3.5 bg-blue-50/40 border border-blue-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-200/50 outline-none transition-all text-base"
+            disabled={!form.category && !form.customCategory}
           />
         </div>
 
@@ -597,6 +675,11 @@ export default function ProductsManagement() {
                     <h3 className="font-medium text-sm line-clamp-2 mb-1.5 h-10">
                       {product.name}
                     </h3>
+                    {(product.category || product.subcategory) && (
+                      <p className="text-xs text-gray-500 mb-2">
+                        {product.category}{product.subcategory ? ` / ${product.subcategory}` : ""}
+                      </p>
+                    )}
                     <div className="flex items-baseline gap-2 mb-3">
                       <span className="text-lg font-bold text-indigo-700">
                         ₹{Number(product.price).toLocaleString()}

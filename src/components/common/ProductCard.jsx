@@ -15,13 +15,14 @@ const ProductCard = ({
   const displayCategory = typeof getDisplayCategory === 'function' 
     ? getDisplayCategory(product.category) 
     : product.category;
+  const displaySubcategory = product.subcategory ? ` / ${product.subcategory}` : '';
     
   const isTrending = trendingProductIds.includes(product._id || product.id);
   const isBestSeller = bestSellerProductIds.includes(product._id || product.id);
   const formatPrice = (num) => new Intl.NumberFormat('en-IN').format(num);
 
   const message = encodeURIComponent(
-    `Hi Studio! ✨ I'm interested in:\n📦 *${product.name}*\n💰 Price: ₹${product.price}\nCategory: ${displayCategory}`
+    `Hi Studio! ✨ I'm interested in:\n📦 *${product.name}*\n💰 Price: ₹${product.price}\nCategory: ${displayCategory}${displaySubcategory}`
   );
 
   const discountPercentage = product.originalPrice 
@@ -81,7 +82,7 @@ const ProductCard = ({
         <div className="p-4 bg-white">
           <div className="flex justify-between items-start mb-1">
             <span className="text-[9px] font-black text-amber-600/80 uppercase tracking-[0.2em]">
-              {displayCategory}
+              {displayCategory}{displaySubcategory}
             </span>
             {isTrending && (
                <div className="flex items-center gap-1">
