@@ -7,7 +7,10 @@ import {
   useEffect,
 } from "react";
 import { toast } from "react-hot-toast";
-import { submitCustomBookOrder } from "../api"; // your api helper with FormData support
+// backend removed – submission unavailable
+const submitCustomBookOrder = async () => {
+  return Promise.reject(new Error("submitCustomBookOrder called but backend removed"));
+};
 
 const OrderContext = createContext();
 

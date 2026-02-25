@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-import { updateCustomBookOrder } from "../../api"; // Make sure to import the update function
+import { updateCustomBookOrder } from "../../api"; // call backend to modify orders
 
 // Fixed: proper template literal with backticks
 const getImageUrl = (path) => {
@@ -22,7 +22,7 @@ const getImageUrl = (path) => {
   if (path.startsWith("http") || path.startsWith("//")) {
     return path;
   }
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
   return `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
 };
 

@@ -1,9 +1,9 @@
 // src/pages/LoginPage.jsx
 import { useState } from "react";
 import { useProducts } from "../Context/ProductContext"; // assuming this exists
-import { loginAdmin } from "../api";           // ← import the real API function
 import { Package } from "lucide-react";
 
+import { loginAdmin } from "../api"; // real login endpoint
 export default function LoginPage() {
   const { login, isAuthenticated } = useProducts();
   const [email, setEmail] = useState("");       // changed from username → email

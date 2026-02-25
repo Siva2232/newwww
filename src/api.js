@@ -1,353 +1,284 @@
 // src/api.js
+// HTTP helper used by the React frontend to talk to the Express backend.
+// Environment variable VITE_API_BASE_URL should point at the backend (e.g.
+// http://localhost:5000) and is set in .env.* files.
 
-// Use env var or default to production backend
-export const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
-export const BASE_URL = `${BACKEND_URL}/api`;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+export { BASE_URL };
 
-// Helper to get admin token from localStorage
-const getAuthToken = () => localStorage.getItem("adminToken");
-
-// Helper to generate headers (with optional auth)
-const getAuthHeaders = () => {
-  const token = getAuthToken();
-  return {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
+const getHeaders = (json = true) => {
+  const headers = {};
+  if (json) headers['Content-Type'] = 'application/json';
+  const token = localStorage.getItem('adminToken');
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
 };
 
-// ────────────────────────────────────────────────
-// Generic error handler
-// ────────────────────────────────────────────────
-const handleResponse = async (res) => {
-  if (!res.ok) {
-    let errorMessage = "Request failed";
-    try {
-      const errorData = await res.json();
-      errorMessage = errorData.message || errorMessage;
-    } catch {
-      // fallback if not JSON
-    }
-    throw new Error(errorMessage);
+async function handleResponse(res) {
+  const text = await res.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (e) {
+    data = text;
   }
-  return res.json();
-};
+  if (!res.ok) {
+    // Handle unauthorized or invalid token
+    if (res.status === 401) {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("isAdminLoggedIn");
+      // Optional: force reload to trigger Auth check in Context
+      if (typeof window !== "undefined") {
+        // window.location.href = "/login"; 
+      }
+    }
+    const message = data && data.message ? data.message : res.statusText;
+    throw new Error(message || "API error");
+  }
+  return data;
+}
 
-// ────────────────────────────────────────────────
-// Auth
-// ────────────────────────────────────────────────
 export const loginAdmin = async (email, password) => {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const res = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: getHeaders(),
     body: JSON.stringify({ email, password }),
   });
   return handleResponse(res);
 };
 
-// ────────────────────────────────────────────────
-// Products
-// ────────────────────────────────────────────────
-export const getProducts = async (query = "") => {
-  const url = query ? `${BASE_URL}/products?${query}` : `${BASE_URL}/products`;
-  const res = await fetch(url);
+export const getProducts = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const res = await fetch(`${BASE_URL}/api/products${query ? `?${query}` : ''}`, {
+    headers: getHeaders(),
+  });
   return handleResponse(res);
 };
-
-export const getProductById = async (id) => {
-  const res = await fetch(`${BASE_URL}/products/${id}`);
+export const searchProducts = async (term) => {
+  const res = await fetch(`${BASE_URL}/api/products/search?q=${encodeURIComponent(term)}`, {
+    headers: getHeaders(),
+  });
   return handleResponse(res);
 };
-
-export const createProduct = async (productData) => {
-  const res = await fetch(`${BASE_URL}/products`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(productData),
+export const createProduct = async (payload) => {
+  const res = await fetch(`${BASE_URL}/api/products`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const updateProduct = async (id, payload) => {
+  const res = await fetch(`${BASE_URL}/api/products/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const deleteProduct = async (id) => {
+  const res = await fetch(`${BASE_URL}/api/products/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+};
+export const toggleProductTrending = async (id) => {
+  const res = await fetch(`${BASE_URL}/api/products/${id}/toggle-trending`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+};
+export const toggleProductBestSeller = async (id) => {
+  const res = await fetch(`${BASE_URL}/api/products/${id}/toggle-best-seller`, {
+    method: 'PATCH',
+    headers: getHeaders(),
   });
   return handleResponse(res);
 };
 
-export const updateProduct = async (productId, productData) => {
-  const res = await fetch(`${BASE_URL}/products/${productId}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(productData),
-  });
-  return handleResponse(res);
-};
-
-export const deleteProduct = async (productId) => {
-  const res = await fetch(`${BASE_URL}/products/${productId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(res);
-};
-
-// Toggle trending / best-seller
-export const toggleProductTrending = async (productId) => {
-  const res = await fetch(`${BASE_URL}/products/${productId}/trending`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(res);
-};
-
-export const toggleProductBestSeller = async (productId) => {
-  const res = await fetch(`${BASE_URL}/products/${productId}/best-seller`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(res);
-};
-
-// ────────────────────────────────────────────────
-// Categories
-// ────────────────────────────────────────────────
 export const getCategories = async () => {
-  const res = await fetch(`${BASE_URL}/categories`);
+  const res = await fetch(`${BASE_URL}/api/categories`, { headers: getHeaders() });
   return handleResponse(res);
 };
-
-export const createCategory = async (categoryData) => {
-  const res = await fetch(`${BASE_URL}/categories`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(categoryData),
+export const createCategory = async (payload) => {
+  const res = await fetch(`${BASE_URL}/api/categories`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const updateCategory = async (id, payload) => {
+  const res = await fetch(`${BASE_URL}/api/categories/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const deleteCategory = async (id) => {
+  const res = await fetch(`${BASE_URL}/api/categories/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
   });
   return handleResponse(res);
 };
 
-export const updateCategory = async (categoryId, categoryData) => {
-  const res = await fetch(`${BASE_URL}/categories/${categoryId}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(categoryData),
+export const getSubCategories = async () => {
+  const res = await fetch(`${BASE_URL}/api/subcategories`, { headers: getHeaders() });
+  return handleResponse(res);
+};
+export const createSubCategory = async (payload) => {
+  const res = await fetch(`${BASE_URL}/api/subcategories`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const updateSubCategory = async (id, payload) => {
+  const res = await fetch(`${BASE_URL}/api/subcategories/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const deleteSubCategory = async (id) => {
+  const res = await fetch(`${BASE_URL}/api/subcategories/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
   });
   return handleResponse(res);
 };
 
-export const deleteCategory = async (categoryId) => {
-  const res = await fetch(`${BASE_URL}/categories/${categoryId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(res);
-};
-
-// ────────────────────────────────────────────────
-// Subcategories
-// ────────────────────────────────────────────────
-export const getSubCategories = async (categoryId) => {
-  let url = `${BASE_URL}/subcategories`;
-  if (categoryId) {
-    url += `?category=${encodeURIComponent(categoryId)}`;
-  }
-  const res = await fetch(url);
-  return handleResponse(res);
-};
-
-export const createSubCategory = async (subcatData) => {
-  const res = await fetch(`${BASE_URL}/subcategories`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(subcatData),
-  });
-  return handleResponse(res);
-};
-
-export const updateSubCategory = async (subcatId, subcatData) => {
-  const res = await fetch(`${BASE_URL}/subcategories/${subcatId}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(subcatData),
-  });
-  return handleResponse(res);
-};
-
-export const deleteSubCategory = async (subcatId) => {
-  const res = await fetch(`${BASE_URL}/subcategories/${subcatId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(res);
-};
-
-// ────────────────────────────────────────────────
-// Hero Banners
-// ────────────────────────────────────────────────
 export const getHeroBanners = async () => {
-  const res = await fetch(`${BASE_URL}/hero-banners`);
+  const res = await fetch(`${BASE_URL}/api/banners`, { headers: getHeaders() });
   return handleResponse(res);
 };
-
-export const createHeroBanner = async (bannerData) => {
-  const res = await fetch(`${BASE_URL}/hero-banners`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(bannerData),
+export const createHeroBanner = async (payload) => {
+  const res = await fetch(`${BASE_URL}/api/banners`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const updateHeroBanner = async (id, payload) => {
+  const res = await fetch(`${BASE_URL}/api/banners/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const deleteHeroBanner = async (id) => {
+  const res = await fetch(`${BASE_URL}/api/banners/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
   });
   return handleResponse(res);
 };
 
-export const updateHeroBanner = async (bannerId, bannerData) => {
-  const res = await fetch(`${BASE_URL}/hero-banners/${bannerId}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(bannerData),
-  });
-  return handleResponse(res);
-};
-
-export const deleteHeroBanner = async (bannerId) => {
-  const res = await fetch(`${BASE_URL}/hero-banners/${bannerId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(res);
-};
-
-// ────────────────────────────────────────────────
-// Special Offers (new)
-// ────────────────────────────────────────────────
 export const getSpecialOffers = async () => {
-  const res = await fetch(`${BASE_URL}/special-offers`);
+  const res = await fetch(`${BASE_URL}/api/special-offers`, { headers: getHeaders() });
   return handleResponse(res);
 };
-
-export const createSpecialOffer = async (offerData) => {
-  const res = await fetch(`${BASE_URL}/special-offers`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(offerData),
+export const createSpecialOffer = async (payload) => {
+  const res = await fetch(`${BASE_URL}/api/special-offers`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const updateSpecialOffer = async (id, payload) => {
+  const res = await fetch(`${BASE_URL}/api/special-offers/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const deleteSpecialOffer = async (id) => {
+  const res = await fetch(`${BASE_URL}/api/special-offers/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
   });
   return handleResponse(res);
 };
 
-export const updateSpecialOffer = async (offerId, offerData) => {
-  const res = await fetch(`${BASE_URL}/special-offers/${offerId}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(offerData),
+export const getCustomBookOrders = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const res = await fetch(`${BASE_URL}/api/custom-orders${query ? `?${query}` : ''}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+};
+export const submitCustomBookOrder = async (payload) => {
+  const isFormData = payload instanceof FormData;
+  const res = await fetch(`${BASE_URL}/api/custom-orders`, {
+    method: 'POST',
+    headers: getHeaders(!isFormData),
+    body: isFormData ? payload : JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const updateCustomBookOrder = async (id, payload) => {
+  const res = await fetch(`${BASE_URL}/api/custom-orders/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
   });
   return handleResponse(res);
 };
 
-export const deleteSpecialOffer = async (offerId) => {
-  const res = await fetch(`${BASE_URL}/special-offers/${offerId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
+export const getCustomProducts = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const res = await fetch(`${BASE_URL}/api/custom-products${query ? `?${query}` : ''}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+};
+export const createCustomProduct = async (payload) => {
+  const res = await fetch(`${BASE_URL}/api/custom-products`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const updateCustomProduct = async (id, payload) => {
+  const res = await fetch(`${BASE_URL}/api/custom-products/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+};
+export const deleteCustomProduct = async (id) => {
+  const res = await fetch(`${BASE_URL}/api/custom-products/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
   });
   return handleResponse(res);
 };
 
-// ────────────────────────────────────────────────
-// Custom Products (for bespoke/custom books)
-// ────────────────────────────────────────────────
-// ────────────────────────────────────────────────
-// Custom Products (for bespoke/custom books)
-// ────────────────────────────────────────────────
-export const getCustomProducts = async () => {
-  const res = await fetch(`${BASE_URL}/custom-products`);
-  return handleResponse(res);
-};
-
-export const createCustomProduct = async (productData) => {
-  const res = await fetch(`${BASE_URL}/custom-products`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(productData),
-  });
-  return handleResponse(res);
-};
-
-export const updateCustomProduct = async (productId, productData) => {
-  const res = await fetch(`${BASE_URL}/custom-products/${productId}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(productData),
-  });
-  return handleResponse(res);
-};
-
-export const deleteCustomProduct = async (productId) => {
-  const res = await fetch(`${BASE_URL}/custom-products/${productId}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-  if (res.status === 204) return { message: "Deleted" };
-  return handleResponse(res);
-};
-
-
-
-// src/api.js — append at the end
-
-export const submitCustomBookOrder = async (formData) => {
-  const res = await fetch(`${BASE_URL}/custom-book-orders`, {
-    method: "POST",
-    // NO Content-Type header — browser sets multipart/form-data + boundary
-    body: formData,
-  });
-
-  if (!res.ok) {
-    let msg = "Submission failed";
-    try {
-      const err = await res.json();
-      msg = err.message || msg;
-    } catch {}
-    throw new Error(msg);
-  }
-
-  return res.json();
-};
-
-// Optional: admin list
-export const getCustomBookOrders = async () => {
-  const res = await fetch(`${BASE_URL}/custom-book-orders`, {
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(res);
-};
-
-export const getCustomBookOrderById = async (orderId) => {
-  const res = await fetch(`${BASE_URL}/custom-book-orders/${orderId}`, {
-    headers: getAuthHeaders(),
-  });
-  return handleResponse(res);
-};
-
-export const updateCustomBookOrder = async (orderId, data) => {
-  const res = await fetch(`${BASE_URL}/custom-book-orders/${orderId}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-  return handleResponse(res);
-};
-
-// ────────────────────────────────────────────────
-// File Upload Helper
-// ────────────────────────────────────────────────
+// file upload helper
 export const uploadImage = async (file) => {
-  const formData = new FormData();
-  formData.append("image", file);
-
-  const res = await fetch(`${BASE_URL}/uploads`, {
-    method: "POST",
-    body: formData,
-    // Note: Do NOT set Content-Type header for FormData, browser does it with boundary
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE_URL}/api/upload`, {
+    method: 'POST',
+    body: form,
   });
-  
-  if (!res.ok) {
-    const errorBody = await res.text();
-    throw new Error(errorBody || "Image upload failed");
-  }
-  
-  return res.json(); // Expected { path: "/uploads/filename.ext" }
+  return handleResponse(res);
 };
 
-
-
-
+// other helpers
+export const getCustomProductOrders = async () => {
+  const res = await fetch(`${BASE_URL}/api/custom-orders`, { headers: getHeaders() });
+  return handleResponse(res);
+};

@@ -139,15 +139,7 @@ export default function StudioForm({
       setIsSubmitted(true);
     } catch (err) {
       console.error("Submit error:", err);
-      // Show better error messages based on response
-      if (err.response) {
-        const msg = err.response.data?.message || "Server error";
-        toast.error(msg);
-      } else if (err.request) {
-        toast.error("No response from server. Check your internet or backend.");
-      } else {
-        toast.error(err.message || "Failed to submit order");
-      }
+      toast.error(err.message || "Failed to submit order. Please try again.");
     } finally {
       setSubmitting(false);
     }

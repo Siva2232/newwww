@@ -44,38 +44,13 @@ export default function ProductDetail() {
   }, []);
 
   useEffect(() => {
-    if (contextProduct && !contextProduct.description) {
-      setLoading(true);
-      import("../api").then((api) => {
-        api
-          .getProductById(id)
-          .then((data) => {
-            setProduct(data);
-            setLoading(false);
-          })
-          .catch((err) => {
-            console.error("Failed to fetch product details", err);
-            setLoading(false);
-          });
-      });
-    } else if (contextProduct) {
+    // with backend removed we rely solely on contextProduct
+    if (contextProduct) {
       setProduct(contextProduct);
-      setLoading(false);
     } else {
-      setLoading(true);
-      import("../api").then((api) => {
-        api
-          .getProductById(id)
-          .then((data) => {
-            setProduct(data);
-            setLoading(false);
-          })
-          .catch((err) => {
-            console.error("Failed to fetch product details", err);
-            setLoading(false);
-          });
-      });
+      console.warn("Cannot load product details – backend removed");
     }
+    setLoading(false);
   }, [id, contextProduct]);
 
   const [currentImg, setCurrentImg] = useState(0);

@@ -217,7 +217,7 @@ Can you provide more details, customization options, and confirm availability?`
                   <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer">
                     <div className="aspect-[3/4] relative overflow-hidden">
                       <img
-                        src={rel.image || rel.mainImage || rel.images?.[0] || "https://via.placeholder.com/600x800?text=No+Image"}
+                        src={rel.image || rel.mainImage || rel.images?.[0] || "https://placehold.co/600x800?text=No+Image"}
                         alt={rel.name}
                         loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"

@@ -9,11 +9,13 @@ import {
   ShoppingBag,
   Heart,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { useProducts } from "../Context/ProductContext";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../assets/hhhh.jpg";
 import { getImageUrl } from "../utils/imageUrl";
+import * as api from "../api";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -22,15 +24,30 @@ export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
   const [previewProduct, setPreviewProduct] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
-  // Expose mobileOpen to window/context if feasible, or use a custom event to communicate with ProductDetail
+  // Search logic
   useEffect(() => {
-    // Dispatch a custom event when mobile menu state changes
-    const event = new CustomEvent('nav-mobile-menu-change', { 
-      detail: { isOpen: mobileOpen } 
-    });
-    window.dispatchEvent(event);
-  }, [mobileOpen]);
+    if (searchTerm.trim().length >= 2) {
+      const handler = setTimeout(async () => {
+        setSearchLoading(true);
+        try {
+          const results = await api.searchProducts(searchTerm);
+          setSearchResults(results || []);
+        } catch (err) {
+          console.error("Search error:", err);
+        } finally {
+          setSearchLoading(false);
+        }
+      }, 300);
+      return () => clearTimeout(handler);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchTerm]);
+
+  const filteredProducts = searchResults;
 
   const { products = [], shopCategories = [], shopSubCategories = [] } = useProducts();
   const searchRef = useRef(null);
@@ -57,6 +74,14 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
+  // Expose mobileOpen to window/context if feasible, or use a custom event
+  useEffect(() => {
+    const event = new CustomEvent('nav-mobile-menu-change', { 
+      detail: { isOpen: mobileOpen } 
+    });
+    window.dispatchEvent(event);
+  }, [mobileOpen]);
+
   const handleNavClick = (path) => {
     setMobileOpen(false);
     setIsDropdownOpen(false);
@@ -64,14 +89,6 @@ export default function Navbar() {
     navigate(path);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  const filteredProducts = useMemo(() => {
-    if (searchTerm.trim().length < 2) return [];
-    const term = searchTerm.toLowerCase().trim();
-    return products
-      .filter((p) => p?.name?.toLowerCase()?.includes(term))
-      .slice(0, 5);
-  }, [products, searchTerm]);
 
   const categoryProducts = useMemo(() => {
     if (!activeCategory) return [];
@@ -141,7 +158,11 @@ export default function Navbar() {
                   exit={{ opacity: 0, y: 5 }}
                   className="absolute left-0 right-0 top-full mt-2 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50"
                 >
-                  {filteredProducts.length === 0 ? (
+                  {searchLoading ? (
+                    <div className="p-4 flex justify-center items-center">
+                      <Loader2 size={24} className="animate-spin text-amber-500" />
+                    </div>
+                  ) : filteredProducts.length === 0 ? (
                     <div className="p-4 text-center text-gray-500 text-sm">
                       No products found
                     </div>

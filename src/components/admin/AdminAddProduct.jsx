@@ -1,13 +1,13 @@
 // src/components/admin/AdminAddProduct.jsx
 import { useState, useEffect, useRef } from "react";
 import { Save, AlertCircle, Image as ImageIcon, Upload, X, Trash2, Pencil } from "lucide-react";
-import { 
-  createCustomProduct, 
-  uploadImage, 
-  BACKEND_URL, 
-  getCustomProducts, 
-  updateCustomProduct, 
-  deleteCustomProduct 
+import {
+  createCustomProduct,
+  updateCustomProduct,
+  deleteCustomProduct,
+  getCustomProducts,
+  uploadImage,
+  BASE_URL,
 } from "../../api";
 
 export default function AdminAddProduct() {
@@ -148,7 +148,7 @@ export default function AdminAddProduct() {
     });
     
     // Set preview to existing image URL (or path)
-    const imgUrl = product.image ? (product.image.startsWith("http") ? product.image : `${BACKEND_URL}${product.image}`) : "";
+    const imgUrl = product.image ? (product.image.startsWith("http") ? product.image : `${BASE_URL}${product.image}`) : "";
     setImagePreview(imgUrl);
     setImageFile(null); // Clear any pending file
     
@@ -379,11 +379,11 @@ export default function AdminAddProduct() {
                 >
                   <div className="relative aspect-[4/5] bg-gray-50 overflow-hidden">
                     <img
-                      src={product.image ? (product.image.startsWith("http") ? product.image : `${BACKEND_URL}${product.image}`) : "https://via.placeholder.com/400x500?text=No+Image"}
+                      src={product.image ? (product.image.startsWith("http") ? product.image : `${BASE_URL}${product.image}`) : "https://placehold.co/400x500?text=No+Image"}
                       alt={product.name}
                       onError={(e) => {
                          e.target.onerror = null; 
-                         e.target.src = "https://via.placeholder.com/400x500?text=No+Image";
+                         e.target.src = "https://placehold.co/400x500?text=No+Image";
                       }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />

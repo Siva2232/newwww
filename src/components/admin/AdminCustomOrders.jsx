@@ -6,8 +6,9 @@ import {
   Image as ImageIcon,
   Loader2,
 } from "lucide-react";
-import { getCustomBookOrders } from "../../api"; // from your api.js
 import AdminOrderDetail from "./AdminOrderDetail";
+
+import { getCustomBookOrders } from "../../api";
 
 // Helper to fix image URLs (VERY IMPORTANT for /uploads/... paths)
 const getImageUrl = (path) => {
@@ -19,7 +20,7 @@ const getImageUrl = (path) => {
   }
 
   // Most common case: backend serves from /uploads
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
   const url = `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
   // Debug log for image URL
   console.log("Image URL generated:", url);
@@ -28,25 +29,33 @@ const getImageUrl = (path) => {
 
 export default function AdminCustomOrders() {
   const [orders, setOrders] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, pages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   const closeDetail = () => setSelectedOrder(null);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const data = await getCustomBookOrders();
-        console.log("Fetched orders:", data); // ← debug: check what comes from backend
-        setOrders(data || []);
-      } catch (err) {
-        setError(err.message || "Failed to load orders");
-        console.error("Fetch error:", err);
-      } finally {
-        setLoading(false);
+  const fetchOrders = async (page = 1) => {
+    try {
+      setLoading(true);
+      const data = await getCustomBookOrders({ page, limit: 10 });
+      
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        setOrders(data.orders || []);
+        setPagination(data.pagination || { page: 1, pages: 1 });
       }
-    };
+    } catch (err) {
+      setError(err.message || "Failed to load orders");
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchOrders();
   }, []);
 
@@ -175,6 +184,29 @@ export default function AdminCustomOrders() {
           );
         })}
       </div>
+
+      {/* Pagination UI */}
+      {pagination.pages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-8 pb-10">
+          <button
+            onClick={() => fetchOrders(pagination.page - 1)}
+            disabled={pagination.page === 1}
+            className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50 transition-colors"
+          >
+            Previous
+          </button>
+          <span className="text-sm font-medium">
+            Page {pagination.page} of {pagination.pages}
+          </span>
+          <button
+            onClick={() => fetchOrders(pagination.page + 1)}
+            disabled={pagination.page === pagination.pages}
+            className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {selectedOrder && (
         <AdminOrderDetail order={selectedOrder} onClose={closeDetail} />

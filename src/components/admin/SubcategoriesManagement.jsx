@@ -1,9 +1,11 @@
 // src/components/admin/SubcategoriesManagement.jsx
 import { useState, useRef, useEffect } from "react";
 import { useProducts } from "../../Context/ProductContext";
-import { uploadImage } from "../../api";
 import { Plus, Upload, Trash2, X, Image as ImageIcon, Link2 } from "lucide-react";
-import { BACKEND_URL } from "../../api";
+
+import { uploadImage, BASE_URL } from "../../api";
+// `uploadImage` will gracefully fail if backend isn't running, so the rest
+// of the component can still operate with placeholder images.
 
 export default function SubcategoriesManagement() {
   const {
@@ -328,7 +330,7 @@ export default function SubcategoriesManagement() {
               >
                 <div className="relative aspect-square overflow-hidden">
                   <img
-                    src={cat.image?.startsWith('http') || cat.image?.startsWith('data:') ? cat.image : `${BACKEND_URL}${cat.image}`}
+                    src={cat.image?.startsWith('http') || cat.image?.startsWith('data:') ? cat.image : `${BASE_URL}${cat.image}`}
                     alt={cat.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />

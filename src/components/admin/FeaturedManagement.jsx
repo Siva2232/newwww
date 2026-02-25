@@ -112,7 +112,7 @@ export default function FeaturedManagement() {
                     <img
                       src={
                         getImageUrl(product.mainImage || product.images?.[0] || product.image) ||
-                        "https://via.placeholder.com/300?text=No+Image"
+                        "https://placehold.co/300x300?text=No+Image"
                       }
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -221,7 +221,7 @@ export default function FeaturedManagement() {
                     <img
                       src={
                         getImageUrl(product.mainImage || product.images?.[0] || product.image) ||
-                        "https://via.placeholder.com/300?text=No+Image"
+                        "https://placehold.co/300x300?text=No+Image"
                       }
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"

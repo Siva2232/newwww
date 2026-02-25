@@ -1,7 +1,6 @@
 // src/pages/AdminPanel.jsx
 import { useState, useEffect } from "react";
 import { useProducts } from "../Context/ProductContext";
-import { getCustomBookOrders } from "../api";
 import {
   Package,
   Image as ImageIcon,
@@ -25,6 +24,11 @@ import AdminCustomOrders from "../components/admin/AdminCustomOrders";
 import AdminAddProduct from "../components/admin/AdminAddProduct";
 import SubcategoriesManagement from "../components/admin/SubcategoriesManagement";
 import logo from "../assets/hhhh.jpg";
+
+// backend removed – stub for order fetching
+const getCustomBookOrders = async () => {
+  return Promise.resolve([]);
+};
 
 export default function AdminPanel() {
   const {

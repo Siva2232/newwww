@@ -1,7 +1,6 @@
 // src/components/admin/ProductsManagement.jsx
 import { useState, useRef, useEffect } from "react";
 import { useProducts } from "../../Context/ProductContext";
-import { uploadImage, BACKEND_URL } from "../../api";
 import {
   Plus,
   Image as ImageIcon,
@@ -11,9 +10,10 @@ import {
   X,
 } from "lucide-react";
 
+import { uploadImage, BASE_URL, getProducts } from "../../api"; // base URL for images
 export default function ProductsManagement() {
   const {
-    products,
+    products: contextProducts,
     addProduct,
     updateProduct,
     deleteProduct,
@@ -21,6 +21,31 @@ export default function ProductsManagement() {
     shopSubCategories,
     setShopCategories,
   } = useProducts();
+
+  const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, pages: 1 });
+  const [loading, setLoading] = useState(false);
+
+  const fetchProductsList = async (page = 1) => {
+    try {
+      setLoading(true);
+      const data = await getProducts({ page, limit: 12 });
+      if (Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        setProducts(data.products || []);
+        setPagination(data.pagination || { page: 1, pages: 1 });
+      }
+    } catch (err) {
+      console.error("Fetch products failed", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProductsList();
+  }, []);
 
   const [form, setForm] = useState({
     name: "",
@@ -398,8 +423,8 @@ export default function ProductsManagement() {
               className="w-full px-5 py-3.5 bg-gray-50/60 border border-gray-300 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200/50 outline-none transition-all text-base"
             >
               <option value="">— Select existing —</option>
-              {shopCategories.map((cat) => (
-                <option key={cat.id} value={cat.name}>
+              {shopCategories.map((cat, idx) => (
+                <option key={cat._id || cat.id || `opt-${idx}`} value={cat.name}>
                   {cat.name}
                 </option>
               ))}
@@ -540,7 +565,7 @@ export default function ProductsManagement() {
               {form.mainImagePreview ? (
                 <div className="relative">
                   <img 
-                    src={form.mainImagePreview.startsWith("data:") || form.mainImagePreview.startsWith("http") ? form.mainImagePreview : `${BACKEND_URL}${form.mainImagePreview}`} 
+                    src={form.mainImagePreview.startsWith("data:") || form.mainImagePreview.startsWith("http") ? form.mainImagePreview : `${BASE_URL}${form.mainImagePreview}`} 
                     alt="preview" 
                     className="w-full h-64 object-cover" 
                   />
@@ -583,7 +608,7 @@ export default function ProductsManagement() {
                     {form.carouselPreviews.map((img, idx) => (
                       <div key={idx} className="group relative aspect-square rounded-lg overflow-hidden border border-gray-200">
                         <img 
-                          src={img.startsWith("data:") || img.startsWith("http") ? img : `${BACKEND_URL}${img}`} 
+                          src={img.startsWith("data:") || img.startsWith("http") ? img : `${BASE_URL}${img}`} 
                           alt="" 
                           className="w-full h-full object-cover" 
                         />
@@ -655,11 +680,11 @@ export default function ProductsManagement() {
                 >
                   <div className="relative aspect-square bg-gray-50">
                     <img
-                      src={mainImage ? (mainImage.startsWith("data:") || mainImage.startsWith("http") ? mainImage : `${BACKEND_URL}${mainImage}`) : "https://via.placeholder.com/400x400?text=No+Image"}
+                      src={mainImage ? (mainImage.startsWith("data:") || mainImage.startsWith("http") ? mainImage : `${BASE_URL}${mainImage}`) : "https://placehold.co/400x400?text=No+Image"}
                       alt={product.name}
                       onError={(e) => {
                         e.target.onerror = null; 
-                        e.target.src = "https://via.placeholder.com/400x400?text=No+Image";
+                        e.target.src = "https://placehold.co/400x400?text=No+Image";
                       }}
                       style={{ willChange: "transform" }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -714,6 +739,29 @@ export default function ProductsManagement() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Pagination UI */}
+        {pagination.pages > 1 && (
+          <div className="flex justify-center items-center gap-4 mt-12 pb-10">
+            <button
+              onClick={() => fetchProductsList(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50 transition-colors"
+            >
+              Previous
+            </button>
+            <span className="text-sm font-medium">
+              Page {pagination.page} of {pagination.pages}
+            </span>
+            <button
+              onClick={() => fetchProductsList(pagination.page + 1)}
+              disabled={pagination.page === pagination.pages}
+              className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50 transition-colors"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

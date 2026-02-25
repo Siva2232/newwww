@@ -1,6 +1,11 @@
 // src/Context/ProductContext.jsx
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import * as api from "../api";
+// when backend is available we delegate network calls to the shared api module
+import * as api from '../api';
+
+// during development you can still override any of the methods on `api` if needed or
+// provide dummy implementations via dependency injection, but we assume the module
+// exports everything the context expects.
 
 const ProductContext = createContext();
 
@@ -89,7 +94,7 @@ export const ProductProvider = ({ children }) => {
     loadFromStorage("bestSellerProductIds", [])
   );
   const [isAuthenticated, setIsAuthenticated] = useState(
-    () => localStorage.getItem("isAdminLoggedIn") === "true"
+    () => !!localStorage.getItem("adminToken")
   );
 
   // ─── Fetch products, categories, banners, and special offers from backend on mount ──────────────────────────────────
@@ -97,11 +102,15 @@ export const ProductProvider = ({ children }) => {
     const fetchData = async () => {
       try {
         const productsData = await api.getProducts();
-        if (Array.isArray(productsData)) {
-          setProducts(productsData);
+        
+        // Handle both old array format and new pagination object format
+        const productList = Array.isArray(productsData) ? productsData : (productsData?.products || []);
+        
+        if (productList.length > 0) {
+          setProducts(productList);
           // Extract featured product IDs from database
-          const trendingIds = productsData.filter(p => p.isTrending).map(p => p._id);
-          const bestSellerIds = productsData.filter(p => p.isBestSeller).map(p => p._id);
+          const trendingIds = productList.filter(p => p.isTrending).map(p => p._id);
+          const bestSellerIds = productList.filter(p => p.isBestSeller).map(p => p._id);
           if (trendingIds.length > 0) setTrendingProductIds(trendingIds);
           if (bestSellerIds.length > 0) setBestSellerProductIds(bestSellerIds);
         }
@@ -196,12 +205,14 @@ export const ProductProvider = ({ children }) => {
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   const login = () => {
+    // caller should also store JWT in localStorage as `adminToken`
     localStorage.setItem("isAdminLoggedIn", "true");
     setIsAuthenticated(true);
   };
 
   const logout = () => {
     localStorage.removeItem("isAdminLoggedIn");
+    localStorage.removeItem("adminToken");
     setIsAuthenticated(false);
   };
 
@@ -346,11 +357,13 @@ export const ProductProvider = ({ children }) => {
       await api.deleteProduct(id);
     } catch (error) {
       // Rollback: re-fetch products on error
-      const productsData = await api.getProducts();
-      if (Array.isArray(productsData)) {
-        setProducts(productsData);
-        const trendingIds = productsData.filter(p => p.isTrending).map(p => p._id);
-        const bestSellerIds = productsData.filter(p => p.isBestSeller).map(p => p._id);
+      const data = await api.getProducts();
+      const productList = Array.isArray(data) ? data : (data?.products || []);
+      
+      if (productList.length > 0) {
+        setProducts(productList);
+        const trendingIds = productList.filter(p => p.isTrending).map(p => p._id);
+        const bestSellerIds = productList.filter(p => p.isBestSeller).map(p => p._id);
         if (trendingIds.length > 0) setTrendingProductIds(trendingIds);
         if (bestSellerIds.length > 0) setBestSellerProductIds(bestSellerIds);
       }

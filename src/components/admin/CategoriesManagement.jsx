@@ -1,9 +1,9 @@
 // src/components/admin/CategoriesManagement.jsx
 import { useState, useRef } from "react";
 import { useProducts } from "../../Context/ProductContext";
-import { uploadImage } from "../../api";
 import { Plus, Upload, Trash2, X, Image as ImageIcon, Link2 } from "lucide-react";
-import { BACKEND_URL } from "../../api"; // fallback if needed, but we use path in DB
+
+import { uploadImage, BASE_URL } from "../../api";
 
 export default function CategoriesManagement() {
   const { shopCategories, addCategory, deleteCategory } = useProducts();
@@ -283,14 +283,14 @@ export default function CategoriesManagement() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 sm:gap-6">
-            {shopCategories.map((cat) => (
+            {shopCategories.map((cat, idx) => (
               <div
-                key={cat.id}
+                key={cat._id || cat.id || `cat-${idx}`}
                 className="group bg-white rounded-2xl shadow border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative aspect-square overflow-hidden">
                   <img
-                    src={cat.image?.startsWith('http') || cat.image?.startsWith('data:') ? cat.image : `${BACKEND_URL}${cat.image}`}
+                    src={cat.image?.startsWith('http') || cat.image?.startsWith('data:') ? cat.image : `${BASE_URL}${cat.image}`}
                     alt={cat.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />

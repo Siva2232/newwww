@@ -59,7 +59,7 @@ const ProductCard = ({
 
           <Link to={`/product/${product._id || product.id}`} className="block h-full">
             <img
-              src={getImageUrl(product.image || product.mainImage || product.images?.[0]) || "https://via.placeholder.com/400"}
+              src={getImageUrl(product.image || product.mainImage || product.images?.[0]) || "https://placehold.co/400x400"}
               alt={product.name}
               className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110"
             />

@@ -2,8 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
-import { getCustomProducts } from "../../api";
-
+import { getCustomProducts } from "../../api"; // fetch catalog of bespoke items
 export default function ProductSelection({
   setSelectedProduct,
   fadeInUp,
@@ -22,17 +21,25 @@ export default function ProductSelection({
       return;
     }
 
-    const fetchProducts = async () => {
+    const fetchProducts = async (page = 1) => {
       try {
         setLoading(true);
-        const data = await getCustomProducts();
+        const data = await getCustomProducts({ page, limit: 12 });
+        
+        let productList = [];
+        if (Array.isArray(data)) {
+          productList = data;
+        } else {
+          productList = data.products || [];
+        }
+
         // Optional: ensure image has correct path (especially useful in dev vs prod)
-        const updatedProducts = data.map((product) => ({
+        const updatedProducts = productList.map((product) => ({
           ...product,
           image: product.image
             ? product.image.startsWith("http")
               ? product.image
-              : `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"}${product.image}`
+              : `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5001"}${product.image}`
             : "/placeholder-product.jpg",
         }));
         setProducts(updatedProducts);

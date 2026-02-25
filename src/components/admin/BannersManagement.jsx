@@ -1,8 +1,9 @@
 // src/components/admin/BannersManagement.jsx
 import { useState, useRef } from "react";
 import { useProducts } from "../../Context/ProductContext";
-import { uploadImage, BACKEND_URL } from "../../api";
 import { Plus, Upload, Trash2, X, Image as ImageIcon } from "lucide-react";
+
+import { uploadImage, BASE_URL } from "../../api"; // use shared helper for uploads
 
 export default function BannersManagement() {
   const { heroBanners, addHeroBanner, deleteHeroBanner } = useProducts();
@@ -273,7 +274,7 @@ export default function BannersManagement() {
               >
                 <div className="relative overflow-hidden">
                   <img
-                    src={banner.image?.startsWith('data:') || banner.image?.startsWith('http') ? banner.image : `${BACKEND_URL}${banner.image}`}
+                    src={banner.image?.startsWith('data:') || banner.image?.startsWith('http') ? banner.image : `${BASE_URL}${banner.image}`}
                     alt={banner.title}
                     className="w-full h-56 object-cover transition-transform duration-700 group-hover:scale-110"
                   />

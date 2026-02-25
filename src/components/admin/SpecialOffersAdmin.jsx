@@ -1,13 +1,14 @@
 // src/components/admin/SpecialOffersAdmin.jsx
 import { useRef, useEffect, useState } from "react";
 import { Sparkles, Gift, Upload, X, Plus, Trash2, Edit2, Loader2 } from "lucide-react";
+
 import {
   getSpecialOffers,
-  createSpecialOffer,
   updateSpecialOffer,
+  createSpecialOffer,
   deleteSpecialOffer,
   uploadImage,
-  BACKEND_URL
+  BASE_URL,
 } from "../../api";
 
 const SpecialOffersAdmin = () => {
@@ -354,7 +355,7 @@ const SpecialOffersAdmin = () => {
                         src={
                           offer.image && (offer.image.startsWith("data:") || offer.image.startsWith("http"))
                             ? offer.image
-                            : `${BACKEND_URL}${offer.image}`
+                            : `${BASE_URL}${offer.image}`
                         }
                         alt={offer.title}
                         className="w-16 h-16 object-cover rounded-lg border border-gray-200 shadow-sm"
