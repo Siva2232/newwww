@@ -1,7 +1,7 @@
 // src/api.js
 
 // Use env var or default to production backend
-export const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "https://api.aktech.sbs";
+export const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 export const BASE_URL = `${BACKEND_URL}/api`;
 
 // Helper to get admin token from localStorage
