@@ -39,7 +39,7 @@ export default function ProductSelection({
           image: product.image
             ? product.image.startsWith("http")
               ? product.image
-              : `${import.meta.env.VITE_API_BASE_URL || "http://localhost:5001"}${product.image}`
+              : `${import.meta.env.VITE_API_BASE_URL || "https://api-ppdo.ppdo.shop"}${product.image}`
             : "/placeholder-product.jpg",
         }));
         setProducts(updatedProducts);

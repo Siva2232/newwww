@@ -20,7 +20,7 @@ const getImageUrl = (path) => {
   }
 
   // Most common case: backend serves from /uploads
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://api-ppdo.ppdo.shop";
   const url = `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
   // Debug log for image URL
   console.log("Image URL generated:", url);
