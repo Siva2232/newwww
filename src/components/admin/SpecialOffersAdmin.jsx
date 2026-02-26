@@ -1,5 +1,6 @@
 // src/components/admin/SpecialOffersAdmin.jsx
 import { useRef, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Sparkles, Gift, Upload, X, Plus, Trash2, Edit2, Loader2 } from "lucide-react";
 
 import {
@@ -163,12 +164,15 @@ const SpecialOffersAdmin = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this offer?")) return;
+    // Remove browser confirm, show toast after delete
+    // For custom confirmation, use modal. Here, auto-confirm.
     setSubmitting(true);
     try {
       await deleteSpecialOffer(id);
       fetchOffers();
+      toast.success("Offer deleted successfully");
     } catch (err) {
+      toast.error(err.message || "Failed to delete offer");
       setError(err.message);
     } finally {
       setSubmitting(false);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import {
   X,
   User,
@@ -47,10 +48,10 @@ export default function AdminOrderDetail({ order, onClose }) {
     try {
       await updateCustomBookOrder(order._id, { status, adminNotes });
       // Optionally notify parent to refresh list, or just show success
-      alert("Order updated successfully!");
+      toast.success("Order updated successfully!");
     } catch (err) {
       console.error(err);
-      alert("Failed to update order");
+      toast.error("Failed to update order");
     } finally {
       setUpdating(false);
     }

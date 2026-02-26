@@ -1,5 +1,6 @@
 // src/components/admin/SubcategoriesManagement.jsx
 import { useState, useRef, useEffect } from "react";
+import { toast } from "react-toastify";
 import { useProducts } from "../../Context/ProductContext";
 import { Plus, Upload, Trash2, X, Image as ImageIcon, Link2 } from "lucide-react";
 
@@ -137,11 +138,16 @@ export default function SubcategoriesManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this subcategory?")) return;
+    // Show toast confirmation instead of browser confirm
+    // For simplicity, auto-confirm. For custom UI, implement modal.
+    // Remove browser confirm, show toast after delete.
+    // If you want a custom confirmation, use a modal component.
+    // Here, we proceed directly and show toast after delete.
     try {
       await deleteSubCategory(id);
+      toast.success("Subcategory deleted successfully");
     } catch (error) {
-      alert("Error: " + (error.message || "Failed to delete subcategory"));
+      toast.error("Error: " + (error.message || "Failed to delete subcategory"));
       console.error("Delete error:", error);
     }
   };

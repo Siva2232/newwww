@@ -1,5 +1,6 @@
 // src/components/admin/CategoriesManagement.jsx
 import { useState, useRef } from "react";
+import { toast } from "react-toastify";
 import { useProducts } from "../../Context/ProductContext";
 import { Plus, Upload, Trash2, X, Image as ImageIcon, Link2 } from "lucide-react";
 
@@ -124,13 +125,13 @@ export default function CategoriesManagement() {
 
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this category?\n\nProducts using it will fall back to 'uncategorized'.")) {
-      return;
-    }
+    // Remove browser confirm, show toast after delete
+    // For custom confirmation, use modal. Here, auto-confirm.
     try {
       await deleteCategory(id);
+      toast.success("Category deleted successfully");
     } catch (error) {
-      alert("Error: " + (error.message || "Failed to delete category"));
+      toast.error("Error: " + (error.message || "Failed to delete category"));
       console.error("Delete error:", error);
     }
   };

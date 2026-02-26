@@ -71,13 +71,13 @@ export default function AdminPanel() {
   const specialOffersCount = specialOffers?.length || 0;
 
   const menuItems = [
-    { id: "products", label: "Products", icon: Package, count: products.length },
-    { id: "add-product", label: "Add Product", icon: PlusCircle, count: null },
-    { id: "banners", label: "Hero Banners", icon: ImageIcon, count: heroBanners.length },
-    { id: "categories", label: "Shop Categories", icon: Grid3X3, count: shopCategories.length },
-    { id: "subcategories", label: "Subcategories", icon: Grid3X3, count: shopSubCategories?.length || 0 },
+    { id: "products", label: "Add Products", icon: Package, count: products.length },
+    { id: "banners", label: "Main Banners", icon: ImageIcon, count: heroBanners.length },
+    { id: "categories", label: "Main Categories", icon: Grid3X3, count: shopCategories.length },
+    { id: "subcategories", label: "Sub Categories", icon: Grid3X3, count: shopSubCategories?.length || 0 },
     { id: "featured", label: "Featured Products", icon: TrendingUp, count: trendingProductIds.length },
     { id: "special-offers", label: "Special Offers", icon: Gift, count: specialOffersCount },
+    { id: "add-product", label: "Add custom book products", icon: PlusCircle, count: null },
     { id: "custom-orders", label: "Custom Orders", icon: BookOpen, count: customOrdersCount },
   ];
 

@@ -1,5 +1,6 @@
 // src/components/admin/BannersManagement.jsx
 import { useState, useRef } from "react";
+import { toast } from "react-toastify";
 import { useProducts } from "../../Context/ProductContext";
 import { Plus, Upload, Trash2, X, Image as ImageIcon } from "lucide-react";
 
@@ -121,13 +122,13 @@ export default function BannersManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this hero banner?\nIt will no longer appear on the homepage.")) {
-      return;
-    }
+    // Remove browser confirm, show toast after delete
+    // For custom confirmation, use modal. Here, auto-confirm.
     try {
       await deleteHeroBanner(id);
+      toast.success("Banner deleted successfully");
     } catch (error) {
-      alert("Error: " + (error.message || "Failed to delete banner"));
+      toast.error("Error: " + (error.message || "Failed to delete banner"));
       console.error("Delete error:", error);
     }
   };

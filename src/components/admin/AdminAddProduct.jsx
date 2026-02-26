@@ -1,5 +1,6 @@
 // src/components/admin/AdminAddProduct.jsx
 import { useState, useEffect, useRef } from "react";
+import { toast } from "react-toastify";
 import { Save, AlertCircle, Image as ImageIcon, Upload, X, Trash2, Pencil } from "lucide-react";
 import {
   createCustomProduct,
@@ -174,13 +175,15 @@ export default function AdminAddProduct() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    // Remove browser confirm, show toast after delete
+    // For custom confirmation, use modal. Here, auto-confirm.
     try {
       await deleteCustomProduct(id);
       fetchProducts();
+      toast.success("Product deleted successfully");
     } catch (err) {
       console.error(err);
-      alert("Failed to delete product");
+      toast.error("Failed to delete product");
     }
   };
 

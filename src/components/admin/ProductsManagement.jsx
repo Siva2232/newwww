@@ -1,5 +1,6 @@
 // src/components/admin/ProductsManagement.jsx
 import { useState, useRef, useEffect } from "react";
+import { toast } from "react-toastify";
 import { useProducts } from "../../Context/ProductContext";
 import {
   Plus,
@@ -146,11 +147,19 @@ export default function ProductsManagement() {
   };
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) return alert("Product name is required");
-    if (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0)
-      return alert("Valid positive price required");
+    if (!form.name.trim()) {
+      toast.error("Product name is required");
+      return;
+    }
+    if (!form.price || isNaN(Number(form.price)) || Number(form.price) <= 0) {
+      toast.error("Valid positive price required");
+      return;
+    }
     // Ensure we have at least one image (new file or existing preview path)
-    if (!form.mainImageFile && !form.mainImagePreview) return alert("Main image is required");
+    if (!form.mainImageFile && !form.mainImagePreview) {
+      toast.error("Main image is required");
+      return;
+    }
 
     let category = "uncategorized";
     const custom = form.customCategory?.trim();
@@ -306,7 +315,7 @@ export default function ProductsManagement() {
       
     } catch (err) {
       console.error(err);
-      alert("Failed to save product: " + err.message);
+      toast.error("Failed to save product: " + err.message);
     }
   };
 
@@ -454,7 +463,7 @@ export default function ProductsManagement() {
           </div>
         </div>
 
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Or create new category
           </label>
@@ -464,8 +473,8 @@ export default function ProductsManagement() {
             onChange={(e) => updateForm({ customCategory: e.target.value, category: "" })}
             className="w-full px-5 py-3.5 bg-blue-50/40 border border-blue-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-200/50 outline-none transition-all text-base"
           />
-        </div>
-        <div className="mb-8">
+        </div> */}
+        {/* <div className="mb-8">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Or create new subcategory
           </label>
@@ -476,7 +485,7 @@ export default function ProductsManagement() {
             className="w-full px-5 py-3.5 bg-blue-50/40 border border-blue-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-200/50 outline-none transition-all text-base"
             disabled={!form.category && !form.customCategory}
           />
-        </div>
+        </div> */}
 
         <div className="space-y-6 mb-9">
           <div>
@@ -725,9 +734,10 @@ export default function ProductsManagement() {
                       </button>
                       <button
                         onClick={() => {
-                          if (window.confirm("Delete this product?")) {
-                            deleteProduct(pid);
-                          }
+                          // Remove browser confirm, show toast after delete
+                          // For custom confirmation, use modal. Here, auto-confirm.
+                          deleteProduct(pid);
+                          toast.success("Product deleted successfully");
                         }}
                         className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5"
                       >
