@@ -1,5 +1,6 @@
 // src/pages/LoginPage.jsx
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { useProducts } from "../Context/ProductContext"; // assuming this exists
 import { Package } from "lucide-react";
 
@@ -26,17 +27,20 @@ export default function LoginPage() {
         // Save token (localStorage, context, cookie, etc)
         localStorage.setItem("adminToken", data.token);
         login(); // call context login → sets isAuthenticated true
+        toast.success("Login successful");
         // Optional: redirect here or let router handle it
       }
       
       // Option B: returns { success: true, message: "Logged in" }
       else if (data.success) {
         login();
+        toast.success("Login successful");
       }
       
       // Option C: just returns user object when successful
       else if (data.email || data.id) {
         login();
+        toast.success("Login successful");
       }
       
       // If none of the above match → adjust according to your actual response

@@ -117,10 +117,10 @@ export default function AdminAddProduct() {
 
       if (editingId) {
         await updateCustomProduct(editingId, productData);
-        setSuccess("Custom product updated successfully 🎉");
+        toast.success("Custom product updated successfully 🎉");
       } else {
         await createCustomProduct(productData);
-        setSuccess("Custom product added successfully 🎉");
+        toast.success("Custom product added successfully 🎉");
       }
 
       // Refresh list

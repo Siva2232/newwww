@@ -114,6 +114,7 @@ export default function BannersManagement() {
       // So passing imagePath as imageBase64 works fine there.
 
       await addHeroBanner(payload);
+      toast.success("Banner created successfully");
       resetForm();
     } catch (error) {
       setError("Error: " + (error.message || "Failed to create banner"));

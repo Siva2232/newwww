@@ -130,6 +130,7 @@ export default function SubcategoriesManagement() {
         payload.imageBase64 = uploadResult.path;
       }
       await addSubCategory(payload);
+      toast.success("Subcategory created successfully");
       resetForm();
     } catch (error) {
       setError("Error: " + (error.message || "Failed to create subcategory"));

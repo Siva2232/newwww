@@ -290,8 +290,10 @@ export default function ProductsManagement() {
 
       if (form.editingId) {
         await updateProduct(form.editingId, payload);
+        toast.success("Product updated successfully");
       } else {
         await addProduct(payload);
+        toast.success("Product created successfully");
       }
       
       // Reset
