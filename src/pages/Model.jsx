@@ -274,7 +274,7 @@ export default function ProductsShop() {
               <p className="text-[#86868b] mt-2 max-w-xs">Adjust your search or filters to explore other works.</p>
             </div>
           ) : (
-            <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8 lg:gap-8">
+            <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-8 lg:gap-8">
               <AnimatePresence>
                 {filteredProducts.map(product => (
                   <motion.div
