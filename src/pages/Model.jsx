@@ -21,7 +21,7 @@ export default function ProductsShop() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSubcategory, setSelectedSubcategory] = useState('All');
   const [selectedFilter, setSelectedFilter] = useState('All');
-  const [isFilterVisible, setIsFilterVisible] = useState(true);
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
@@ -31,11 +31,8 @@ export default function ProductsShop() {
   }, []);
 
   useEffect(() => {
-    // If we're on desktop, make sure filter is VISIBLE by default or forced visible
-    // if you want "always show" on desktop, we can just enforce it here.
-    if (!isMobile) {
-      setIsFilterVisible(true);
-    } else {
+    // hide sidebar when switching to mobile; otherwise leave current state
+    if (isMobile) {
       setIsFilterVisible(false);
     }
   }, [isMobile]);
@@ -127,10 +124,13 @@ export default function ProductsShop() {
               <SlidersHorizontal size={14} /> {isFilterVisible ? 'Close Sidebar' : 'Filters'}
             </button>
           ) : (
-             // On desktop, maybe show a static label or nothing
-             <div className="hidden lg:flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-500 rounded-full text-[10px] font-black uppercase tracking-widest cursor-default">
-                <SlidersHorizontal size={14} /> Filters Active
-             </div>
+            // On desktop show a toggle button
+            <button
+              onClick={() => setIsFilterVisible(!isFilterVisible)}
+              className="hidden lg:flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-500 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition"
+            >
+              <SlidersHorizontal size={14} /> {isFilterVisible ? 'Hide Filters' : 'Show Filters'}
+            </button>
           )}
 
           <div className="relative flex-1 max-w-xl group">
@@ -186,7 +186,7 @@ export default function ProductsShop() {
         </div>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-6 py-12 flex flex-col lg:flex-row gap-16">
+      <div className="max-w-[1440px] mx-auto px-4 py-12 flex flex-col lg:flex-row gap-8">
         
         {/* 3. SIDEBAR (Apple Editorial Style) */}
         <AnimatePresence>
@@ -196,7 +196,7 @@ export default function ProductsShop() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -50, opacity: 0 }}
               className={`
-                ${isMobile ? 'fixed inset-0 z-[200] bg-white p-8 overflow-y-auto' : 'w-72 sticky top-32 h-fit'}
+                ${isMobile ? 'fixed inset-0 z-[200] bg-white p-8 overflow-y-auto' : 'w-64 sticky top-32 h-fit lg:-ml-8'}
               `}
             >
               {isMobile && (
@@ -274,7 +274,7 @@ export default function ProductsShop() {
               <p className="text-[#86868b] mt-2 max-w-xs">Adjust your search or filters to explore other works.</p>
             </div>
           ) : (
-            <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-8">
+            <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8 lg:gap-8">
               <AnimatePresence>
                 {filteredProducts.map(product => (
                   <motion.div

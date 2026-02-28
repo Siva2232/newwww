@@ -23,33 +23,75 @@ export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [activeSubcategory, setActiveSubcategory] = useState(null);
   const [previewProduct, setPreviewProduct] = useState(null);
-  const [searchResults, setSearchResults] = useState([]);
+  // results can include products, categories, and subcategories
+  const [searchResults, setSearchResults] = useState({
+    products: [],
+    categories: [],
+    subcategories: [],
+  });
   const [searchLoading, setSearchLoading] = useState(false);
+
+  const { products = [], shopCategories = [], shopSubCategories = [] } = useProducts();
 
   // Search logic
   useEffect(() => {
-    if (searchTerm.trim().length >= 2) {
+    // allow searching even for a single character to show results/categories
+    if (searchTerm.trim().length >= 1) {
       const handler = setTimeout(async () => {
         setSearchLoading(true);
         try {
-          const results = await api.searchProducts(searchTerm);
-          setSearchResults(results || []);
+          let productsRes = await api.searchProducts(searchTerm);
+          const term = searchTerm.trim().toLowerCase();
+          // local category/subcategory filtering
+          const matchingCats = shopCategories.filter((c) =>
+            c.name.toLowerCase().includes(term),
+          );
+          const matchingSubcats = shopSubCategories.filter((sc) => {
+            const name = typeof sc.name === "string" ? sc.name : "";
+            return name.toLowerCase().includes(term);
+          });
+
+          // if API returned nothing, fall back to local product list
+          if (!productsRes || productsRes.length === 0) {
+            productsRes = products.filter((p) => {
+              const n = (p.name || "").toLowerCase();
+              return n.includes(term);
+            });
+          }
+
+          setSearchResults({
+            products: productsRes || [],
+            categories: matchingCats,
+            subcategories: matchingSubcats,
+          });
         } catch (err) {
           console.error("Search error:", err);
+          // fallback to local products if request fails
+          const term = searchTerm.trim().toLowerCase();
+          const fallbackProducts = products.filter((p) =>
+            (p.name || "").toLowerCase().includes(term),
+          );
+          const matchingCats = shopCategories.filter((c) =>
+            c.name.toLowerCase().includes(term),
+          );
+          const matchingSubcats = shopSubCategories.filter((sc) => {
+            const name = typeof sc.name === "string" ? sc.name : "";
+            return name.toLowerCase().includes(term);
+          });
+          setSearchResults({ products: fallbackProducts, categories: matchingCats, subcategories: matchingSubcats });
         } finally {
           setSearchLoading(false);
         }
       }, 300);
       return () => clearTimeout(handler);
     } else {
-      setSearchResults([]);
+      setSearchResults({ products: [], categories: [], subcategories: [] });
     }
-  }, [searchTerm]);
+  }, [searchTerm, shopCategories, shopSubCategories]);
 
-  const filteredProducts = searchResults;
-
-  const { products = [], shopCategories = [], shopSubCategories = [] } = useProducts();
+  const filteredProducts = searchResults.products;
   const searchRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -90,20 +132,42 @@ export default function Navbar() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const categoryProducts = useMemo(() => {
-    if (!activeCategory) return [];
-    return products
-      .filter((p) => p?.category?.trim().toLowerCase() === activeCategory.toLowerCase())
-      .slice(0, 5);
-  }, [products, activeCategory]);
+  // helper normalizer for category/subcategory value which may be a string or object
+  const normalize = (val) => {
+    if (!val) return "";
+    if (typeof val === "string") return val.trim().toLowerCase();
+    if (typeof val === "object" && val.name)
+      return String(val.name).trim().toLowerCase();
+    return "";
+  };
 
+  // products to show in the middle column; only when a subcategory is hovered
+  const middleProducts = useMemo(() => {
+    if (!products || products.length === 0 || !activeSubcategory) return [];
+    return products
+      .filter((p) => {
+        const sub = normalize(p?.subcategory);
+        return sub === activeSubcategory.toLowerCase();
+      })
+      .slice(0, 5);
+  }, [products, activeSubcategory]);
+
+  // when the middle list changes, update preview
   useEffect(() => {
-    if (categoryProducts.length > 0) {
-      setPreviewProduct(categoryProducts[0]);
+    if (middleProducts.length > 0) {
+      setPreviewProduct(middleProducts[0]);
     } else {
       setPreviewProduct(null);
     }
-  }, [categoryProducts]);
+  }, [middleProducts]);
+
+  // clear subcategory when main category closes or changes
+  useEffect(() => {
+    if (!activeCategory) {
+      setActiveSubcategory(null);
+    }
+  }, [activeCategory]);
+
 
   return (
     <>
@@ -151,7 +215,7 @@ export default function Navbar() {
 
             {/* Search Dropdown */}
             <AnimatePresence>
-              {isDropdownOpen && searchTerm.trim().length >= 2 && (
+              {isDropdownOpen && searchTerm.trim().length >= 1 && (
                 <motion.div
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -162,40 +226,92 @@ export default function Navbar() {
                     <div className="p-4 flex justify-center items-center">
                       <Loader2 size={24} className="animate-spin text-amber-500" />
                     </div>
-                  ) : filteredProducts.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500 text-sm">
-                      No products found
-                    </div>
                   ) : (
                     <div>
-                      {filteredProducts.map((product) => (
-                        <div
-                          key={product._id || product.id}
-                          onClick={() =>
-                            handleNavClick(
-                              `/product/${product._id || product.id}`,
-                            )
-                          }
-                          className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-none"
-                        >
-                          <img
-                            src={getImageUrl(product.image) || "/placeholder-product.jpg"}
-                            alt={product.name}
-                            className="w-10 h-10 object-cover rounded bg-gray-100"
-                            onError={(e) => {
-                              e.target.src = "/placeholder-product.jpg";
-                            }}
-                          />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 line-clamp-1">
-                              {product.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              ₹{product.price}
-                            </p>
-                          </div>
+                      {/* categories hits */}
+                      {searchResults.categories.length > 0 && (
+                        <div className="p-2 border-b border-gray-100">
+                          <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                            Categories
+                          </p>
+                          {searchResults.categories.map((cat) => (
+                            <div
+                              key={cat._id || cat.id}
+                              onClick={() =>
+                                handleNavClick(
+                                  `/models?category=${encodeURIComponent(cat.name)}`,
+                                )
+                              }
+                              className="p-2 hover:bg-gray-50 cursor-pointer rounded"
+                            >
+                              {cat.name}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
+
+                      {/* subcategory hits */}
+                      {searchResults.subcategories.length > 0 && (
+                        <div className="p-2 border-b border-gray-100">
+                          <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                            Subcategories
+                          </p>
+                          {searchResults.subcategories.map((sc) => (
+                            <div
+                              key={sc._id || sc.id}
+                              onClick={() =>
+                                handleNavClick(
+                                  `/models?subcategory=${encodeURIComponent(sc.name)}`,
+                                )
+                              }
+                              className="p-2 hover:bg-gray-50 cursor-pointer rounded"
+                            >
+                              {sc.name}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* product hits */}
+                      {filteredProducts.length > 0 && (
+                        filteredProducts.map((product) => (
+                          <div
+                            key={product._id || product.id}
+                            onClick={() =>
+                              handleNavClick(
+                                `/product/${product._id || product.id}`,
+                              )
+                            }
+                            className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-none"
+                          >
+                            <img
+                              src={getImageUrl(product.image) || "/placeholder-product.jpg"}
+                              alt={product.name}
+                              className="w-10 h-10 object-cover rounded bg-gray-100"
+                              onError={(e) => {
+                                e.target.src = "/placeholder-product.jpg";
+                              }}
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 line-clamp-1">
+                                {product.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                ₹{product.price}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+
+                      {/* no results message */}
+                      {searchResults.categories.length === 0 &&
+                        searchResults.subcategories.length === 0 &&
+                        filteredProducts.length === 0 && (
+                          <div className="p-4 text-center text-gray-500 text-sm">
+                            No results found
+                          </div>
+                        )}
                     </div>
                   )}
                 </motion.div>
@@ -205,7 +321,7 @@ export default function Navbar() {
           {/* NEW: Custom Book Button */}
           <Link
             to="/custom-book"
-            className="hidden md:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-md text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105 whitespace-nowrap"
+            className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#f7ef22] text-black rounded-md text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105 whitespace-nowrap"
           >
             <span>Create Custom Book</span>
             <ArrowRight size={16} />
@@ -259,7 +375,10 @@ export default function Navbar() {
                     <div
                       key={cat._id || cat.id}
                       className="relative group h-full flex items-center"
-                      onMouseEnter={() => setActiveCategory(cat.name)}
+                      onMouseEnter={() => {
+                        setActiveCategory(cat.name);
+                        setActiveSubcategory(null);
+                      }}
                       onMouseLeave={() => setActiveCategory(null)}
                     >
                       <Link
@@ -281,69 +400,88 @@ export default function Navbar() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ duration: 0.2 }}
-                            className={`absolute top-full mt-1 w-[550px] bg-white shadow-xl rounded-lg border border-gray-100 overflow-hidden z-50 flex ${dropdownClasses}`}
+                            className={`absolute top-full mt-1 w-[660px] bg-white shadow-xl rounded-lg border border-gray-100 overflow-hidden z-50 flex ${dropdownClasses}`}
+                            onMouseEnter={() => setActiveCategory(cat.name)}
+                            onMouseLeave={() => setActiveCategory(null)}
                           >
                             {/* Left Side: Product List */}
-                            <div className="w-1/2 py-2 bg-white">
-                              <div className="flex flex-col h-full">
-                                {/* subcategory links */}
-                                {shopSubCategories && shopSubCategories.filter(sc => {
-                                    const catName = typeof sc.category === 'string' ? sc.category : sc.category?.name;
-                                    return catName === cat.name;
-                                  }).length > 0 && (
-                                  <div className="px-4 pb-2 border-b border-gray-100">
-                                    <div className="flex flex-wrap gap-2">
-                                      {shopSubCategories.filter(sc => {
-                                        const catName = typeof sc.category === 'string' ? sc.category : sc.category?.name;
-                                        return catName === cat.name;
-                                      }).map(sc => (
-                                        <Link
-                                          key={sc._id || sc.id}
-                                          to={`/models?category=${encodeURIComponent(cat.name)}&subcategory=${encodeURIComponent(sc.name)}`}
-                                          className="text-xs px-2 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
-                                          onClick={() => setActiveCategory(null)}
-                                        >
-                                          {sc.name}
-                                        </Link>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                <div className="flex-1">
-                                  {categoryProducts.length > 0 ? (
-                                    categoryProducts.map((product) => (
-                                      <Link
-                                        key={product._id || product.id}
-                                        to={`/product/${product._id || product.id}`}
-                                        className="flex items-center justify-between px-4 py-3 hover:bg-amber-50 border-l-4 border-transparent hover:border-amber-500 transition-all group/item"
-                                        onMouseEnter={() => setPreviewProduct(product)}
-                                        onClick={() => setActiveCategory(null)}
-                                      >
-                                        <span className="text-sm font-medium text-gray-700 group-hover/item:text-amber-700 line-clamp-1">
-                                          {product.name}
-                                        </span>
-                                        <ArrowRight size={14} className="opacity-0 group-hover/item:opacity-100 text-amber-500 transition-opacity" />
-                                      </Link>
-                                    ))
-                                  ) : (
-                                    <p className="text-sm text-gray-400 text-center py-8">
-                                      No products found in this category
-                                    </p>
-                                  )}
-                                </div>
-                                {categoryProducts.length > 0 && (
-                                  <div className="px-4 pt-2 border-t border-gray-100 mt-auto">
-                                    <Link
-                                      to={`/models?category=${encodeURIComponent(cat.name)}`}
-                                      className="block text-center text-xs font-bold uppercase tracking-wider text-amber-600 hover:text-white hover:bg-amber-600 transition-colors py-2 rounded border border-amber-600"
-                                      onClick={() => setActiveCategory(null)}
-                                    >
-                                      View All {cat.name}
-                                    </Link>
-                                  </div>
-                                )}
-                              </div>
+                            {/* left column – subcategory list */}
+                          <div className="w-1/3 py-2 bg-white border-r border-gray-100">
+                            <div className="flex flex-col gap-2 px-4">
+                              {shopSubCategories
+                                .filter((sc) => {
+                                  const catName =
+                                    typeof sc.category === "string"
+                                      ? sc.category
+                                      : sc.category?.name;
+                                  return catName === cat.name;
+                                })
+                                .map((sc) => (
+                                  <button
+                                    key={sc._id || sc.id}
+                                    onMouseEnter={() => setActiveSubcategory(sc.name)}
+                                    onClick={() =>
+                                      handleNavClick(
+                                        `/models?category=${encodeURIComponent(
+                                          cat.name,
+                                        )}&subcategory=${encodeURIComponent(
+                                          sc.name,
+                                        )}`,
+                                      )
+                                    }
+                                    className="text-sm text-left px-2 py-1 bg-gray-100 rounded hover:bg-gray-200"
+                                  >
+                                    {sc.name}
+                                  </button>
+                                ))}
                             </div>
+                          </div>
+
+                          {/* middle column – products list */}
+                          <div className="w-1/3 py-2 bg-white border-r border-gray-100">
+                            <div className="flex flex-col h-full">
+                              {middleProducts.length > 0 ? (
+                                middleProducts.map((product) => (
+                                  <Link
+                                    key={product._id || product.id}
+                                    to={`/product/${product._id || product.id}`}
+                                    className="flex items-center justify-between px-4 py-3 hover:bg-amber-50 border-l-4 border-transparent hover:border-amber-500 transition-all group/item"
+                                    onMouseEnter={() => setPreviewProduct(product)}
+                                    onClick={() => setActiveCategory(null)}
+                                  >
+                                    <span className="text-sm font-medium text-gray-700 group-hover/item:text-amber-700 line-clamp-1">
+                                      {product.name}
+                                    </span>
+                                    <ArrowRight size={14} className="opacity-0 group-hover/item:opacity-100 text-amber-500 transition-opacity" />
+                                  </Link>
+                                ))
+                              ) : (
+                                <p className="text-sm text-gray-400 text-center py-8">
+                                  {activeSubcategory
+                                    ? "No products found"
+                                    : "Hover a subcategory"
+                                  }
+                                </p>
+                              )}
+                            </div>
+                            {middleProducts.length > 0 && (
+                              <div className="px-4 pt-2 border-t border-gray-100 mt-auto">
+                                <Link
+                                  to={`/models?category=${encodeURIComponent(cat.name)}${
+                                    activeSubcategory
+                                      ? `&subcategory=${encodeURIComponent(
+                                          activeSubcategory,
+                                        )}`
+                                      : ""
+                                  }`}
+                                  className="block text-center text-xs font-bold uppercase tracking-wider text-amber-600 hover:text-white hover:bg-amber-600 transition-colors py-2 rounded border border-amber-600"
+                                  onClick={() => setActiveCategory(null)}
+                                >
+                                  View All {activeSubcategory || cat.name}
+                                </Link>
+                              </div>
+                            )}
+                          </div>
 
                             {/* Right Side: Preview */}
                             <div className="w-1/2 bg-gray-50 border-l border-gray-100 p-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
@@ -407,7 +545,7 @@ export default function Navbar() {
               )}
 
               <Link
-                to="/services"
+                to="/models"
                 className="text-xs font-bold uppercase tracking-wide text-gray-700 hover:text-amber-600 whitespace-nowrap px-2 flex items-center gap-1"
               >
                 MORE <ChevronDown size={12} className="opacity-50" />
@@ -456,6 +594,51 @@ export default function Navbar() {
             </div>
 
             <div className="mt-4 space-y-4">
+              {/* categories */}
+              {searchResults.categories.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Categories
+                  </p>
+                  {searchResults.categories.map((cat) => (
+                    <div
+                      key={cat._id || cat.id}
+                      onClick={() =>
+                        handleNavClick(
+                          `/models?category=${encodeURIComponent(cat.name)}`,
+                        )
+                      }
+                      className="p-2 hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      {cat.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* subcategories */}
+              {searchResults.subcategories.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Subcategories
+                  </p>
+                  {searchResults.subcategories.map((sc) => (
+                    <div
+                      key={sc._id || sc.id}
+                      onClick={() =>
+                        handleNavClick(
+                          `/models?subcategory=${encodeURIComponent(sc.name)}`,
+                        )
+                      }
+                      className="p-2 hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      {sc.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* products */}
               {filteredProducts.map((product) => (
                 <div
                   key={product._id}
@@ -473,11 +656,15 @@ export default function Navbar() {
                   </div>
                 </div>
               ))}
-              {filteredProducts.length === 0 && searchTerm.length > 1 && (
-                <p className="text-center text-gray-400 mt-10">
-                  No results found.
-                </p>
-              )}
+
+              {filteredProducts.length === 0 &&
+                searchTerm.length > 1 &&
+                searchResults.categories.length === 0 &&
+                searchResults.subcategories.length === 0 && (
+                  <p className="text-center text-gray-400 mt-10">
+                    No results found.
+                  </p>
+                )}
             </div>
           </motion.div>
         )}
@@ -555,7 +742,7 @@ export default function Navbar() {
 
                   <button
                     onClick={() => handleNavClick("/custom-book")}
-                    className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg text-lg font-bold shadow-md active:scale-95 transition-transform"
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-[#f7ef22] text-black rounded-lg text-lg font-bold shadow-md active:scale-95 transition-transform"
                   >
                     <span>Create Custom Book</span>
                     <ArrowRight size={20} />

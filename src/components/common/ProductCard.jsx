@@ -96,10 +96,15 @@ const ProductCard = ({
           </div>
 
           <Link to={`/product/${product._id || product.id}`}>
-            <h3 className="text-sm font-bold text-slate-800 leading-snug line-clamp-1 mb-3 group-hover:text-amber-600 transition-colors duration-300">
+            <h3 className="text-sm font-bold text-slate-800 leading-snug line-clamp-1 mb-1 group-hover:text-amber-600 transition-colors duration-300">
               {product.name}
             </h3>
           </Link>
+          {product.description && (
+            <p className="text-xs text-slate-500 mb-3 line-clamp-2">
+              {product.description}
+            </p>
+          )}
 
           {/* PRICE & INTERACTIVE CTA */}
           <div className="flex items-center justify-between">

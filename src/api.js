@@ -3,7 +3,17 @@
 // Environment variable VITE_API_BASE_URL should point at the backend (e.g.
 // http://localhost:5000) and is set in .env.* files.
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// ensure the base URL always includes a protocol; Vite env vars must be reloaded after editing
+let BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+if (BASE_URL && !/^https?:\/\//i.test(BASE_URL)) {
+  // missing protocol, default to https
+  BASE_URL = `https://${BASE_URL}`;
+}
+// remove trailing slash to avoid double slashes
+if (BASE_URL.endsWith('/')) {
+  BASE_URL = BASE_URL.slice(0, -1);
+}
+console.debug('API BASE_URL set to', BASE_URL);
 export { BASE_URL };
 
 const getHeaders = (json = true) => {
@@ -55,10 +65,22 @@ export const getProducts = async (params = {}) => {
   return handleResponse(res);
 };
 export const searchProducts = async (term) => {
-  const res = await fetch(`${BASE_URL}/api/products/search?q=${encodeURIComponent(term)}`, {
-    headers: getHeaders(),
-  });
-  return handleResponse(res);
+  const url = `${BASE_URL}/api/products/search?q=${encodeURIComponent(term)}`;
+  console.debug('searchProducts url', url);
+  try {
+    const res = await fetch(url, {
+      headers: getHeaders(),
+    });
+    if (res.status === 404) {
+      // backend doesn't support search endpoint (e.g. prod) – just return empty
+      console.warn('searchProducts endpoint returned 404; falling back to empty array');
+      return [];
+    }
+    return handleResponse(res);
+  } catch (err) {
+    console.error('searchProducts fetch failed', err);
+    return [];
+  }
 };
 export const createProduct = async (payload) => {
   const res = await fetch(`${BASE_URL}/api/products`, {

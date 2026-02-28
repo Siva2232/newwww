@@ -143,47 +143,47 @@ export default function AdminPanel() {
             </button>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleTabChange(item.id)}
-                className={`group w-full flex items-center gap-4 px-5 py-4 rounded-xl text-left transition-all duration-200 ${
-                  activeTab === item.id
-                    ? "bg-indigo-600 text-white shadow-lg"
-                    : "hover:bg-gray-800"
-                }`}
-              >
-                <item.icon
-                  size={22}
-                  className={`transition-colors ${
-                    activeTab === item.id
-                      ? "text-indigo-200"
-                      : "text-gray-400 group-hover:text-indigo-400"
+          <nav className="flex-1 p-4 space-y-3">
+            {menuItems.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleTabChange(item.id)}
+                  className={`group w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-colors duration-200 ${
+                    isActive ? "bg-indigo-600 shadow-lg" : "hover:bg-gray-800"
                   }`}
-                />
-                <div className="flex-1 flex items-center justify-between">
+                >
+                  <div
+                    className={`p-2 rounded-full transition-colors ${
+                      isActive
+                        ? "bg-white text-indigo-600"
+                        : "bg-gray-700 text-gray-300 group-hover:bg-indigo-500 group-hover:text-white"
+                    }`}
+                  >
+                    <item.icon size={20} />
+                  </div>
                   <span
-                    className={`font-medium transition-colors ${
-                      activeTab === item.id ? "" : "group-hover:text-white"
+                    className={`flex-1 font-medium transition-colors ${
+                      isActive ? "text-white" : "text-gray-300 group-hover:text-white"
                     }`}
                   >
                     {item.label}
                   </span>
                   {item.count !== null && item.count !== undefined && (
                     <span
-                      className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                        activeTab === item.id
-                          ? "bg-indigo-700"
-                          : "bg-gray-700 group-hover:bg-gray-600"
+                      className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                        isActive
+                          ? "bg-white text-indigo-600"
+                          : "bg-gray-700 group-hover:bg-indigo-600 text-gray-300"
                       }`}
                     >
                       {item.count}
                     </span>
                   )}
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </nav>
 
           <div className="p-6 border-t border-gray-800 space-y-4">
@@ -199,7 +199,7 @@ export default function AdminPanel() {
 
             <button
               onClick={() => window.confirm("Are you sure you want to logout?") && logout()}
-              className="w-full flex items-center justify-center gap-3 px-5 py-3.5 bg-red-600 hover:bg-red-700 rounded-xl font-medium transition shadow-md"
+              className="w-full flex items-center justify-center gap-3 px-5 py-3.5 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-lg shadow-md"
             >
               <LogOut size={20} />
               Logout
@@ -209,11 +209,11 @@ export default function AdminPanel() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="md:hidden sticky top-0 bg-white shadow-md p-4 flex items-center justify-between z-40">
+      <main className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+        <div className="md:hidden sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md p-4 flex items-center justify-between z-40">
           <div className="flex items-center gap-3">
-             <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-gray-100 rounded-lg transition">
-               <Menu size={26} />
+             <button onClick={() => setSidebarOpen(true)} className="p-2 bg-white rounded-full shadow hover:shadow-md transition">
+               <Menu size={26} className="text-indigo-600" />
              </button>
              <h2 className="font-bold text-xl">{currentItem?.label || "Admin"}</h2>
           </div>
@@ -231,7 +231,7 @@ export default function AdminPanel() {
 
         <div className="p-6 md:p-10 max-w-7xl mx-auto">
           {/* Stats Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-7 gap-6 mb-8">
             <StatCard icon={Package} color="amber" count={products.length} label="Products" />
             <StatCard icon={ImageIcon} color="sky" count={heroBanners.length} label="Banners" />
             <StatCard icon={Grid3X3} color="purple" count={shopCategories.length} label="Categories" />
@@ -245,9 +245,9 @@ export default function AdminPanel() {
           <div className="hidden md:flex items-center justify-between mb-10">
             <div className="flex items-end gap-5">
               {currentItem && (
-                <currentItem.icon size={48} className={getColorClasses(currentColor).icon} />
+                <currentItem.icon size={48} className={`${getColorClasses(currentColor).icon}`} />
               )}
-              <h1 className="text-4xl font-extrabold text-gray-800">
+              <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-400">
                 {currentItem?.label || "Select a section"}
               </h1>
             </div>
