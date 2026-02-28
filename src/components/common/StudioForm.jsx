@@ -37,12 +37,22 @@ export default function StudioForm({
       toast.error("Only image files are allowed");
       return;
     }
-    if (files.length + valid.length > 50) {
+    // file size enforcement
+    const underLimit = valid.filter((f) => {
+      if (f.size > 5 * 1024 * 1024) {
+        toast.error(`${f.name} is over 5 MB and was ignored`);
+        return false;
+      }
+      return true;
+    });
+    if (underLimit.length === 0) return;
+
+    if (files.length + underLimit.length > 50) {
       toast.error("Maximum 50 photos allowed");
       return;
     }
-    const newPreviews = valid.map((f) => URL.createObjectURL(f));
-    setFiles((prev) => [...prev, ...valid]);
+    const newPreviews = underLimit.map((f) => URL.createObjectURL(f));
+    setFiles((prev) => [...prev, ...underLimit]);
     setPreviews((prev) => [...prev, ...newPreviews]);
   };
 
@@ -56,6 +66,10 @@ export default function StudioForm({
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) {
       toast.error("Please select a valid image");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Cover image must be less than 5 MB");
       return;
     }
     if (coverPreview) URL.revokeObjectURL(coverPreview);

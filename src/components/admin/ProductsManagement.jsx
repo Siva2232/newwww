@@ -97,6 +97,12 @@ export default function ProductsManagement() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // enforce 5MB per-file limit (frontend guard)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Main image must be under 5 MB");
+      return;
+    }
+
     try {
       const preview = await readFilePreview(file);
       updateForm({ 
@@ -112,10 +118,21 @@ export default function ProductsManagement() {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
+    // filter out files that exceed 5MB
+    const validFiles = files.filter((f) => {
+      if (f.size > 5 * 1024 * 1024) {
+        toast.error(`${f.name} is larger than 5 MB and was skipped`);
+        return false;
+      }
+      return true;
+    });
+
+    if (!validFiles.length) return;
+
     try {
-      const newPreviews = await Promise.all(files.map(readFilePreview));
+      const newPreviews = await Promise.all(validFiles.map(readFilePreview));
       updateForm({
-        carouselImageFiles: [...form.carouselImageFiles, ...files],
+        carouselImageFiles: [...form.carouselImageFiles, ...validFiles],
         carouselPreviews: [...form.carouselPreviews, ...newPreviews],
       });
     } catch (err) {

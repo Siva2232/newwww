@@ -33,9 +33,9 @@ export default function BannersManagement() {
       return;
     }
 
-    // Optional: warn if too large (~8MB for banners)
-    if (file.size > 8 * 1024 * 1024) {
-      setError("Image is too large. Recommended max size: 8 MB");
+    // enforce size limit (5MB per image)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size should be less than 5 MB");
       return;
     }
 
