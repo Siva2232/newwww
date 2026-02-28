@@ -31,7 +31,6 @@ export default function ProductsShop() {
   }, []);
 
   useEffect(() => {
-    // hide sidebar when switching to mobile; otherwise leave current state
     if (isMobile) {
       setIsFilterVisible(false);
     }
@@ -55,7 +54,6 @@ export default function ProductsShop() {
     }
   }, [searchParams, shopCategories, shopSubCategories]);
 
-  // reset subcategory whenever category changes
   useEffect(() => {
     setSelectedSubcategory('All');
   }, [selectedCategory]);
@@ -87,10 +85,10 @@ export default function ProductsShop() {
   return (
     <div className="min-h-screen bg-[#FBFBFD] text-[#1d1d1f]">
       
-      {/* 1. MINIMALIST HERO HEADER */}
-      <section className="px-6">
+      {/* HERO HEADER */}
+      <section className="px-5 sm:px-6 lg:px-8">
         <div className="max-w-[1440px] mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 md:mb-12">
             <div className="space-y-4">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-orange-600 font-bold text-[10px] uppercase tracking-[0.2em]">
                 <Sparkles size={14} fill="currentColor" />
@@ -103,111 +101,112 @@ export default function ProductsShop() {
             </div>
             
             <div className="flex items-center gap-4">
-               <div className="bg-white border border-black/5 rounded-full px-6 py-2 shadow-sm flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#86868b]">Showing</span>
-                  <span className="text-sm font-bold">{filteredProducts.length} Results</span>
-               </div>
+              <div className="bg-white border border-black/5 rounded-full px-5 sm:px-6 py-2 shadow-sm flex items-center gap-3 whitespace-nowrap">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#86868b]">Showing</span>
+                <span className="text-sm font-bold">{filteredProducts.length} Results</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. FLOATING UTILITY BAR (Sticky) */}
-      <div className="top-0 z-[100] bg-white/70 backdrop-blur-2xl border-b border-black/[0.03] py-4">
-        <div className="max-w-[1440px] mx-auto px-6 flex items-center justify-between gap-6">
-          {/* Only show/hide button on mobile. On desktop, sidebar is always there. */}
+      {/* FLOATING UTILITY BAR – now properly contained */}
+      <div className="sticky top-0 z-[100] bg-white/70 backdrop-blur-2xl border-b border-black/[0.03] py-4">
+        <div className="max-w-[1440px] mx-auto px-5 sm:px-6 lg:px-8 flex items-center justify-between gap-4 sm:gap-6">
           {isMobile ? (
             <button
               onClick={() => setIsFilterVisible(!isFilterVisible)}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl"
             >
-              <SlidersHorizontal size={14} /> {isFilterVisible ? 'Close Sidebar' : 'Filters'}
+              <SlidersHorizontal size={14} /> {isFilterVisible ? 'Close' : 'Filters'}
             </button>
           ) : (
-            // On desktop show a toggle button
             <button
               onClick={() => setIsFilterVisible(!isFilterVisible)}
-              className="hidden lg:flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-500 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition"
             >
-              <SlidersHorizontal size={14} /> {isFilterVisible ? 'Hide Filters' : 'Show Filters'}
+              <SlidersHorizontal size={14} /> {isFilterVisible ? 'Hide' : 'Filters'}
             </button>
           )}
 
-          <div className="relative flex-1 max-w-xl group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#86868b] group-focus-within:text-orange-600 transition-colors" size={18} />
+          <div className="relative flex-1 max-w-md lg:max-w-xl group">
+            <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-[#86868b] group-focus-within:text-orange-600 transition-colors" size={18} />
             <input
               type="text"
               placeholder="Search our masterpiece catalog..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-[#f5f5f7] border-none rounded-full py-3.5 pl-14 pr-6 text-sm font-medium focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
+              className="w-full bg-[#f5f5f7] border-none rounded-full py-3 sm:py-3.5 pl-12 sm:pl-14 pr-5 sm:pr-6 text-sm font-medium focus:ring-4 focus:ring-orange-500/10 transition-all outline-none"
             />
           </div>
         </div>
       </div>
 
-      {/* 2.5 CATEGORY STORIES (Swipeable) */}
-      <div className="max-w-[1440px] mx-auto px-6 pt-10 pb-4">
-        <div className="flex gap-4 sm:gap-8 overflow-x-auto pb-6 -mx-6 px-6 sm:mx-0 sm:px-0 no-scrollbar snap-x">
-           <button
-             onClick={() => setSelectedCategory('All')}
-             className="flex flex-col items-center min-w-[72px] sm:min-w-[84px] gap-3 snap-start group"
-           >
-             <div className={`w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full p-[2px] transition-all duration-300 ${selectedCategory === 'All' ? 'bg-gradient-to-tr from-orange-500 to-amber-500' : 'bg-transparent group-hover:bg-gray-200'}`}>
-                <div className="w-full h-full rounded-full bg-white border-[3px] border-white overflow-hidden relative">
-                   <div className="absolute inset-0 bg-[#1d1d1f] flex items-center justify-center text-white font-bold text-[10px] tracking-widest uppercase">
-                      All
-                   </div>
+      {/* CATEGORY STORIES – better padding control */}
+      <div className="max-w-[1440px] mx-auto px-5 sm:px-6 lg:px-8 pt-8 pb-4">
+        <div className="flex gap-4 sm:gap-6 lg:gap-8 overflow-x-auto pb-6 -mx-5 sm:-mx-6 lg:mx-0 lg:px-0 no-scrollbar snap-x">
+          <button
+            onClick={() => setSelectedCategory('All')}
+            className="flex flex-col items-center min-w-[72px] sm:min-w-[80px] lg:min-w-[84px] gap-2.5 snap-start group"
+          >
+            <div className={`w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] lg:w-[84px] lg:h-[84px] rounded-full p-[2px] transition-all duration-300 ${selectedCategory === 'All' ? 'bg-gradient-to-tr from-orange-500 to-amber-500' : 'bg-transparent group-hover:bg-gray-200'}`}>
+              <div className="w-full h-full rounded-full bg-white border-[3px] border-white overflow-hidden relative">
+                <div className="absolute inset-0 bg-[#1d1d1f] flex items-center justify-center text-white font-bold text-[10px] sm:text-[11px] tracking-widest uppercase">
+                  All
                 </div>
-             </div>
-             <span className={`text-[11px] font-bold tracking-tight ${selectedCategory === 'All' ? 'text-orange-600' : 'text-[#1d1d1f]'}`}>View All</span>
-           </button>
+              </div>
+            </div>
+            <span className={`text-[11px] font-bold tracking-tight ${selectedCategory === 'All' ? 'text-orange-600' : 'text-[#1d1d1f]'}`}>View All</span>
+          </button>
 
-           {shopCategories.map((cat, idx) => (
-             <button
-               key={cat.id || idx}
-               onClick={() => setSelectedCategory(cat.name)}
-               className="flex flex-col items-center min-w-[72px] sm:min-w-[84px] gap-3 snap-start group"
-             >
-               <div className={`w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-full p-[2px] transition-all duration-300 ${selectedCategory === cat.name ? 'bg-gradient-to-tr from-orange-500 to-amber-500' : 'bg-transparent group-hover:bg-gray-200'}`}>
-                  <div className="w-full h-full rounded-full bg-white border-[3px] border-white overflow-hidden relative">
-                     <img 
-                        src={getImageUrl(cat.image) || "/placeholder.jpg"} 
-                        alt={cat.name} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                     />
-                  </div>
-               </div>
-               <span className={`text-[11px] font-bold tracking-tight max-w-[80px] text-center truncate ${selectedCategory === cat.name ? 'text-orange-600' : 'text-[#1d1d1f]'}`}>
-                  {cat.name}
-               </span>
-             </button>
-           ))}
+          {shopCategories.map((cat, idx) => (
+            <button
+              key={cat.id || idx}
+              onClick={() => setSelectedCategory(cat.name)}
+              className="flex flex-col items-center min-w-[72px] sm:min-w-[80px] lg:min-w-[84px] gap-2.5 snap-start group"
+            >
+              <div className={`w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] lg:w-[84px] lg:h-[84px] rounded-full p-[2px] transition-all duration-300 ${selectedCategory === cat.name ? 'bg-gradient-to-tr from-orange-500 to-amber-500' : 'bg-transparent group-hover:bg-gray-200'}`}>
+                <div className="w-full h-full rounded-full bg-white border-[3px] border-white overflow-hidden relative">
+                  <img 
+                    src={getImageUrl(cat.image) || "/placeholder.jpg"} 
+                    alt={cat.name} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  />
+                </div>
+              </div>
+              <span className={`text-[11px] font-bold tracking-tight max-w-[80px] text-center truncate ${selectedCategory === cat.name ? 'text-orange-600' : 'text-[#1d1d1f]'}`}>
+                {cat.name}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-4 py-12 flex flex-col lg:flex-row gap-8">
+      {/* MAIN CONTENT AREA – fixed layout */}
+      <div className="max-w-[1440px] mx-auto px-5 sm:px-6 lg:px-8 py-8 lg:py-12 flex flex-col lg:flex-row gap-8">
         
-        {/* 3. SIDEBAR (Apple Editorial Style) */}
         <AnimatePresence>
           {isFilterVisible && (
             <motion.aside
-              initial={{ x: -50, opacity: 0 }}
+              initial={{ x: -40, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -50, opacity: 0 }}
+              exit={{ x: -300, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 180 }}
               className={`
-                ${isMobile ? 'fixed inset-0 z-[200] bg-white p-8 overflow-y-auto' : 'w-64 sticky top-32 h-fit lg:-ml-8'}
+                ${isMobile 
+                  ? 'fixed inset-0 z-[200] bg-white p-6 sm:p-8 overflow-y-auto' 
+                  : 'hidden lg:block w-64 xl:w-72 sticky top-28 lg:top-32 shrink-0 -ml-4 xl:-ml-6'
+                }
               `}
             >
               {isMobile && (
-                <div className="flex justify-between items-center mb-12">
-                  <h2 className="text-3xl font-bold tracking-tighter">Filter By</h2>
+                <div className="flex justify-between items-center mb-10">
+                  <h2 className="text-3xl font-bold tracking-tighter">Filters</h2>
                   <button onClick={() => setIsFilterVisible(false)} className="p-3 bg-[#f5f5f7] rounded-full"><X size={24} /></button>
                 </div>
               )}
 
               <div className="space-y-16">
-                {/* Collection Group */}
                 <section>
                   <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#86868b] mb-8">Collections</h3>
                   <div className="grid grid-cols-1 gap-1">
@@ -244,7 +243,6 @@ export default function ProductsShop() {
                   </section>
                 )}
 
-                {/* Featured Group */}
                 <section>
                   <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#86868b] mb-8">Featured</h3>
                   <div className="flex flex-wrap lg:flex-col gap-3">
@@ -265,8 +263,8 @@ export default function ProductsShop() {
           )}
         </AnimatePresence>
 
-        {/* 4. PRODUCT GRID (Optimized Spacing) */}
-        <main className="flex-1">
+        {/* PRODUCT GRID – constrained width */}
+        <main className="flex-1 min-w-0">
           {filteredProducts.length === 0 ? (
             <div className="h-[50vh] flex flex-col items-center justify-center text-center">
               <LayoutGrid size={48} className="text-[#86868b] mb-6 opacity-20" />
@@ -274,16 +272,19 @@ export default function ProductsShop() {
               <p className="text-[#86868b] mt-2 max-w-xs">Adjust your search or filters to explore other works.</p>
             </div>
           ) : (
-            <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-8 lg:gap-8">
+            <motion.div 
+              layout 
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5 sm:gap-6 lg:gap-7 xl:gap-8"
+            >
               <AnimatePresence>
                 {filteredProducts.map(product => (
                   <motion.div
                     key={product._id || product.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    initial={{ opacity: 0, scale: 0.92 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    exit={{ opacity: 0, scale: 0.92 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <ProductCard
                       product={product}
