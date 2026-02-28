@@ -153,9 +153,9 @@ const SpecialOffersAdmin = () => {
       title: offer.title || "",
       description: offer.description || "",
       imageFile: null,
-      preview: offer.image && (offer.image.startsWith("data:") || offer.image.startsWith("http")) 
-                 ? offer.image 
-                 : `${BACKEND_URL}${offer.image}`,
+      preview: offer.image && (offer.image.startsWith("data:") || offer.image.startsWith("http"))
+                 ? offer.image
+                 : `${BASE_URL}${offer.image}`,
       category: offer.category || "Exclusive",
     });
     setError(null);
