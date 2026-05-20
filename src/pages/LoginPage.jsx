@@ -213,7 +213,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-8 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+            {/* <div className="mt-8 p-4 rounded-2xl bg-slate-50 border border-slate-100">
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-2">
                 Dev credentials
               </p>
@@ -227,7 +227,7 @@ export default function LoginPage() {
                   <code className="font-semibold text-indigo-700">password123</code>
                 </span>
               </div>
-            </div>
+            </div> */}
           </div>
 
           <p className="text-center text-xs text-slate-400 mt-6 lg:hidden">
