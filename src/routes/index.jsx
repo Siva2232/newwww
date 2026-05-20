@@ -67,20 +67,18 @@ export default function AppRoutes() {
             <Route path="/album/:id" element={<PageTransition><Detailed /></PageTransition>} />
             <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
 
-            {/* Admin Login Route */}
+            {/* Admin routes — no PageTransition (avoids shake + scroll jump) */}
             <Route
               path="/admin/login"
               element={
-                isAuthenticated ? <Navigate to="/admin" replace /> : <PageTransition><LoginPage /></PageTransition>
+                isAuthenticated ? <Navigate to="/admin" replace /> : <LoginPage />
               }
             />
-
-            {/* Protected Admin Panel */}
             <Route
               path="/admin"
               element={
                 <ProtectedAdminRoute>
-                  <PageTransition><AdminPanel /></PageTransition>
+                  <AdminPanel />
                 </ProtectedAdminRoute>
               }
             />

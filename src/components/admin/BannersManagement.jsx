@@ -1,28 +1,53 @@
-// src/components/admin/BannersManagement.jsx
 import { useState, useRef } from "react";
 import { toast } from "react-toastify";
 import { useProducts } from "../../Context/ProductContext";
-import { Plus, Upload, Trash2, X, Image as ImageIcon } from "lucide-react";
+import {
+  Plus,
+  Upload,
+  Trash2,
+  X,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  FileText,
+  Monitor,
+  Sparkles,
+} from "lucide-react";
+import { uploadImage, BASE_URL } from "../../api";
+import DeleteConfirmModal from "./DeleteConfirmModal";
 
-import { uploadImage, BASE_URL } from "../../api"; // use shared helper for uploads
+const STEPS = [
+  { id: 1, title: "Banner copy", subtitle: "Title & message", icon: FileText },
+  { id: 2, title: "Hero image", subtitle: "Upload & publish", icon: ImageIcon },
+];
+
+const inputClass =
+  "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-400 focus:ring-2 focus:ring-sky-100 outline-none transition text-sm";
+
+const getEmptyForm = () => ({
+  title: "",
+  description: "",
+  preview: null,
+  imageFile: null,
+});
 
 export default function BannersManagement() {
   const { heroBanners, addHeroBanner, deleteHeroBanner } = useProducts();
 
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    preview: null,
-    imageFile: null,
-  });
-
+  const [form, setForm] = useState(getEmptyForm);
+  const [currentStep, setCurrentStep] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const resetForm = () => {
-    setForm({ title: "", description: "", preview: null, imageFile: null });
+    setForm(getEmptyForm());
     setError("");
+    setCurrentStep(1);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -32,13 +57,10 @@ export default function BannersManagement() {
       setError("Only image files are allowed (JPG, PNG, etc.)");
       return;
     }
-
-    // enforce size limit (5MB per image)
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image size should be less than 5 MB");
+      setError("Image must be under 5 MB");
       return;
     }
-
     const reader = new FileReader();
     reader.onloadend = () => {
       setForm((prev) => ({
@@ -51,252 +73,406 @@ export default function BannersManagement() {
     reader.readAsDataURL(file);
   };
 
-
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
+  const clearImage = () => {
+    setForm((prev) => ({ ...prev, preview: null, imageFile: null }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
+  const resolveImage = (src) =>
+    !src
+      ? ""
+      : src.startsWith("http") || src.startsWith("data:")
+        ? src
+        : `${BASE_URL}${src}`;
+
+  const validateStep = (step) => {
+    if (step === 1) {
+      if (!form.title.trim()) {
+        setError("Banner title is required");
+        return false;
+      }
+      const titleLower = form.title.trim().toLowerCase();
+      if (heroBanners.some((b) => b.title.toLowerCase() === titleLower)) {
+        setError("A banner with this title already exists");
+        return false;
+      }
+      return true;
+    }
+    if (step === 2) {
+      if (!form.imageFile) {
+        setError("Please upload a banner image");
+        return false;
+      }
+      return true;
+    }
+    return true;
   };
 
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+  const goNext = () => {
+    if (!validateStep(currentStep)) return;
+    setError("");
+    setCurrentStep((s) => Math.min(s + 1, STEPS.length));
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleFile(file);
+  const goBack = () => {
+    setError("");
+    setCurrentStep((s) => Math.max(s - 1, 1));
   };
 
   const handleSubmit = async () => {
-    if (!form.title.trim()) {
-      setError("Banner title is required");
-      return;
-    }
-    if (!form.imageFile) {
-      setError("Please upload a banner image");
+    if (!validateStep(1) || !validateStep(2)) {
+      if (!validateStep(1)) setCurrentStep(1);
+      else setCurrentStep(2);
       return;
     }
 
-    const titleLower = form.title.trim().toLowerCase();
-    if (heroBanners.some((b) => b.title.toLowerCase() === titleLower)) {
-      setError("A banner with this title already exists");
-      return;
-    }
+    setSubmitting(true);
+    setError("");
 
     try {
-      // 1. Upload image to server
       const uploadResult = await uploadImage(form.imageFile);
-      const imagePath = uploadResult.path;
-
-      // 2. Add banner with image path
-      const payload = {
+      await addHeroBanner({
         title: form.title.trim(),
         description: form.description.trim(),
-        // Pass path instead of base64
-        imageBase64: imagePath, 
-        // Note: keeping the key 'imageBase64' because ProductContext/api might map it to 'image'
-        // or we need to check ProductContext.jsx. 
-        // Let's verify ProductContext's addHeroBanner.
-      };
-      
-      // In ProductContext lines 525:
-      // const payload = { ..., image: data.imageBase64 || null };
-      // So passing imagePath as imageBase64 works fine there.
-
-      await addHeroBanner(payload);
-      toast.success("Banner created successfully");
+        imageBase64: uploadResult.path,
+      });
+      toast.success("Hero banner created");
       resetForm();
-    } catch (error) {
-      setError("Error: " + (error.message || "Failed to create banner"));
-      console.error("Submit error:", error);
+    } catch (err) {
+      setError(err.message || "Failed to create banner");
+      toast.error(err.message || "Failed to create banner");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    // Remove browser confirm, show toast after delete
-    // For custom confirmation, use modal. Here, auto-confirm.
+  const confirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+    setDeleteLoading(true);
     try {
-      await deleteHeroBanner(id);
-      toast.success("Banner deleted successfully");
-    } catch (error) {
-      toast.error("Error: " + (error.message || "Failed to delete banner"));
-      console.error("Delete error:", error);
+      await deleteHeroBanner(deleteTarget.id);
+      toast.success("Banner deleted");
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error(err.message || "Failed to delete banner");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
   return (
-    <div className="space-y-10 pb-12">
-      {/* Form Card */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="px-7 py-6 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <Plus className="text-indigo-600" size={26} strokeWidth={2.4} />
-            Add New Hero Banner
-          </h2>
-          <p className="mt-1.5 text-gray-600 text-sm">
-            Create eye-catching banners for your homepage carousel
-          </p>
+    <div className="space-y-8 pb-10">
+      <div
+        id="hero-banner-wizard"
+        className="bg-white rounded-2xl shadow-lg border border-slate-200/80 overflow-hidden"
+      >
+        <div className="px-6 py-5 md:px-8 border-b border-slate-100 bg-gradient-to-r from-sky-50 via-indigo-50 to-blue-50/80">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <ImageIcon className="text-sky-600" size={24} />
+                Add New Hero Banner
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].subtitle}
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-100 text-sky-800 text-xs font-bold">
+              <Monitor size={14} />
+              Homepage carousel
+            </span>
+          </div>
+
+          <div className="mt-5 flex gap-2">
+            {STEPS.map((step, idx) => {
+              const done = currentStep > step.id;
+              const active = currentStep === step.id;
+              return (
+                <div key={step.id} className="flex items-center flex-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (step.id < currentStep) setCurrentStep(step.id);
+                      else if (step.id === currentStep + 1 && validateStep(currentStep))
+                        setCurrentStep(step.id);
+                    }}
+                    className={`flex items-center gap-2 w-full rounded-xl px-2 py-2 transition ${
+                      active ? "bg-white shadow-sm ring-2 ring-sky-500/30" : done ? "opacity-90" : "opacity-55"
+                    }`}
+                  >
+                    <span
+                      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                        done
+                          ? "bg-emerald-500 text-white"
+                          : active
+                            ? "bg-sky-600 text-white"
+                            : "bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {done ? <Check size={16} /> : step.id}
+                    </span>
+                    <span className="hidden sm:block text-left min-w-0">
+                      <span className={`block text-xs font-bold truncate ${active ? "text-sky-700" : "text-slate-700"}`}>
+                        {step.title}
+                      </span>
+                      <span className="block text-[10px] text-slate-500 truncate">{step.subtitle}</span>
+                    </span>
+                  </button>
+                  {idx < STEPS.length - 1 && (
+                    <div className={`w-4 h-0.5 mx-0.5 rounded ${done ? "bg-emerald-400" : "bg-slate-200"}`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="p-6 md:p-8">
+        <div className="p-6 md:p-8 min-h-[300px]">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+            <div className="mb-5 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">
-                Banner Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Summer Sale – Up to 70% Off!"
-                value={form.title}
-                onChange={(e) => {
-                  setForm((prev) => ({ ...prev, title: e.target.value }));
-                  setError("");
-                }}
-                className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 outline-none transition"
-              />
+          {currentStep === 1 && (
+            <div className="max-w-xl space-y-5">
+              <Field label="Banner headline *">
+                <input
+                  type="text"
+                  placeholder="Summer Sale — Up to 70% Off!"
+                  value={form.title}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, title: e.target.value }));
+                    setError("");
+                  }}
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Subtext (optional)">
+                <textarea
+                  value={form.description}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, description: e.target.value }));
+                    setError("");
+                  }}
+                  placeholder="Limited time · Free shipping above ₹999 · Shop now"
+                  rows={3}
+                  className={`${inputClass} resize-none`}
+                />
+              </Field>
+
+              <div className="p-4 rounded-xl bg-sky-50 border border-sky-100 text-sm text-slate-600">
+                <p className="font-semibold text-sky-900 flex items-center gap-2 mb-1">
+                  <Sparkles size={16} />
+                  Pro tip
+                </p>
+                Keep headlines short (under 8 words). Subtext appears below on the homepage hero.
+              </div>
             </div>
+          )}
 
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">
-                Description (optional)
-              </label>
-              <input
-                type="text"
-                placeholder="Limited time offer • Free shipping on orders above ₹999"
-                value={form.description}
-                onChange={(e) => {
-                  setForm((prev) => ({ ...prev, description: e.target.value }));
-                  setError("");
-                }}
-                className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 outline-none transition"
-              />
-            </div>
-          </div>
-
-          {/* Image Dropzone */}
-          <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Banner Image <span className="text-red-500">*</span>
-            </label>
-
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className={`relative border-2 border-dashed rounded-2xl transition-all min-h-[240px] cursor-pointer
-                ${isDragging
-                  ? "border-indigo-500 bg-indigo-50 scale-[1.015]"
-                  : form.preview
-                  ? "border-indigo-300 bg-indigo-50/30"
-                  : "border-gray-300 hover:border-indigo-400 bg-gray-50/60"}`}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="absolute inset-0 opacity-0 cursor-pointer z-10"
-              />
-
-              {form.preview ? (
-                <div className="relative group h-full">
-                  <img
-                    src={form.preview}
-                    alt="Banner preview"
-                    className="w-full h-full object-cover rounded-xl"
-                  />
-                  <button
-                    onClick={resetForm}
-                    className="absolute top-3 right-3 bg-black/70 hover:bg-black/90 text-white p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition shadow-md"
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="grid lg:grid-cols-5 gap-6">
+                <div className="lg:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-800 mb-2">
+                    Banner image *
+                  </label>
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) handleFile(file);
+                    }}
+                    className={`relative border-2 border-dashed rounded-2xl min-h-[180px] cursor-pointer overflow-hidden transition ${
+                      isDragging
+                        ? "border-sky-500 bg-sky-50"
+                        : form.preview
+                          ? "border-sky-400 bg-sky-50/40"
+                          : "border-slate-300 hover:border-sky-400 bg-slate-50"
+                    }`}
                   >
-                    <X size={18} />
-                  </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFile(file);
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                    />
+                    {form.preview ? (
+                      <div className="relative h-[180px]">
+                        <img
+                          src={form.preview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            clearImage();
+                          }}
+                          className="absolute top-2 right-2 z-20 bg-black/70 text-white p-2 rounded-full"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-[180px] flex flex-col items-center justify-center text-slate-500 p-4 text-center">
+                        <Upload size={32} className="mb-2 text-sky-500" />
+                        <p className="text-sm font-semibold">Upload hero image</p>
+                        <p className="text-xs text-slate-400 mt-1">1920×800 recommended · max 5MB</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                  <Upload size={40} className="mb-4 text-indigo-500 opacity-70" />
-                  <p className="text-lg font-semibold text-gray-700">
-                    {isDragging ? "Drop image here" : "Drag & drop or click to upload"}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Recommended: 1920 × 800 px • Max 8 MB • JPG / PNG
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
 
+                <div className="lg:col-span-3">
+                  <p className="text-sm font-semibold text-slate-800 mb-3">Homepage hero preview</p>
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xl bg-slate-900">
+                    <div className="relative aspect-[21/9] min-h-[140px]">
+                      {form.preview ? (
+                        <img
+                          src={form.preview}
+                          alt=""
+                          className="w-full h-full object-cover opacity-90"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-r from-slate-700 to-slate-800" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+                      <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-10 max-w-lg">
+                        <p className="text-[10px] font-bold text-sky-300 uppercase tracking-widest mb-1">
+                          Featured
+                        </p>
+                        <h3 className="text-xl md:text-2xl font-extrabold text-white leading-tight line-clamp-2">
+                          {form.title.trim() || "Your headline here"}
+                        </h3>
+                        {form.description.trim() && (
+                          <p className="text-sm text-slate-200 mt-2 line-clamp-2">
+                            {form.description}
+                          </p>
+                        )}
+                        <span className="inline-block mt-4 px-4 py-1.5 bg-white text-slate-900 text-xs font-bold rounded-lg w-fit">
+                          Shop now
+                        </span>
+                      </div>
+                      <div className="absolute bottom-3 right-4 flex gap-1.5">
+                        {[0, 1, 2].map((i) => (
+                          <span
+                            key={i}
+                            className={`w-2 h-2 rounded-full ${i === 0 ? "bg-white" : "bg-white/40"}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 md:px-8 border-t border-slate-100 bg-slate-50/80 flex flex-wrap justify-between gap-3">
           <button
-            onClick={handleSubmit}
-            disabled={!form.title.trim() || !form.imageFile}
-            className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 
-                     disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2.5 text-lg"
+            type="button"
+            onClick={goBack}
+            disabled={currentStep === 1}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-white disabled:opacity-40 disabled:pointer-events-none transition"
           >
-            <Plus size={22} />
-            Create Banner
+            <ChevronLeft size={18} />
+            Back
           </button>
+          <div className="flex gap-2">
+            {currentStep < STEPS.length ? (
+              <button
+                type="button"
+                onClick={goNext}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-sky-600 text-white font-semibold text-sm hover:bg-sky-700 shadow-md transition"
+              >
+                Next
+                <ChevronRight size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white font-semibold text-sm hover:from-sky-700 hover:to-indigo-700 shadow-lg disabled:opacity-60 transition"
+              >
+                {submitting ? (
+                  "Publishing..."
+                ) : (
+                  <>
+                    <Check size={18} />
+                    Publish banner
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* List of Banners */}
-      <div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <ImageIcon size={24} className="text-indigo-600" />
-          Active Hero Banners ({heroBanners.length})
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
+        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2 mb-6">
+          <ImageIcon className="text-sky-600" size={22} />
+          Active hero banners
+          <span className="text-sm font-semibold text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full">
+            {heroBanners.length}
+          </span>
         </h3>
 
         {heroBanners.length === 0 ? (
-          <div className="bg-gray-50 border border-dashed border-gray-300 rounded-2xl p-12 text-center">
-            <ImageIcon size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-xl font-medium text-gray-600">No hero banners yet</p>
-            <p className="text-gray-500 mt-2">Add your first banner using the form above</p>
+          <div className="rounded-2xl border-2 border-dashed border-slate-200 py-12 text-center">
+            <ImageIcon size={44} className="mx-auto text-slate-300 mb-3" />
+            <p className="font-semibold text-slate-600">No hero banners yet</p>
+            <p className="text-sm text-slate-400 mt-1">Your homepage carousel will show banners from here</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {heroBanners.map((banner, index) => (
               <div
                 key={banner._id || banner.id || index}
-                className="group bg-white rounded-2xl shadow border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="group rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:border-sky-200 transition-all"
               >
-                <div className="relative overflow-hidden">
+                <div className="relative aspect-[21/9] bg-slate-100 overflow-hidden">
                   <img
-                    src={banner.image?.startsWith('data:') || banner.image?.startsWith('http') ? banner.image : `${BASE_URL}${banner.image}`}
+                    src={resolveImage(banner.image) || "https://placehold.co/1200x400?text=Banner"}
                     alt={banner.title}
-                    className="w-full h-56 object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://placehold.co/1200x400?text=Banner";
+                    }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-
-                <div className="p-5">
-                  <h4 className="font-bold text-lg text-gray-900 line-clamp-2 mb-2">
-                    {banner.title}
-                  </h4>
-                  <p className="text-sm text-gray-600 line-clamp-2 min-h-[3rem] mb-4">
-                    {banner.description || "No description added"}
+                <div className="p-4">
+                  <h4 className="font-bold text-slate-900 line-clamp-2">{banner.title}</h4>
+                  <p className="text-sm text-slate-500 line-clamp-2 mt-1 min-h-[2.5rem]">
+                    {banner.description || "No description"}
                   </p>
-
                   <button
+                    type="button"
                     onClick={() => handleDelete(banner._id || banner.id)}
-                    className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 font-medium py-3 rounded-xl transition-colors"
+                    className="mt-4 w-full flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold py-2.5 rounded-xl text-sm transition"
                   >
-                    <Trash2 size={18} />
-                    Delete Banner
+                    <Trash2 size={16} />
+                    Delete
                   </button>
                 </div>
               </div>
@@ -304,6 +480,25 @@ export default function BannersManagement() {
           </div>
         )}
       </div>
+
+      <DeleteConfirmModal
+        isOpen={!!deleteTarget}
+        title="Delete this hero banner?"
+        description="It will be removed from the homepage carousel immediately."
+        itemName={deleteTarget?.name}
+        onConfirm={confirmDelete}
+        onCancel={() => !deleteLoading && setDeleteTarget(null)}
+        isLoading={deleteLoading}
+      />
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-slate-700 mb-1.5">{label}</label>
+      {children}
     </div>
   );
 }

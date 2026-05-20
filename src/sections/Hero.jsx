@@ -18,6 +18,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useProducts } from "../Context/ProductContext";
 import ProductCard from "../components/common/ProductCard";
 import { getImageUrl } from "../utils/imageUrl";
+import { getProductId, isProductInList } from "../utils/productIds";
 
 // WhatsApp business number
 const whatsappNumber = "9746683778";
@@ -535,13 +536,13 @@ export default function Hero() {
 
   const trendingProducts = useMemo(() => {
     return products
-      .filter((p) => trendingProductIds.includes(p._id || p.id))
+      .filter((p) => isProductInList(getProductId(p), trendingProductIds))
       .slice(0, 12);
   }, [products, trendingProductIds]);
 
   const bestSellers = useMemo(() => {
     return products
-      .filter((p) => bestSellerProductIds.includes(p._id || p.id))
+      .filter((p) => isProductInList(getProductId(p), bestSellerProductIds))
       .slice(0, 12);
   }, [products, bestSellerProductIds]);
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Heart, Sparkles, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '../../utils/imageUrl';
+import { getProductId, isProductInList } from '../../utils/productIds';
 
 const ProductCard = ({ 
   product, 
@@ -17,8 +18,9 @@ const ProductCard = ({
     : product.category;
   const displaySubcategory = product.subcategory ? ` / ${product.subcategory}` : '';
     
-  const isTrending = trendingProductIds.includes(product._id || product.id);
-  const isBestSeller = bestSellerProductIds.includes(product._id || product.id);
+  const pid = getProductId(product);
+  const isTrending = isProductInList(pid, trendingProductIds);
+  const isBestSeller = isProductInList(pid, bestSellerProductIds);
   const formatPrice = (num) => new Intl.NumberFormat('en-IN').format(num);
 
   const message = encodeURIComponent(

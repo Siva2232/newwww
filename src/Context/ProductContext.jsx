@@ -2,6 +2,13 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 // when backend is available we delegate network calls to the shared api module
 import * as api from '../api';
+import {
+  normalizeProductId,
+  sameProductId,
+  pruneFeaturedIds,
+  featuredIdsFromProducts,
+  getProductId,
+} from '../utils/productIds';
 
 // during development you can still override any of the methods on `api` if needed or
 // provide dummy implementations via dependency injection, but we assume the module
@@ -97,66 +104,56 @@ export const ProductProvider = ({ children }) => {
     () => !!localStorage.getItem("adminToken")
   );
 
-  // ─── Fetch products, categories, banners, and special offers from backend on mount ──────────────────────────────────
+  // ─── Fetch admin catalog data once on mount (batched to reduce re-render flicker) ──
   useEffect(() => {
+    let cancelled = false;
+
     const fetchData = async () => {
-      try {
-        const productsData = await api.getProducts();
-        
-        // Handle both old array format and new pagination object format
-        const productList = Array.isArray(productsData) ? productsData : (productsData?.products || []);
-        
-        if (productList.length > 0) {
-          setProducts(productList);
-          // Extract featured product IDs from database
-          const trendingIds = productList.filter(p => p.isTrending).map(p => p._id);
-          const bestSellerIds = productList.filter(p => p.isBestSeller).map(p => p._id);
-          if (trendingIds.length > 0) setTrendingProductIds(trendingIds);
-          if (bestSellerIds.length > 0) setBestSellerProductIds(bestSellerIds);
-        }
-      } catch (error) {
-        console.warn("Failed to fetch products from backend, using localStorage:", error);
+      const [productsResult, categoriesResult, subcatsResult, bannersResult, offersResult] =
+        await Promise.allSettled([
+          api.getProducts({ limit: 500 }),
+          api.getCategories(),
+          api.getSubCategories(),
+          api.getHeroBanners(),
+          api.getSpecialOffers(),
+        ]);
+
+      if (cancelled) return;
+
+      if (productsResult.status === "fulfilled") {
+        const productsData = productsResult.value;
+        const productList = Array.isArray(productsData)
+          ? productsData
+          : productsData?.products || [];
+        setProducts(productList);
+        const { trending, bestSeller } = featuredIdsFromProducts(productList);
+        setTrendingProductIds(trending);
+        setBestSellerProductIds(bestSeller);
+      } else {
+        console.warn("Failed to fetch products from backend, using localStorage:", productsResult.reason);
       }
 
-      try {
-        const categoriesData = await api.getCategories();
-        if (Array.isArray(categoriesData)) {
-          setShopCategories(categoriesData);
-        }
-      } catch (error) {
-        console.warn("Failed to fetch categories from backend, using localStorage:", error);
+      if (categoriesResult.status === "fulfilled" && Array.isArray(categoriesResult.value)) {
+        setShopCategories(categoriesResult.value);
       }
 
-      // fetch subcategories
-      try {
-        const subcats = await api.getSubCategories();
-        if (Array.isArray(subcats)) {
-          setShopSubCategories(subcats);
-        }
-      } catch (error) {
-        console.warn("Failed to fetch subcategories from backend:", error);
+      if (subcatsResult.status === "fulfilled" && Array.isArray(subcatsResult.value)) {
+        setShopSubCategories(subcatsResult.value);
       }
 
-      try {
-        const bannersData = await api.getHeroBanners();
-        if (Array.isArray(bannersData)) {
-          setHeroBanners(bannersData);
-        }
-      } catch (error) {
-        console.warn("Failed to fetch banners from backend, using localStorage:", error);
+      if (bannersResult.status === "fulfilled" && Array.isArray(bannersResult.value)) {
+        setHeroBanners(bannersResult.value);
       }
 
-      // Fetch special offers
-      try {
-        const offersData = await api.getSpecialOffers();
-        if (Array.isArray(offersData)) {
-          setSpecialOffers(offersData);
-        }
-      } catch (error) {
-        console.warn("Failed to fetch special offers from backend:", error);
+      if (offersResult.status === "fulfilled" && Array.isArray(offersResult.value)) {
+        setSpecialOffers(offersResult.value);
       }
     };
+
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ─── Cross-tab / cross-window sync ───────────────────────────────────────
@@ -202,6 +199,12 @@ export const ProductProvider = ({ children }) => {
   useEffect(() => debouncedSave("trendingProductIds", trendingProductIds), [trendingProductIds]);
   useEffect(() => debouncedSave("bestSellerProductIds", bestSellerProductIds), [bestSellerProductIds]);
   useEffect(() => debouncedSave("shopSubCategories", shopSubCategories), [shopSubCategories]);
+
+  // Drop featured IDs for products that no longer exist (e.g. after delete)
+  useEffect(() => {
+    setTrendingProductIds((prev) => pruneFeaturedIds(prev, products));
+    setBestSellerProductIds((prev) => pruneFeaturedIds(prev, products));
+  }, [products]);
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   const login = () => {
@@ -347,26 +350,20 @@ export const ProductProvider = ({ children }) => {
   };
 
   const deleteProduct = async (id) => {
+    const nid = normalizeProductId(id);
     try {
-      // Optimistically remove from UI immediately
-      setProducts((prev) => prev.filter((p) => p._id !== id && p.id !== id));
-      setTrendingProductIds((prev) => prev.filter((pid) => pid !== id));
-      setBestSellerProductIds((prev) => prev.filter((pid) => pid !== id));
+      setProducts((prev) => prev.filter((p) => !sameProductId(getProductId(p), nid)));
+      setTrendingProductIds((prev) => prev.filter((pid) => !sameProductId(pid, nid)));
+      setBestSellerProductIds((prev) => prev.filter((pid) => !sameProductId(pid, nid)));
 
-      // Delete from backend
-      await api.deleteProduct(id);
+      await api.deleteProduct(nid);
     } catch (error) {
-      // Rollback: re-fetch products on error
-      const data = await api.getProducts();
+      const data = await api.getProducts({ limit: 500 });
       const productList = Array.isArray(data) ? data : (data?.products || []);
-      
-      if (productList.length > 0) {
-        setProducts(productList);
-        const trendingIds = productList.filter(p => p.isTrending).map(p => p._id);
-        const bestSellerIds = productList.filter(p => p.isBestSeller).map(p => p._id);
-        if (trendingIds.length > 0) setTrendingProductIds(trendingIds);
-        if (bestSellerIds.length > 0) setBestSellerProductIds(bestSellerIds);
-      }
+      setProducts(productList);
+      const { trending, bestSeller } = featuredIdsFromProducts(productList);
+      setTrendingProductIds(trending);
+      setBestSellerProductIds(bestSeller);
       console.error("Error deleting product:", error);
       throw error;
     }
@@ -659,36 +656,39 @@ export const ProductProvider = ({ children }) => {
 
   // ─── Featured toggles ────────────────────────────────────────────────────
   const toggleTrending = async (id) => {
+    const nid = normalizeProductId(id);
     try {
-      const isCurrentlyTrending = trendingProductIds.includes(id);
+      const isCurrentlyTrending = trendingProductIds.some((x) => sameProductId(x, nid));
       const newTrendingState = !isCurrentlyTrending;
 
-      // Update ID list
       setTrendingProductIds((prev) =>
         newTrendingState
-          ? [...prev, id]
-          : prev.filter((x) => x !== id)
+          ? [...prev.filter((x) => !sameProductId(x, nid)), nid]
+          : prev.filter((x) => !sameProductId(x, nid))
       );
 
-      // Also update isTrending flag in products → UI refreshes immediately
       setProducts((prev) =>
         prev.map((p) =>
-          (p._id === id || p.id === id)
+          sameProductId(getProductId(p), nid)
             ? { ...p, isTrending: newTrendingState }
             : p
         )
       );
 
-      await api.toggleProductTrending(id);
+      await api.toggleProductTrending(nid);
     } catch (error) {
-      // Rollback both
       setTrendingProductIds((prev) =>
-        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        prev.some((x) => sameProductId(x, nid))
+          ? prev.filter((x) => !sameProductId(x, nid))
+          : [...prev, nid]
       );
       setProducts((prev) =>
         prev.map((p) =>
-          (p._id === id || p.id === id)
-            ? { ...p, isTrending: !trendingProductIds.includes(id) }
+          sameProductId(getProductId(p), nid)
+            ? {
+                ...p,
+                isTrending: !trendingProductIds.some((x) => sameProductId(x, nid)),
+              }
             : p
         )
       );
@@ -698,36 +698,39 @@ export const ProductProvider = ({ children }) => {
   };
 
   const toggleBestSeller = async (id) => {
+    const nid = normalizeProductId(id);
     try {
-      const isCurrentlyBest = bestSellerProductIds.includes(id);
+      const isCurrentlyBest = bestSellerProductIds.some((x) => sameProductId(x, nid));
       const newBestState = !isCurrentlyBest;
 
-      // Update ID list
       setBestSellerProductIds((prev) =>
         newBestState
-          ? [...prev, id]
-          : prev.filter((x) => x !== id)
+          ? [...prev.filter((x) => !sameProductId(x, nid)), nid]
+          : prev.filter((x) => !sameProductId(x, nid))
       );
 
-      // Also update isBestSeller flag in products → UI refreshes immediately
       setProducts((prev) =>
         prev.map((p) =>
-          (p._id === id || p.id === id)
+          sameProductId(getProductId(p), nid)
             ? { ...p, isBestSeller: newBestState }
             : p
         )
       );
 
-      await api.toggleProductBestSeller(id);
+      await api.toggleProductBestSeller(nid);
     } catch (error) {
-      // Rollback both
       setBestSellerProductIds((prev) =>
-        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        prev.some((x) => sameProductId(x, nid))
+          ? prev.filter((x) => !sameProductId(x, nid))
+          : [...prev, nid]
       );
       setProducts((prev) =>
         prev.map((p) =>
-          (p._id === id || p.id === id)
-            ? { ...p, isBestSeller: !bestSellerProductIds.includes(id) }
+          sameProductId(getProductId(p), nid)
+            ? {
+                ...p,
+                isBestSeller: !bestSellerProductIds.some((x) => sameProductId(x, nid)),
+              }
             : p
         )
       );

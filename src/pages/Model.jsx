@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useProducts } from "../Context/ProductContext";
 import ProductCard from "../components/common/ProductCard";
 import { getImageUrl } from "../utils/imageUrl";
+import { getProductId, isProductInList } from "../utils/productIds";
 
 const whatsappNumber = "9746683778";
 
@@ -75,9 +76,10 @@ export default function ProductsShop() {
       const matchesSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'All' || p.category?.toLowerCase() === selectedCategory.toLowerCase();
       const matchesSubcategory = selectedSubcategory === 'All' || p.subcategory?.toLowerCase() === selectedSubcategory.toLowerCase();
+      const pid = getProductId(p);
       const matchesFeatured = selectedFilter === 'All' ||
-        (selectedFilter === 'Trending' && trendingProductIds?.includes(p._id || p.id)) ||
-        (selectedFilter === 'Best Sellers' && bestSellerProductIds?.includes(p._id || p.id));
+        (selectedFilter === 'Trending' && isProductInList(pid, trendingProductIds)) ||
+        (selectedFilter === 'Best Sellers' && isProductInList(pid, bestSellerProductIds));
       return matchesSearch && matchesCategory && matchesSubcategory && matchesFeatured;
     });
   }, [products, searchQuery, selectedCategory, selectedSubcategory, selectedFilter, trendingProductIds, bestSellerProductIds]);
