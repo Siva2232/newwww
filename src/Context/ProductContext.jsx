@@ -89,36 +89,28 @@ export const ProductProvider = ({ children }) => {
   // Special Offers state
   const [specialOffers, setSpecialOffers] = useState([]);
 
-  // ...existing state...
-  const [products, setProducts] = useState(() => loadFromStorage("products", []));
-  const [heroBanners, setHeroBanners] = useState(() => loadFromStorage("heroBanners", []));
-  const [shopCategories, setShopCategories] = useState(() => loadFromStorage("shopCategories", []));
-  const [shopSubCategories, setShopSubCategories] = useState(() => loadFromStorage("shopSubCategories", []));
-  const [trendingProductIds, setTrendingProductIds] = useState(() =>
-    loadFromStorage("trendingProductIds", [])
-  );
-  const [bestSellerProductIds, setBestSellerProductIds] = useState(() =>
-    loadFromStorage("bestSellerProductIds", [])
-  );
+  // Start empty — load from API first to avoid stale localStorage flash in admin
+  const [products, setProducts] = useState([]);
+  const [heroBanners, setHeroBanners] = useState([]);
+  const [shopCategories, setShopCategories] = useState([]);
+  const [shopSubCategories, setShopSubCategories] = useState([]);
+  const [trendingProductIds, setTrendingProductIds] = useState([]);
+  const [bestSellerProductIds, setBestSellerProductIds] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogSynced, setCatalogSynced] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => !!localStorage.getItem("adminToken")
   );
 
-  // ─── Fetch admin catalog data once on mount (batched to reduce re-render flicker) ──
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchData = async () => {
-      const [productsResult, categoriesResult, subcatsResult, bannersResult, offersResult] =
-        await Promise.allSettled([
-          api.getProducts({ limit: 500 }),
-          api.getCategories(),
-          api.getSubCategories(),
-          api.getHeroBanners(),
-          api.getSpecialOffers(),
-        ]);
-
-      if (cancelled) return;
+  const applyCatalogResults = useCallback(
+    (results) => {
+      const [
+        productsResult,
+        categoriesResult,
+        subcatsResult,
+        bannersResult,
+        offersResult,
+      ] = results;
 
       if (productsResult.status === "fulfilled") {
         const productsData = productsResult.value;
@@ -130,31 +122,78 @@ export const ProductProvider = ({ children }) => {
         setTrendingProductIds(trending);
         setBestSellerProductIds(bestSeller);
       } else {
-        console.warn("Failed to fetch products from backend, using localStorage:", productsResult.reason);
+        console.warn(
+          "Failed to fetch products, using localStorage fallback:",
+          productsResult.reason
+        );
+        const cached = loadFromStorage("products", []);
+        setProducts(cached);
+        const { trending, bestSeller } = featuredIdsFromProducts(cached);
+        setTrendingProductIds(
+          trending.length > 0 ? trending : loadFromStorage("trendingProductIds", [])
+        );
+        setBestSellerProductIds(
+          bestSeller.length > 0 ? bestSeller : loadFromStorage("bestSellerProductIds", [])
+        );
       }
 
       if (categoriesResult.status === "fulfilled" && Array.isArray(categoriesResult.value)) {
         setShopCategories(categoriesResult.value);
+      } else {
+        setShopCategories(loadFromStorage("shopCategories", []));
       }
 
       if (subcatsResult.status === "fulfilled" && Array.isArray(subcatsResult.value)) {
         setShopSubCategories(subcatsResult.value);
+      } else {
+        setShopSubCategories(loadFromStorage("shopSubCategories", []));
       }
 
       if (bannersResult.status === "fulfilled" && Array.isArray(bannersResult.value)) {
         setHeroBanners(bannersResult.value);
+      } else {
+        setHeroBanners(loadFromStorage("heroBanners", []));
       }
 
       if (offersResult.status === "fulfilled" && Array.isArray(offersResult.value)) {
         setSpecialOffers(offersResult.value);
+      } else {
+        setSpecialOffers(loadFromStorage("specialOffers", []));
       }
-    };
+    },
+    [loadFromStorage]
+  );
 
-    fetchData();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const syncCatalog = useCallback(async () => {
+    setCatalogLoading(true);
+    try {
+      const results = await Promise.allSettled([
+        api.getProducts({ limit: 500 }),
+        api.getCategories(),
+        api.getSubCategories(),
+        api.getHeroBanners(),
+        api.getSpecialOffers(),
+      ]);
+      applyCatalogResults(results);
+      setCatalogSynced(true);
+    } catch (err) {
+      console.error("Catalog sync failed:", err);
+      setProducts(loadFromStorage("products", []));
+      setHeroBanners(loadFromStorage("heroBanners", []));
+      setShopCategories(loadFromStorage("shopCategories", []));
+      setShopSubCategories(loadFromStorage("shopSubCategories", []));
+      setTrendingProductIds(loadFromStorage("trendingProductIds", []));
+      setBestSellerProductIds(loadFromStorage("bestSellerProductIds", []));
+      setSpecialOffers(loadFromStorage("specialOffers", []));
+      setCatalogSynced(true);
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, [applyCatalogResults, loadFromStorage]);
+
+  useEffect(() => {
+    syncCatalog();
+  }, [syncCatalog]);
 
   // ─── Cross-tab / cross-window sync ───────────────────────────────────────
   useEffect(() => {
@@ -192,13 +231,31 @@ export const ProductProvider = ({ children }) => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, [loadFromStorage, products, heroBanners, shopCategories, trendingProductIds, bestSellerProductIds]);
 
-  // ─── Auto-save ───────────────────────────────────────────────────────────
-  useEffect(() => debouncedSave("products", products), [products]);
-  useEffect(() => debouncedSave("heroBanners", heroBanners), [heroBanners]);
-  useEffect(() => debouncedSave("shopCategories", shopCategories), [shopCategories]);
-  useEffect(() => debouncedSave("trendingProductIds", trendingProductIds), [trendingProductIds]);
-  useEffect(() => debouncedSave("bestSellerProductIds", bestSellerProductIds), [bestSellerProductIds]);
-  useEffect(() => debouncedSave("shopSubCategories", shopSubCategories), [shopSubCategories]);
+  // ─── Auto-save (only after server sync — avoids wiping cache with empty state) ──
+  useEffect(() => {
+    if (!catalogSynced) return;
+    debouncedSave("products", products);
+  }, [products, catalogSynced]);
+  useEffect(() => {
+    if (!catalogSynced) return;
+    debouncedSave("heroBanners", heroBanners);
+  }, [heroBanners, catalogSynced]);
+  useEffect(() => {
+    if (!catalogSynced) return;
+    debouncedSave("shopCategories", shopCategories);
+  }, [shopCategories, catalogSynced]);
+  useEffect(() => {
+    if (!catalogSynced) return;
+    debouncedSave("trendingProductIds", trendingProductIds);
+  }, [trendingProductIds, catalogSynced]);
+  useEffect(() => {
+    if (!catalogSynced) return;
+    debouncedSave("bestSellerProductIds", bestSellerProductIds);
+  }, [bestSellerProductIds, catalogSynced]);
+  useEffect(() => {
+    if (!catalogSynced) return;
+    debouncedSave("shopSubCategories", shopSubCategories);
+  }, [shopSubCategories, catalogSynced]);
 
   // Drop featured IDs for products that no longer exist (e.g. after delete)
   useEffect(() => {
@@ -208,9 +265,9 @@ export const ProductProvider = ({ children }) => {
 
   // ─── Auth ────────────────────────────────────────────────────────────────
   const login = () => {
-    // caller should also store JWT in localStorage as `adminToken`
     localStorage.setItem("isAdminLoggedIn", "true");
     setIsAuthenticated(true);
+    syncCatalog();
   };
 
   const logout = () => {
@@ -770,6 +827,9 @@ export const ProductProvider = ({ children }) => {
     // Special Offers
     specialOffers,
     setSpecialOffers,
+    catalogLoading,
+    catalogSynced,
+    syncCatalog,
   };
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;

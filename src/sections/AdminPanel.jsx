@@ -25,6 +25,7 @@ import AdminAddProduct from "../components/admin/AdminAddProduct";
 import SubcategoriesManagement from "../components/admin/SubcategoriesManagement";
 import Sidebar from "../components/admin/Sidebar";
 import AdminNavbar from "../components/admin/AdminNavbar";
+import AdminDataLoader from "../components/admin/AdminDataLoader";
 import logo from "../assets/hhhh.jpg";
 
 // we'll fetch orders from the shared api helper
@@ -40,6 +41,7 @@ export default function AdminPanel() {
     bestSellerProductIds,
     logout,
     specialOffers,
+    catalogLoading,
   } = useProducts();
 
   const [activeTab, setActiveTab] = useState(
@@ -51,6 +53,7 @@ export default function AdminPanel() {
   );
   const [customOrdersCount, setCustomOrdersCount] = useState(0);
   const [recentOrders, setRecentOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
@@ -59,7 +62,6 @@ export default function AdminPanel() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        // backend may return either raw array or an object with {orders, pagination}
         const data = await fetchOrdersFromApi({ page: 1, limit: 5 });
         let orders = [];
         let total = 0;
@@ -76,6 +78,8 @@ export default function AdminPanel() {
         setRecentOrders(orders);
       } catch (err) {
         console.error("Failed to fetch custom orders count", err);
+      } finally {
+        setOrdersLoading(false);
       }
     };
     fetchOrders();
@@ -83,6 +87,8 @@ export default function AdminPanel() {
     const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const adminDataReady = !catalogLoading && !ordersLoading;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -108,16 +114,18 @@ export default function AdminPanel() {
     "custom-orders": customOrdersCount,
   };
 
+  const countOrNull = (n) => (adminDataReady ? n : null);
+
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, count: null, section: "Overview" },
-    { id: "products", label: "Products", icon: Package, count: products.length, section: "Catalog" },
-    { id: "categories", label: "Categories", icon: Grid3X3, count: shopCategories.length, section: "Catalog" },
-    { id: "subcategories", label: "Subcategories", icon: Grid3X3, count: shopSubCategories?.length || 0, section: "Catalog" },
+    { id: "products", label: "Products", icon: Package, count: countOrNull(products.length), section: "Catalog" },
+    { id: "categories", label: "Categories", icon: Grid3X3, count: countOrNull(shopCategories.length), section: "Catalog" },
+    { id: "subcategories", label: "Subcategories", icon: Grid3X3, count: countOrNull(shopSubCategories?.length || 0), section: "Catalog" },
     { id: "add-product", label: "Custom Books", icon: PlusCircle, count: null, section: "Catalog" },
-    { id: "banners", label: "Banners", icon: ImageIcon, count: heroBanners.length, section: "Marketing" },
-    { id: "featured", label: "Featured", icon: TrendingUp, count: trendingProductIds.length, section: "Marketing" },
-    { id: "special-offers", label: "Special Offers", icon: Gift, count: specialOffersCount, section: "Marketing" },
-    { id: "custom-orders", label: "Custom Orders", icon: BookOpen, count: customOrdersCount, section: "Orders" },
+    { id: "banners", label: "Banners", icon: ImageIcon, count: countOrNull(heroBanners.length), section: "Marketing" },
+    { id: "featured", label: "Featured", icon: TrendingUp, count: countOrNull(trendingProductIds.length), section: "Marketing" },
+    { id: "special-offers", label: "Special Offers", icon: Gift, count: countOrNull(specialOffersCount), section: "Marketing" },
+    { id: "custom-orders", label: "Custom Orders", icon: BookOpen, count: countOrNull(customOrdersCount), section: "Orders" },
   ];
 
   const currentItem = menuItems.find((item) => item.id === activeTab);
@@ -288,7 +296,11 @@ export default function AdminPanel() {
                   : "bg-white rounded-2xl shadow-lg overflow-hidden min-h-[70vh]"
               }
             >
-              {renderActivePanel()}
+              {!adminDataReady ? (
+                <AdminDataLoader />
+              ) : (
+                renderActivePanel()
+              )}
             </div>
           </div>
         </main>

@@ -19,7 +19,7 @@ const inputClass =
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useProducts();
-  const [email, setEmail] = useState("admin@gmail.com");
+  const [email, setEmail] = useState("admin@ppdo.com");
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -159,7 +159,7 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@gmail.com"
+                    placeholder="admin@ppdo.com"
                     required
                     autoComplete="username"
                     className={inputClass}
@@ -220,7 +220,7 @@ export default function LoginPage() {
               <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-slate-600">
                 <span>
                   <span className="text-slate-400">Email:</span>{" "}
-                  <code className="font-semibold text-indigo-700">admin@gmail.com</code>
+                  <code className="font-semibold text-indigo-700">admin@ppdo.com</code>
                 </span>
                 <span>
                   <span className="text-slate-400">Pass:</span>{" "}

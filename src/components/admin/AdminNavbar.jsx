@@ -223,7 +223,7 @@ export default function AdminNavbar({
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-slate-900 truncate">Admin User</p>
-                        <p className="text-xs text-slate-500 truncate">admin@ppdo.shop</p>
+                        <p className="text-xs text-slate-500 truncate">admin@ppdo.com</p>
                       </div>
                     </div>
                     <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-semibold">
