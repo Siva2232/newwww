@@ -51,7 +51,7 @@ export default function AppRoutes() {
       )}
 
       {/* Main Content */}
-      <main className={isAdminRoute ? "pt-0" : "pt-36"}>
+      <main className={isAdminRoute ? "pt-0" : "pt-[108px] md:pt-[116px]"}>
         {/* ScrollToTop logic handled inside PageTransition now */}
         
         <AnimatePresence mode="wait">

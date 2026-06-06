@@ -1,16 +1,11 @@
-// src/pages/Hero.jsx
-import { useState, useEffect, useRef, useMemo } from "react";
-import { createPortal } from "react-dom";
+// src/sections/Hero.jsx
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
-  Search,
   ArrowRight,
   ArrowUpRight,
-  ShoppingCart,
-  Star,
-  Plus,
   Sparkles,
   Timer,
 } from "lucide-react";
@@ -20,10 +15,39 @@ import ProductCard from "../components/common/ProductCard";
 import { getImageUrl } from "../utils/imageUrl";
 import { getProductId, isProductInList } from "../utils/productIds";
 
-// WhatsApp business number
 const whatsappNumber = "9746683778";
 
-// Inline WhatsApp SVG
+const SectionEyebrow = ({ children, icon: Icon = Sparkles, onDark = false }) => (
+  <div
+    className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+      onDark
+        ? "border border-white/25 bg-black/30 text-white backdrop-blur-md"
+        : "border border-orange-200/80 bg-orange-50/90 text-orange-700"
+    }`}
+  >
+    <Icon size={13} className="shrink-0" aria-hidden />
+    <span>{children}</span>
+  </div>
+);
+
+const SectionHeading = ({ title, subtitle, className = "" }) => (
+  <div className={`space-y-3 ${className}`}>
+    <motion.h2
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      className="text-[clamp(1.75rem,4vw,3.5rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-[#1d1d1f]"
+    >
+      {title}
+      {subtitle && (
+        <span className="mt-1 block text-[0.55em] font-medium tracking-[-0.02em] text-[#86868b]">
+          {subtitle}
+        </span>
+      )}
+    </motion.h2>
+  </div>
+);
 
 // Inline WhatsApp SVG
 const WhatsAppIcon = ({ size = 24, className = "" }) => (
@@ -154,44 +178,33 @@ function SpecialOffersCarousel() {
   if (activeOffers.length === 0) return null;
 
   return (
-    <section className="relative w-full bg-[#f5f5f7] py-14 sm:py-16 md:py-24 overflow-hidden">
-      {/* Blobs */}
-      <div className="absolute top-0 left-1/4 w-80 h-80 md:w-96 md:h-96 bg-orange-100/30 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 md:w-96 md:h-96 bg-blue-100/20 rounded-full blur-[100px] pointer-events-none" />
+    <section className="relative w-full overflow-hidden bg-[#f5f5f7] py-16 sm:py-20 md:py-28">
+      <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-orange-200/25 blur-[100px] md:h-96 md:w-96" />
+      <div className="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-sky-200/20 blur-[100px] md:h-96 md:w-96" />
 
-      {/* Header */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 mb-10 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-orange-600 font-bold text-xs uppercase tracking-[0.2em]">
-              <Sparkles size={14} fill="currentColor" />
-              <span>Limited Time Release</span>
-            </div>
-
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-3xl sm:text-4xl md:text-7xl font-semibold tracking-tight text-[#1d1d1f]"
-            >
-              Special Offers.
-              <span className="text-[#86868b] block opacity-70 font-medium">
-                Hand-picked deals you shouldn't miss.
-              </span>
-            </motion.h2>
+      <div className="relative z-10 mx-auto mb-12 max-w-[1440px] px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
+          <div className="max-w-2xl space-y-4">
+            <SectionEyebrow>Limited time</SectionEyebrow>
+            <SectionHeading
+              title="Special Offers."
+              subtitle="Hand-picked deals you shouldn't miss."
+            />
           </div>
 
-          <div className="hidden sm:flex gap-3">
+          <div className="flex gap-2.5 sm:gap-3">
             <button
+              type="button"
               onClick={() => manualScroll("left")}
-              className="w-11 h-11 rounded-full bg-white border border-black/5 flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm active:scale-90"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[0.06] bg-white text-[#1d1d1f] shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition-all hover:bg-[#1d1d1f] hover:text-white active:scale-95"
               aria-label="Scroll left"
             >
               <ChevronLeft size={20} strokeWidth={1.5} />
             </button>
             <button
+              type="button"
               onClick={() => manualScroll("right")}
-              className="w-11 h-11 rounded-full bg-white border border-black/5 flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm active:scale-90"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[0.06] bg-white text-[#1d1d1f] shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition-all hover:bg-[#1d1d1f] hover:text-white active:scale-95"
               aria-label="Scroll right"
             >
               <ChevronRight size={20} strokeWidth={1.5} />
@@ -213,47 +226,50 @@ function SpecialOffersCarousel() {
           {duplicatedOffers.map((offer, i) => (
             <div
               key={`${offer._id || offer.id || "offer"}-${i}`}
-              className="flex-none w-[75vw] sm:w-[50vw] md:w-[380px] lg:w-[420px] group"
+              className="group flex-none w-[78vw] sm:w-[52vw] md:w-[380px] lg:w-[420px]"
             >
               <div className="space-y-5">
                 <motion.div
-                  className="relative h-[280px] sm:h-[350px] md:h-[400px] bg-white rounded-[32px] overflow-hidden shadow-sm border border-black/[0.03] group-hover:shadow-md transition-shadow"
-                  whileHover={{ y: -5 }}
+                  className="relative h-[300px] overflow-hidden rounded-[28px] border border-black/[0.04] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-shadow duration-500 group-hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] sm:h-[360px] md:h-[400px]"
+                  whileHover={{ y: -6 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
                 >
                   <img
                     src={getImageUrl(offer.image) || "/placeholder-offer.jpg"}
                     alt={offer.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.4s] ease-out group-hover:scale-[1.04]"
                     onError={(e) => {
                       e.currentTarget.src = "/placeholder-offer.jpg";
                     }}
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
 
-                  <div className="absolute top-4 left-4 z-10">
-                    <span className="px-3 py-1 bg-white/20 backdrop-blur-xl rounded-full text-white text-[10px] font-bold uppercase tracking-widest border border-white/10 shadow-sm">
+                  <div className="absolute left-4 top-4 z-10 sm:left-5 sm:top-5">
+                    <span className="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-md">
                       {offer.category || "Exclusive"}
                     </span>
                   </div>
 
-                  <div className="absolute inset-0 flex items-end justify-start p-5">
-                    <button className="px-6 py-3 bg-[#f7ef22] hover:bg-[#f0e818] text-black rounded-full font-bold text-xs uppercase tracking-widest shadow-xl flex items-center gap-2 transition-colors active:scale-95">
-                      Shop Now
-                      <ArrowRight size={16} />
-                    </button>
+                  <div className="absolute inset-x-0 bottom-0 flex items-end p-5 sm:p-6">
+                    <Link
+                      to="/models"
+                      className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-[#1d1d1f] shadow-lg transition-all hover:bg-[#f5f5f7] active:scale-[0.98]"
+                    >
+                      Shop now
+                      <ArrowRight size={15} strokeWidth={2} />
+                    </Link>
                   </div>
                 </motion.div>
 
-                <div className="px-2 space-y-2">
-                  <div className="flex items-center gap-2 text-black text-[10px] font-bold uppercase tracking-widest">
-                    <Timer size={12} />
-                    <span>Offer</span>
+                <div className="space-y-2 px-1">
+                  <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#86868b]">
+                    <Timer size={12} aria-hidden />
+                    <span>Limited offer</span>
                   </div>
-
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold text-[#1d1d1f] tracking-tight leading-tight line-clamp-2">
+                  <h3 className="line-clamp-2 text-xl font-semibold leading-snug tracking-[-0.02em] text-[#1d1d1f] sm:text-2xl">
                     {offer.title || "Special Deal"}
                   </h3>
-
-                  <p className="text-sm md:text-base text-[#86868b] font-medium line-clamp-2">
+                  <p className="line-clamp-2 text-sm font-medium leading-relaxed text-[#86868b] md:text-[15px]">
                     {offer.description || "Limited time special offer"}
                   </p>
                 </div>
@@ -316,55 +332,52 @@ const CarouselSection = ({
   };
 
   return (
-    <section className="bg-[#f5f5f7] py-20 md:py-0 overflow-hidden relative">
+    <section className="relative overflow-hidden bg-[#f5f5f7] py-16 sm:py-20 md:py-24">
       <AnimatePresence>
         {activeNavId && (
           <motion.div
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed top-0 left-0 right-0 h-1 bg-[#0071e3] origin-left z-[300]"
+            className="fixed top-0 left-0 right-0 z-[300] h-0.5 origin-left bg-[#0071e3]"
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />
         )}
       </AnimatePresence>
 
-      <div className="max-w-[1440px] mx-auto px-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
-          <div className="space-y-4">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-4xl md:text-6xl font-semibold tracking-tight text-[#1d1d1f]"
-            >
-              {title}.
-              <span className="text-[#86868b] block">
-                {" "}
-                Engineered for excellence.
-              </span>
-            </motion.h2>
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 flex flex-col justify-between gap-8 md:mb-12 md:flex-row md:items-end">
+          <div className="max-w-2xl space-y-4">
+            <SectionEyebrow icon={Sparkles}>Curated</SectionEyebrow>
+            <SectionHeading
+              title={`${title}.`}
+              subtitle="Engineered for excellence."
+            />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
+              type="button"
               onClick={() => scroll("left")}
-              className="w-12 h-12 rounded-full bg-white border border-black/5 flex items-center justify-center text-[#1d1d1f] hover:bg-black hover:text-white transition-all active:scale-95 shadow-sm"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[0.06] bg-white text-[#1d1d1f] shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition-all hover:bg-[#1d1d1f] hover:text-white active:scale-95"
+              aria-label="Scroll left"
             >
-              <ChevronLeft size={22} strokeWidth={1.5} />
+              <ChevronLeft size={20} strokeWidth={1.5} />
             </button>
             <button
+              type="button"
               onClick={() => scroll("right")}
-              className="w-12 h-12 rounded-full bg-white border border-black/5 flex items-center justify-center text-[#1d1d1f] hover:bg-black hover:text-white transition-all active:scale-95 shadow-sm"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[0.06] bg-white text-[#1d1d1f] shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition-all hover:bg-[#1d1d1f] hover:text-white active:scale-95"
+              aria-label="Scroll right"
             >
-              <ChevronRight size={22} strokeWidth={1.5} />
+              <ChevronRight size={20} strokeWidth={1.5} />
             </button>
           </div>
         </div>
 
         <div
           ref={scrollRef}
-          className="flex gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-12"
+          className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 sm:gap-6 sm:pb-6"
         >
           {products.map((product, idx) => {
             const isThisCardLoading =
@@ -373,17 +386,17 @@ const CarouselSection = ({
             return (
               <div
                 key={product._id || product.id || idx}
-                className="product-card-wrapper flex-none w-[85vw] sm:w-[300px] md:w-[330px] snap-start"
+                className="product-card-wrapper w-[82vw] flex-none snap-start sm:w-[300px] md:w-[320px]"
               >
                 <motion.div
-                  whileTap={{ scale: 0.97 }}
+                  whileTap={{ scale: 0.98 }}
                   animate={
                     isThisCardLoading
-                      ? { opacity: 0.7, scale: 0.98 }
+                      ? { opacity: 0.75, scale: 0.98 }
                       : { opacity: 1, scale: 1 }
                   }
                   onClick={(e) => handleCardClick(e, product._id || product.id)}
-                  className="group cursor-pointer bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-[0_30px_60px_rgba(0,0,0,0.06)] transition-all duration-500 border border-black/[0.02] relative"
+                  className="group relative cursor-pointer overflow-hidden rounded-[26px] border border-black/[0.05] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.05)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_24px_48px_rgba(0,0,0,0.08)]"
                 >
                   <AnimatePresence>
                     {isThisCardLoading && (
@@ -397,41 +410,41 @@ const CarouselSection = ({
                     )}
                   </AnimatePresence>
 
-                  <div className="aspect-square overflow-hidden bg-[#fafafa] relative">
+                  <div className="relative aspect-[4/5] overflow-hidden bg-[#f8f8fa]">
                     <motion.img
                       src={getImageUrl(product.image || product.mainImage)}
                       alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                     />
-                    <div className="absolute top-6 left-6">
-                      <span className="px-3 py-1 bg-white/80 backdrop-blur-md rounded-full text-[10px] font-bold text-[#86868b] uppercase tracking-widest border border-black/5">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="absolute left-4 top-4 sm:left-5 sm:top-5">
+                      <span className="rounded-full border border-black/[0.06] bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6e6e73] backdrop-blur-md">
                         {getDisplayCategory(product.category)}
                       </span>
                     </div>
                   </div>
 
-                  <div className="p-8">
-                    <h3 className="text-xl md:text-2xl font-semibold text-[#1d1d1f] mb-4 line-clamp-1 group-hover:text-[#0071e3] transition-colors">
+                  <div className="p-5 sm:p-6">
+                    <h3 className="mb-3 line-clamp-2 text-lg font-semibold leading-snug tracking-[-0.02em] text-[#1d1d1f] transition-colors group-hover:text-[#0071e3] sm:text-xl">
                       {product.name}
                     </h3>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-semibold text-[#1d1d1f]">
-                            ₹{product.price}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xl font-semibold tracking-tight text-[#1d1d1f] sm:text-2xl">
+                          ₹{product.price}
+                        </span>
+                        {product.originalPrice && (
+                          <span className="text-sm font-medium text-[#86868b] line-through decoration-[#86868b]/40">
+                            ₹{product.originalPrice}
                           </span>
-                          {product.originalPrice && (
-                            <span className="text-sm text-[#86868b] line-through opacity-50">
-                              ₹{product.originalPrice}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2">
                         {whatsappNumber && WhatsAppIcon && (
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.open(
@@ -439,13 +452,14 @@ const CarouselSection = ({
                                 "_blank",
                               );
                             }}
-                            className="p-3 bg-[#f5f5f7] rounded-full text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all shadow-sm z-50 relative"
+                            className="relative z-50 flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f5f7] text-[#25D366] transition-all hover:bg-[#25D366] hover:text-white"
+                            aria-label="Contact on WhatsApp"
                           >
-                            <WhatsAppIcon size={18} />
+                            <WhatsAppIcon size={17} />
                           </button>
                         )}
-                        <div className="p-3 bg-[#1d1d1f] text-white rounded-full group-hover:bg-[#0071e3] transition-all shadow-md">
-                          <ArrowUpRight size={18} />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f7ef22] text-black shadow-sm transition-all group-hover:scale-105 group-hover:bg-[#f7ef22]/90">
+                          <ArrowUpRight size={17} strokeWidth={2} />
                         </div>
                       </div>
                     </div>
@@ -457,18 +471,206 @@ const CarouselSection = ({
         </div>
       </div>
 
-      <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </section>
   );
 };
+
+function CategoryCarousel({ categories = [] }) {
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < maxScroll - 4);
+
+    const card = el.querySelector(".category-carousel-card");
+    if (!card) return;
+
+    const gap = parseFloat(getComputedStyle(el).gap) || 16;
+    const step = card.offsetWidth + gap;
+    const index = step > 0 ? Math.round(el.scrollLeft / step) : 0;
+    setActiveIndex(Math.min(Math.max(index, 0), categories.length - 1));
+  }, [categories.length]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [categories.length, updateScrollState]);
+
+  const scroll = (direction) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.querySelector(".category-carousel-card");
+    const gap = parseFloat(getComputedStyle(el).gap) || 16;
+    const step = card ? card.offsetWidth + gap : el.clientWidth * 0.88;
+    el.scrollBy({
+      left: direction === "left" ? -step : step,
+      behavior: "smooth",
+    });
+  };
+
+  const scrollToIndex = (index) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.querySelector(".category-carousel-card");
+    const gap = parseFloat(getComputedStyle(el).gap) || 16;
+    const step = card ? card.offsetWidth + gap : 0;
+    el.scrollTo({ left: step * index, behavior: "smooth" });
+  };
+
+  if (!categories.length) return null;
+
+  return (
+    <section className="relative overflow-hidden bg-[#f5f5f7] py-12 sm:py-20 md:py-24">
+      <div className="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-orange-400/10 blur-[100px]" />
+      <div className="pointer-events-none absolute -left-24 bottom-0 h-64 w-64 rounded-full bg-orange-500/5 blur-[90px]" />
+
+      <div className="relative mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
+        <div className="mb-8 flex flex-col justify-between gap-6 sm:mb-10 md:mb-12 md:flex-row md:items-end">
+          <div className="max-w-2xl space-y-4">
+            <SectionEyebrow>Browse</SectionEyebrow>
+            <SectionHeading
+              title="Shop by Category."
+              subtitle="Selection made simple."
+            />
+            <p className="max-w-lg text-sm font-medium leading-relaxed text-[#86868b] sm:text-[15px]">
+              Explore frames, albums, and photo books — curated collections for every memory.
+            </p>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
+            <Link
+              to="/models"
+              className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.06] bg-white px-4 py-2.5 text-xs font-semibold text-[#1d1d1f] shadow-[0_2px_12px_rgba(0,0,0,0.06)] transition-all hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 active:scale-[0.98] sm:text-sm"
+            >
+              View all
+              <ArrowRight size={14} strokeWidth={2} />
+            </Link>
+
+            <div className="flex items-center gap-1.5 rounded-full border border-black/[0.06] bg-white p-1 shadow-[0_2px_12px_rgba(0,0,0,0.06)] sm:gap-2 sm:p-1.5">
+              <button
+                type="button"
+                onClick={() => scroll("left")}
+                disabled={!canScrollLeft}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#1d1d1f] transition-all hover:bg-[#1d1d1f] hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-30 sm:h-10 sm:w-10"
+                aria-label="Previous category"
+              >
+                <ChevronLeft size={18} strokeWidth={1.5} />
+              </button>
+              <button
+                type="button"
+                onClick={() => scroll("right")}
+                disabled={!canScrollRight}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[#1d1d1f] transition-all hover:bg-[#1d1d1f] hover:text-white active:scale-95 disabled:pointer-events-none disabled:opacity-30 sm:h-10 sm:w-10"
+                aria-label="Next category"
+              >
+                <ChevronRight size={18} strokeWidth={1.5} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative">
+          <div
+            ref={scrollRef}
+            className="category-carousel-track no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-4 pb-2 [-webkit-overflow-scrolling:touch] sm:gap-5 sm:pb-4"
+            style={{ touchAction: "pan-x pinch-zoom" }}
+          >
+            {categories.map((cat, index) => (
+              <motion.div
+                key={cat.id || cat.name || index}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.06, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                viewport={{ once: true, margin: "-24px" }}
+                className="category-carousel-card group w-[min(78vw,280px)] flex-none snap-start sm:w-[min(52vw,360px)] md:w-[min(44vw,420px)] lg:w-[min(36vw,480px)]"
+              >
+                <Link
+                  to={`/models?category=${encodeURIComponent(cat.name)}`}
+                  className="block touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 rounded-[26px]"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-[26px] border border-black/[0.05] bg-[#1d1d1f] shadow-[0_4px_24px_rgba(0,0,0,0.05)] transition-all duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_20px_48px_rgba(0,0,0,0.14)] sm:aspect-[16/10] lg:aspect-[5/3]">
+                    <img
+                      src={getImageUrl(cat.image)}
+                      alt={cat.name}
+                      loading="lazy"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                    />
+                    <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+
+                    <div className="pointer-events-none absolute left-4 top-4 z-20 sm:left-5 sm:top-5">
+                      <span className="inline-flex items-center rounded-full border border-white/20 bg-black/25 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/90 backdrop-blur-md sm:px-3 sm:text-[11px]">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                    </div>
+
+                    <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end p-4 sm:p-6 lg:p-8">
+                      {cat.series && (
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-300/95 sm:text-[11px]">
+                          {cat.series}
+                        </p>
+                      )}
+                      <h3 className="line-clamp-2 text-lg font-semibold leading-snug tracking-[-0.02em] text-white drop-shadow-md sm:text-2xl sm:line-clamp-none md:text-[1.75rem] lg:text-3xl">
+                        {cat.name}
+                      </h3>
+                      <div className="mt-3 flex items-center justify-between gap-3 sm:mt-4">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/85 transition-colors group-hover:text-white sm:text-xs">
+                          Explore collection
+                          <ArrowUpRight
+                            size={14}
+                            strokeWidth={2.5}
+                            className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          />
+                        </span>
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1d1d1f] shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white sm:h-11 sm:w-11">
+                          <ArrowUpRight size={16} strokeWidth={2.5} className="sm:hidden" />
+                          <ArrowUpRight size={18} strokeWidth={2.5} className="hidden sm:block" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+            <div className="w-2 flex-none sm:w-4" aria-hidden />
+          </div>
+        </div>
+
+        {categories.length > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-2 sm:mt-8">
+            {categories.map((cat, index) => (
+              <button
+                key={cat.id || cat.name || index}
+                type="button"
+                onClick={() => scrollToIndex(index)}
+                aria-label={`Go to ${cat.name}`}
+                aria-current={activeIndex === index ? "true" : undefined}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  activeIndex === index
+                    ? "w-8 bg-orange-500"
+                    : "w-1.5 bg-[#d2d2d7] hover:bg-[#86868b]"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
 export default function Hero() {
   const {
@@ -479,7 +681,6 @@ export default function Hero() {
     bestSellerProductIds,
   } = useProducts();
 
-  const navigate = useNavigate();
   const [slideIndex, setSlideIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -525,14 +726,32 @@ export default function Hero() {
     };
   }, [isDropdownOpen]);
 
-  // Auto slide for hero banner
+  const bannerCount = heroBanners.length;
+  const currentBanner = heroBanners[slideIndex];
+
+  const goToSlide = useCallback(
+    (index) => {
+      if (bannerCount === 0) return;
+      setSlideIndex(((index % bannerCount) + bannerCount) % bannerCount);
+    },
+    [bannerCount],
+  );
+
+  const nextSlide = useCallback(() => {
+    goToSlide(slideIndex + 1);
+  }, [goToSlide, slideIndex]);
+
+  const prevSlide = useCallback(() => {
+    goToSlide(slideIndex - 1);
+  }, [goToSlide, slideIndex]);
+
   useEffect(() => {
-    if (heroBanners.length <= 1) return;
+    if (bannerCount <= 1) return;
     const interval = setInterval(() => {
-      setSlideIndex((prev) => (prev + 1) % heroBanners.length);
-    }, 6000);
+      setSlideIndex((prev) => (prev + 1) % bannerCount);
+    }, 6500);
     return () => clearInterval(interval);
-  }, [heroBanners.length]);
+  }, [bannerCount]);
 
   const trendingProducts = useMemo(() => {
     return products
@@ -547,262 +766,152 @@ export default function Hero() {
   }, [products, bestSellerProductIds]);
 
   return (
-    <div className="bg-gray-50">
-      {/* Added pt-24 to push content below fixed header if you have one */}
-      <div className="pt-0">
-        {/* Hero Banner */}
-        <section className="relative w-full bg-white pt-1 pb-4 overflow-hidden">
-          <div className="relative h-[260px] sm:h-[320px] md:h-[380px] w-full max-w-[1300px] mx-auto overflow-hidden sm:rounded-[32px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] group mt-5">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={slideIndex}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-                className="absolute inset-0 bg-white"
-              >
-                <motion.div
-                  className="absolute inset-0"
-                  initial={{ scale: 1.05 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 5, ease: "easeOut" }}
-                >
-                  <img
-                    src={getImageUrl(heroBanners[slideIndex]?.image)}
-                    alt={heroBanners[slideIndex]?.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-gradient-to-r md:from-white/90 md:via-white/10 md:to-transparent" />
-                </motion.div>
-
-                <div className="relative h-full flex items-center px-6 sm:px-12 md:px-16">
-                  <div className="max-w-lg">
+    <div className="bg-[#f5f5f7]">
+      <div>
+        {/* Hero Banner — full width, no side gaps */}
+        <section className="relative w-full overflow-hidden pb-4 pt-3 sm:pb-5">
+          <div className="group relative w-full">
+            <div className="relative min-h-[200px] w-full overflow-hidden rounded-none bg-[#1d1d1f] shadow-[0_8px_24px_rgba(0,0,0,0.06)] sm:min-h-[220px] md:min-h-[240px] lg:min-h-[260px]">
+              {bannerCount === 0 ? (
+                <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-2.5 px-6 py-8 text-center sm:min-h-[220px] md:min-h-[240px]">
+                  <SectionEyebrow>Welcome</SectionEyebrow>
+                  <h1 className="max-w-lg text-xl font-semibold tracking-[-0.03em] text-white sm:text-2xl">
+                    Discover premium frames & albums
+                  </h1>
+                  <p className="max-w-md text-xs font-medium text-white/70 sm:text-sm">
+                    Browse our curated collection crafted for lasting memories.
+                  </p>
+                  <Link
+                    to="/models"
+                    className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#1d1d1f] transition-transform hover:scale-[1.02] active:scale-[0.98] sm:text-sm"
+                  >
+                    Shop collection
+                    <ArrowRight size={14} />
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <AnimatePresence mode="wait">
                     <motion.div
-                      initial={{ opacity: 0, x: -15 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2, duration: 0.6 }}
+                      key={slideIndex}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.65, ease: [0.4, 0, 0.2, 1] }}
+                      className="absolute inset-0"
                     >
-                      <span className="inline-block text-[9px] md:text-[11px] font-black text-white md:text-black/40 bg-black/20 md:bg-transparent px-2 py-0.5 rounded md:p-0 tracking-[0.2em] mb-3 uppercase">
-                        Featured
-                      </span>
+                      <motion.div
+                        className="absolute inset-0"
+                        initial={{ scale: 1.06 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 6, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        <img
+                          src={getImageUrl(currentBanner?.image)}
+                          alt={currentBanner?.title || "Featured banner"}
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/10 sm:bg-gradient-to-r sm:from-black/75 sm:via-black/45 sm:to-black/5" />
+                      </motion.div>
 
-                      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white md:text-black leading-[1] tracking-tighter mb-4">
-                        {heroBanners[slideIndex]?.title ||
-                          "The future of style."}
-                      </h2>
-
-                      <p className="text-xs md:text-base text-white/80 md:text-black/60 mb-6 max-w-xs font-medium leading-snug line-clamp-2">
-                        {heroBanners[slideIndex]?.description ||
-                          "Experience next-gen premium design."}
-                      </p>
-
-                      <div className="flex items-center gap-4">
-                        <a
-                          href="/models"
-                          className="px-6 py-2.5 bg-black text-white rounded-xl text-[12px] font-bold hover:scale-105 transition-all shadow-lg active:scale-95"
+                      <div className="relative flex h-full min-h-[200px] items-end px-4 pb-9 pt-6 sm:min-h-[220px] sm:items-center sm:px-6 sm:pb-8 md:min-h-[240px] md:px-8 lg:min-h-[260px]">
+                        <motion.div
+                          key={`content-${slideIndex}`}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.15, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                          className="max-w-md sm:max-w-lg"
                         >
-                          Buy Now
-                        </a>
-                        <a
-                          href="/learn-more"
-                          className="hidden sm:flex text-white md:text-black/60 hover:text-black text-[13px] font-bold items-center gap-1 group"
-                        >
-                          Learn More
-                          <ChevronRight
-                            size={14}
-                            className="group-hover:translate-x-1 transition-transform"
-                          />
-                        </a>
+                          <SectionEyebrow onDark>Featured</SectionEyebrow>
+
+                          <h1 className="mt-2 text-[clamp(1.25rem,3.5vw,1.75rem)] font-semibold leading-tight tracking-[-0.03em] text-white drop-shadow-sm">
+                            {currentBanner?.title || "The future of style."}
+                          </h1>
+
+                          <p className="mt-1.5 max-w-sm text-xs font-medium leading-snug text-white/90 line-clamp-2 drop-shadow-sm sm:text-sm">
+                            {currentBanner?.description ||
+                              "Experience next-gen premium design."}
+                          </p>
+
+                          <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-2.5">
+                            <Link
+                              to="/models"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#1d1d1f] shadow-md transition-all hover:bg-[#f5f5f7] active:scale-[0.98] sm:text-sm"
+                            >
+                              Shop now
+                              <ArrowRight size={14} strokeWidth={2} />
+                            </Link>
+                            <Link
+                              to="/about"
+                              className="inline-flex items-center gap-1 rounded-full border border-white/35 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20 sm:text-sm"
+                            >
+                              Learn more
+                              <ChevronRight size={14} />
+                            </Link>
+                          </div>
+                        </motion.div>
                       </div>
                     </motion.div>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                  </AnimatePresence>
 
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-30 bg-white/10 backdrop-blur-md p-1.5 rounded-full border border-white/20">
-              {heroBanners.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSlideIndex(idx)}
-                  className="relative h-1 rounded-full bg-white/40 overflow-hidden transition-all duration-500"
-                  style={{ width: idx === slideIndex ? "24px" : "6px" }}
-                >
-                  {idx === slideIndex && (
-                    <motion.div
-                      className="absolute inset-0 bg-white md:bg-black"
-                      initial={{ x: "-100%" }}
-                      animate={{ x: 0 }}
-                      transition={{ duration: 8, ease: "linear" }}
-                    />
+                  {bannerCount > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={prevSlide}
+                        className="absolute left-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/25 text-white opacity-0 backdrop-blur-md transition-all hover:bg-black/40 group-hover:opacity-100 sm:left-3 md:opacity-100"
+                        aria-label="Previous slide"
+                      >
+                        <ChevronLeft size={16} strokeWidth={1.5} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={nextSlide}
+                        className="absolute right-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/25 text-white opacity-0 backdrop-blur-md transition-all hover:bg-black/40 group-hover:opacity-100 sm:right-3 md:opacity-100"
+                        aria-label="Next slide"
+                      >
+                        <ChevronRight size={16} strokeWidth={1.5} />
+                      </button>
+                    </>
                   )}
-                </button>
-              ))}
+
+                  <div className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/20 bg-black/35 px-2 py-1.5 backdrop-blur-md">
+                    {heroBanners.map((_, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => goToSlide(idx)}
+                        aria-label={`Go to slide ${idx + 1}`}
+                        aria-current={idx === slideIndex ? "true" : undefined}
+                        className={`relative h-1.5 overflow-hidden rounded-full transition-all duration-300 ${
+                          idx === slideIndex
+                            ? "w-8 bg-white"
+                            : "w-2 bg-white/40 hover:bg-white/70"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>
 
-        {/* Categories Section */}
-        <section className="bg-[#f5f5f7] py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-          <div className="max-w-[1440px] mx-auto">
-            <header className="mb-8 sm:mb-12 lg:mb-16 max-w-3xl lg:max-w-4xl">
-              <motion.h2
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-                viewport={{ once: true }}
-                className="text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-[#1d1d1f] leading-tight"
-              >
-                Shop by Category.
-                <span className="text-[#86868b] block sm:inline">
-                  {" "}
-                  Selection made simple.
-                </span>
-              </motion.h2>
-            </header>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-6">
-              {shopCategories.map((cat, index) => (
-                <motion.div
-                  key={cat.id || index}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{
-                    delay: index * 0.1,
-                    duration: 0.9,
-                    ease: [0.21, 0.45, 0.32, 0.9],
-                  }}
-                  viewport={{ once: true }}
-                  className="relative group h-full"
-                >
-                  <Link
-                    to={`/models?category=${cat.name}`}
-                    className="block h-full touch-manipulation"
-                  >
-                    <div
-                      className="
-                      relative overflow-hidden bg-white
-                      transition-all duration-700 ease-out
-                      group-hover:shadow-xl group-hover:shadow-black/10
-                      group-hover:-translate-y-1 sm:group-hover:-translate-y-2
-                      aspect-square
-                    "
-                    >
-                      <div
-                        className="
-                        absolute inset-0 z-20 flex flex-col justify-end
-                        pb-5 sm:pb-8
-                        pl-4 sm:pl-6
-                        pr-4 sm:pr-6
-                        pointer-events-none
-                      "
-                      >
-                        <motion.p
-                          initial={{ opacity: 0, y: 12 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.15, duration: 0.6 }}
-                          className="text-[10px] sm:text-xs font-bold text-white uppercase tracking-widest mb-1 drop-shadow-md"
-                        >
-                          {cat.series || ""}
-                        </motion.p>
-                        <h3
-                          className="
-                          text-lg sm:text-xl lg:text-2xl
-                          font-semibold text-white leading-tight tracking-tight
-                          drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]
-                        "
-                        >
-                          {cat.name}
-                        </h3>
-                      </div>
-
-                      <img
-                        src={getImageUrl(cat.image)}
-                        alt={cat.name}
-                        className="
-                          absolute inset-0 w-full h-full object-cover object-center
-                          transition-transform duration-[1.1s] ease-out
-                          group-hover:scale-105 sm:group-hover:scale-110
-                        "
-                      />
-
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent pointer-events-none z-10" />
-
-                      <div
-                        className="
-                        absolute inset-0 z-15 opacity-0 group-hover:opacity-100
-                        transition-opacity duration-700 pointer-events-none
-                        bg-gradient-to-tr from-transparent via-white/10 to-transparent
-                        -translate-x-full group-hover:translate-x-full
-                      "
-                      />
-
-                      <div
-                        className="
-                        absolute bottom-3 right-3 sm:bottom-5 sm:right-5
-                        z-30 translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100
-                        transition-all duration-500 ease-out
-                      "
-                      >
-                        <div
-                          className="
-                          w-8 h-8 sm:w-10 sm:h-10
-                          rounded-full bg-white/90 backdrop-blur-md shadow-md
-                          flex items-center justify-center text-[#1d1d1f]
-                        "
-                        >
-                          <ArrowUpRight
-                            size={18}
-                            className="sm:size-5"
-                            strokeWidth={2.5}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 sm:mt-4 px-1">
-                      <div className="flex items-center justify-between text-[11px] sm:text-xs">
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-[#1d1d1f]">
-                            Explore
-                          </span>
-                          <div
-                            className="
-                            h-[1.5px] w-0 bg-[#1d1d1f] transition-all duration-500
-                            group-hover:w-10 sm:group-hover:w-12
-                          "
-                          />
-                        </div>
-                        <span className="text-[#86868b]">Learn more</span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-
-            <footer
-              className="
-              mt-12 sm:mt-16 border-t border-[#d2d2d7] pt-8
-              flex flex-col sm:flex-row items-center justify-between gap-4
-            "
-            >
-              {/* Optional footer content */}
-            </footer>
-          </div>
-        </section>
+        <CategoryCarousel categories={shopCategories} />
 
         {/* Content area */}
         {searchTerm ? (
-          <section className="py-12 bg-gray-50">
-            <div className="max-w-7xl mx-auto px-6">
-              <h2 className="text-2xl md:text-3xl font-black text-center mb-10">
-                Search Results{" "}
-                {filteredProducts.length > 0 && `(${filteredProducts.length})`}
-              </h2>
+          <section className="bg-[#f5f5f7] py-14 sm:py-16">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="mb-10 text-center">
+                <SectionHeading
+                  title={`Search Results${filteredProducts.length > 0 ? ` (${filteredProducts.length})` : ""}`}
+                  subtitle="Find exactly what you need."
+                  className="mx-auto max-w-xl"
+                />
+              </div>
               {filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
                   {filteredProducts.map((product) => (
                     <ProductCard
                       key={product._id || product.id}
@@ -814,15 +923,16 @@ export default function Hero() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-20">
-                  <p className="text-xl text-gray-500 mb-6">
+                <div className="rounded-[28px] border border-black/[0.05] bg-white py-20 text-center shadow-sm">
+                  <p className="mb-6 text-lg font-medium text-[#86868b]">
                     No products found.
                   </p>
                   <button
+                    type="button"
                     onClick={() => setSearchTerm("")}
-                    className="px-8 py-4 bg-amber-600 text-black font-bold rounded-full shadow-xl"
+                    className="rounded-full bg-[#1d1d1f] px-8 py-3.5 text-sm font-semibold text-white transition-all hover:bg-black active:scale-[0.98]"
                   >
-                    Clear Search
+                    Clear search
                   </button>
                 </div>
               )}

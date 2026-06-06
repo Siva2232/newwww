@@ -1,59 +1,66 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import Container from "../components/common/Container";
 import Button from "../components/common/Button";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
-import { Camera, Users, Sparkles, ArrowRight } from "lucide-react";
+import { BookOpen, Layers, Printer, ArrowRight } from "lucide-react";
 
 const services = [
   {
-    icon: <Sparkles className="w-8 h-8" />,
-    title: "For Models",
-    subtitle: "Build Your Brand. Expand Your Network.",
+    icon: <BookOpen className="w-8 h-8" />,
+    title: "Wedding Album Printing",
+    subtitle: "Turn Your Big Day Into a Timeless Masterpiece.",
     features: [
-      "Professional Portfolio Development",
-      "Exclusive Workshops & Events",
-      "Industry Connections",
-      "Priority Job Board Access",
+      "Fujifilm Revoria 2100 LED printing",
+      "Glossy & Matte premium finishes",
+      "Ultra-high resolution color accuracy",
+      "Fade-resistant, long-lasting prints",
+      "Custom album styles for every wedding",
     ],
     images: [
-      "https://media.gettyimages.com/id/493837244/photo/studio-shot-of-young-beautiful-woman.jpg?s=612x612&w=gi&k=20&c=uV2U9seF0GZoUbmc9Sr9vqx6Q0niUC1eliVGuGaKK8U=",
-      "https://www.oxanaalexphotography.com/wp-content/uploads/2023/04/modeling-poses-1.jpg",
+      "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80",
+      "https://images.unsplash.com/photo-1465495976277-798e36452305?w=600&q=80",
     ],
+    ctaLabel: "EXPLORE WEDDING ALBUMS",
+    ctaLink: "/models",
   },
   {
-    icon: <Camera className="w-8 h-8" />,
-    title: "For Photographers",
-    subtitle: "Access Talent. Creative Spaces.",
+    icon: <Layers className="w-8 h-8" />,
+    title: "Custom Photo Books",
+    subtitle: "Preserve Family Memories With Museum-Grade Quality.",
     features: [
-      "Direct Talent Booking",
-      "Premium Studio Rental",
-      "Professional Equipment Access",
-      "Post-Production Support",
-      "Collaborative Projects",
+      "Personalized layouts & album styles",
+      "Silk, pearl, matte & textured papers",
+      "Smooth gradients & vivid lifelike tones",
+      "Fingerprint-resistant matte options",
+      "Start from custom book templates",
     ],
     images: [
-      "https://stored-cf.slickpic.com/Mjg1ODI1MDZmMThjNTg,/20211226/MTgzMDE1MTVjOGM1/pn/400/ethereal-beauty-starry-makeup.jpg.webp",
-      "https://media.gettyimages.com/id/636160600/photo/studio-shot-of-young-beautiful-woman.jpg?s=612x612&w=gi&k=20&c=mwhPYT2LXuUotou23w8N7vd7EnKJNFsrTz0cALF1RHc=",
+      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80",
+      "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80",
     ],
+    ctaLabel: "START YOUR CUSTOM BOOK",
+    ctaLink: "/custom-book",
   },
   {
-    icon: <Users className="w-8 h-8" />,
-    title: "Brands & Creatives",
-    subtitle: "Bring Your Vision to Life.",
+    icon: <Printer className="w-8 h-8" />,
+    title: "Professional & Bulk Printing",
+    subtitle: "High-Speed Production Without Compromising Quality.",
     features: [
-      "Full Production Services",
-      "Custom Casting",
-      "Creative Direction",
-      "End-to-End Project Management",
+      "Portfolio & studio album printing",
+      "Bulk wedding & event album orders",
+      "Consistent color across every page",
+      "Multiple premium media compatibility",
+      "Custom paper types, finishes & styles",
     ],
     images: [
-      "https://www.shutterstock.com/image-photo/confident-businesswoman-dressed-trendy-office-600nw-2634452557.jpg",
-      "https://www.shutterstock.com/image-photo/fashion-model-black-leather-trench-260nw-2646154139.jpg",
+      "https://images.unsplash.com/photo-1589998059171-988d887df646?w=600&q=80",
+      "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&q=80",
     ],
+    ctaLabel: "GET A QUOTE",
+    ctaLink: "/contact",
   },
 ];
 
-// Extracted component to safely use hooks
 function ServiceCard({ service, index }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -68,7 +75,6 @@ function ServiceCard({ service, index }) {
       className="group"
     >
       <div className="bg-zinc-50 rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-700 border border-zinc-100">
-        {/* Header */}
         <div className="p-10 text-center bg-white border-b border-zinc-100">
           <motion.div
             initial={{ scale: 0 }}
@@ -91,7 +97,6 @@ function ServiceCard({ service, index }) {
           </p>
         </div>
 
-        {/* Images */}
         <div className="grid grid-cols-2 gap-4 p-8 bg-zinc-50/50">
           {service.images.map((img, i) => (
             <motion.div
@@ -111,7 +116,6 @@ function ServiceCard({ service, index }) {
           ))}
         </div>
 
-        {/* Features List */}
         <div className="px-10 pb-10 bg-zinc-50/50">
           <ul className="space-y-4">
             {service.features.map((feature, i) => (
@@ -128,15 +132,16 @@ function ServiceCard({ service, index }) {
             ))}
           </ul>
 
-          {/* CTA Button with Pulse */}
           <div className="mt-10">
-            <Button
-              variant="primary"
-              className="w-full rounded-2xl py-5 text-lg font-bold bg-zinc-900 text-white hover:bg-orange-600 transition-all duration-500 shadow-xl flex items-center justify-center gap-3 group"
-            >
-              EXPLORE PACKAGES
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
-            </Button>
+            <a href={service.ctaLink}>
+              <Button
+                variant="primary"
+                className="w-full rounded-2xl py-5 text-lg font-bold bg-zinc-900 text-white hover:bg-orange-600 transition-all duration-500 shadow-xl flex items-center justify-center gap-3 group"
+              >
+                {service.ctaLabel}
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
+              </Button>
+            </a>
           </div>
         </div>
       </div>
@@ -155,18 +160,15 @@ export default function Services() {
 
   return (
     <section className="bg-white overflow-hidden">
-      {/* Hero Banner with Parallax & Layered Animation */}
       <div ref={heroRef} className="relative h-screen max-h-screen">
-        {/* Background Image */}
         <motion.div style={{ y }} className="absolute inset-0">
           <img
-            src="https://blog.sigmaphoto.com/wp-content/uploads/2025/07/jillian-lenser-bf-01.jpg"
-            alt="Behind the scenes fashion photography studio"
+            src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=1600&q=80"
+            alt="Premium photo album printing at Perfect Digital"
             className="w-full h-full object-cover grayscale brightness-75 contrast-125"
           />
         </motion.div>
 
-        {/* Overlays */}
         <div className="absolute inset-0 bg-black/50" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 
@@ -187,7 +189,7 @@ export default function Services() {
               transition={{ delay: 0.4, duration: 1 }}
               className="text-2xl md:text-3xl mt-6 text-gray-200 font-light"
             >
-              Tailored Support for Every Creative Journey
+              Premium Photo Album Printing Powered by Revoria Technology
             </motion.p>
 
             <motion.div
@@ -196,13 +198,13 @@ export default function Services() {
               transition={{ delay: 0.8, duration: 0.8 }}
               className="mt-12"
             >
-              <a href="/services">
+              <a href="/models">
                 <Button
                   variant="secondary"
                   size="lg"
                   className="rounded-full px-10 py-6 text-xl font-bold border-2 border-white hover:bg-white hover:text-black transition-all duration-500 shadow-2xl"
                 >
-                  DISCOVER TALENT
+                  SHOP ALBUMS
                 </Button>
               </a>
             </motion.div>
@@ -210,7 +212,6 @@ export default function Services() {
         </Container>
       </div>
 
-      {/* Services Cards with Staggered Entrance & 3D Hover */}
       <Container className="-mt-32 relative z-10 pb-40">
         <div className="grid md:grid-cols-3 gap-10">
           {services.map((service, index) => (
