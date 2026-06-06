@@ -544,32 +544,22 @@ export default function ProductsShop() {
               )}
             </div>
           ) : (
-            <motion.div
-              layout
-              className="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-5 md:grid-cols-3 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4 2xl:grid-cols-4"
-            >
-              <AnimatePresence mode="popLayout">
-                {filteredProducts.map((product) => (
-                  <motion.div
-                    key={product._id || product.id}
-                    layout
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex justify-center"
-                  >
-                    <ProductCard
-                      product={product}
-                      whatsappNumber={whatsappNumber}
-                      WhatsAppIcon={WhatsAppIcon}
-                      trendingProductIds={trendingProductIds}
-                      bestSellerProductIds={bestSellerProductIds}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-5 md:grid-cols-3 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4 2xl:grid-cols-4">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product._id || product.id}
+                  className="flex justify-center"
+                >
+                  <ProductCard
+                    product={product}
+                    whatsappNumber={whatsappNumber}
+                    WhatsAppIcon={WhatsAppIcon}
+                    trendingProductIds={trendingProductIds}
+                    bestSellerProductIds={bestSellerProductIds}
+                  />
+                </div>
+              ))}
+            </div>
           )}
         </main>
       </div>

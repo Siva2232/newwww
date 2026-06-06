@@ -202,7 +202,7 @@ export default function ContactCTA() {
                 <motion.button
                   type="submit"
                   whileTap={{ scale: 0.98 }}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1d1d1f] px-6 py-3.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-black"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#f7ef22] px-6 py-3.5 text-sm font-bold text-black shadow-md transition-all hover:bg-[#f7ef22]/90 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Send message
                   <ArrowRight size={16} strokeWidth={2} />

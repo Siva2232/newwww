@@ -219,7 +219,7 @@ export default function TestimonialSection() {
       <div className="mt-12 flex justify-center px-4 sm:mt-14">
         <Link
           to="/models"
-          className="inline-flex items-center gap-2 rounded-full bg-[#1d1d1f] px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-black active:scale-[0.98]"
+          className="inline-flex items-center gap-2 rounded-full bg-[#f7ef22] px-6 py-3 text-sm font-bold text-black shadow-md transition-all hover:bg-[#f7ef22]/90 hover:scale-105 active:scale-[0.98]"
         >
           Start your story
           <ArrowRight size={16} strokeWidth={2} />

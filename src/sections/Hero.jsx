@@ -9,7 +9,7 @@ import {
   Sparkles,
   Timer,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useProducts } from "../Context/ProductContext";
 import ProductCard from "../components/common/ProductCard";
 import { getImageUrl } from "../utils/imageUrl";
@@ -32,20 +32,14 @@ const SectionEyebrow = ({ children, icon: Icon = Sparkles, onDark = false }) => 
 
 const SectionHeading = ({ title, subtitle, className = "" }) => (
   <div className={`space-y-3 ${className}`}>
-    <motion.h2
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-      className="text-[clamp(1.75rem,4vw,3.5rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-[#1d1d1f]"
-    >
+    <h2 className="text-[clamp(1.75rem,4vw,3.5rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-[#1d1d1f]">
       {title}
       {subtitle && (
         <span className="mt-1 block text-[0.55em] font-medium tracking-[-0.02em] text-[#86868b]">
           {subtitle}
         </span>
       )}
-    </motion.h2>
+    </h2>
   </div>
 );
 
@@ -113,11 +107,22 @@ function SpecialOffersCarousel() {
 
   useEffect(() => {
     const track = trackRef.current;
+    const section = wrapperRef.current?.closest("section");
     if (!track || activeOffers.length === 0) return;
 
+    const observer =
+      section &&
+      new IntersectionObserver(
+        ([entry]) => {
+          pausedRef.current = !entry.isIntersecting;
+        },
+        { threshold: 0.05 },
+      );
+    if (section && observer) observer.observe(section);
+
     let lastTime = performance.now();
-    const SPEED = 32; // px/second – tune 22–45
-    const MAX_DELTA = 50;
+    const SPEED = 28;
+    const MAX_DELTA = 40;
 
     const animate = (now) => {
       const delta = Math.min(now - lastTime, MAX_DELTA);
@@ -132,7 +137,7 @@ function SpecialOffersCarousel() {
           posRef.current -= segmentWidth;
         }
 
-        track.style.transform = `translateX(-${posRef.current}px)`;
+        track.style.transform = `translate3d(-${posRef.current}px,0,0)`;
       }
 
       rafRef.current = requestAnimationFrame(animate);
@@ -142,6 +147,7 @@ function SpecialOffersCarousel() {
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      observer?.disconnect();
     };
   }, [activeOffers.length]);
 
@@ -307,18 +313,8 @@ const CarouselSection = ({
   getDisplayCategory = (cat) => cat,
 }) => {
   const scrollRef = useRef(null);
-  const navigate = useNavigate();
-  const [activeNavId, setActiveNavId] = useState(null);
 
   if (!products || products.length === 0) return null;
-
-  const handleCardClick = (e, productId) => {
-    setActiveNavId(productId);
-    setTimeout(() => {
-      navigate(`/product/${productId}`);
-      setTimeout(() => setActiveNavId(null), 1000);
-    }, 400);
-  };
 
   const scroll = (direction) => {
     if (!scrollRef.current) return;
@@ -333,18 +329,6 @@ const CarouselSection = ({
 
   return (
     <section className="relative overflow-hidden bg-[#f5f5f7] py-16 sm:py-20 md:py-24">
-      <AnimatePresence>
-        {activeNavId && (
-          <motion.div
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed top-0 left-0 right-0 z-[300] h-0.5 origin-left bg-[#0071e3]"
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-          />
-        )}
-      </AnimatePresence>
-
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-10 flex flex-col justify-between gap-8 md:mb-12 md:flex-row md:items-end">
           <div className="max-w-2xl space-y-4">
@@ -380,52 +364,34 @@ const CarouselSection = ({
           className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 sm:gap-6 sm:pb-6"
         >
           {products.map((product, idx) => {
-            const isThisCardLoading =
-              activeNavId === (product._id || product.id);
+            const productId = product._id || product.id;
 
             return (
               <div
-                key={product._id || product.id || idx}
+                key={productId || idx}
                 className="product-card-wrapper w-[82vw] flex-none snap-start sm:w-[300px] md:w-[320px]"
               >
-                <motion.div
-                  whileTap={{ scale: 0.98 }}
-                  animate={
-                    isThisCardLoading
-                      ? { opacity: 0.75, scale: 0.98 }
-                      : { opacity: 1, scale: 1 }
-                  }
-                  onClick={(e) => handleCardClick(e, product._id || product.id)}
-                  className="group relative cursor-pointer overflow-hidden rounded-[26px] border border-black/[0.05] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.05)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_24px_48px_rgba(0,0,0,0.08)]"
+                <Link
+                  to={`/product/${productId}`}
+                  className="group relative block overflow-hidden rounded-[26px] border border-black/[0.05] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.05)] transition-shadow duration-300 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)]"
                 >
-                  <AnimatePresence>
-                    {isThisCardLoading && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="absolute inset-0 z-40 bg-white/40 backdrop-blur-[2px] flex items-center justify-center"
-                      >
-                        <div className="w-6 h-6 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
                   <div className="relative aspect-[4/5] overflow-hidden bg-[#f8f8fa]">
-                    <motion.img
+                    <img
                       src={getImageUrl(product.image || product.mainImage)}
                       alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                     <div className="absolute left-4 top-4 sm:left-5 sm:top-5">
-                      <span className="rounded-full border border-black/[0.06] bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6e6e73] backdrop-blur-md">
+                      <span className="rounded-full border border-black/[0.06] bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6e6e73]">
                         {getDisplayCategory(product.category)}
                       </span>
                     </div>
                   </div>
 
                   <div className="p-5 sm:p-6">
-                    <h3 className="mb-3 line-clamp-2 text-lg font-semibold leading-snug tracking-[-0.02em] text-[#1d1d1f] transition-colors group-hover:text-[#0071e3] sm:text-xl">
+                    <h3 className="mb-3 line-clamp-2 text-lg font-semibold leading-snug tracking-[-0.02em] text-[#1d1d1f] transition-colors group-hover:text-orange-600 sm:text-xl">
                       {product.name}
                     </h3>
 
@@ -446,25 +412,26 @@ const CarouselSection = ({
                           <button
                             type="button"
                             onClick={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
                               window.open(
                                 `https://wa.me/${whatsappNumber}`,
                                 "_blank",
                               );
                             }}
-                            className="relative z-50 flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f5f7] text-[#25D366] transition-all hover:bg-[#25D366] hover:text-white"
+                            className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f5f7] text-[#25D366] transition-colors hover:bg-[#25D366] hover:text-white"
                             aria-label="Contact on WhatsApp"
                           >
                             <WhatsAppIcon size={17} />
                           </button>
                         )}
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f7ef22] text-black shadow-sm transition-all group-hover:scale-105 group-hover:bg-[#f7ef22]/90">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f7ef22] text-black shadow-sm">
                           <ArrowUpRight size={17} strokeWidth={2} />
                         </div>
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </Link>
               </div>
             );
           })}
@@ -590,12 +557,8 @@ function CategoryCarousel({ categories = [] }) {
             style={{ touchAction: "pan-x pinch-zoom" }}
           >
             {categories.map((cat, index) => (
-              <motion.div
+              <div
                 key={cat.id || cat.name || index}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.06, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                viewport={{ once: true, margin: "-24px" }}
                 className="category-carousel-card group w-[min(78vw,280px)] flex-none snap-start sm:w-[min(52vw,360px)] md:w-[min(44vw,420px)] lg:w-[min(36vw,480px)]"
               >
                 <Link
@@ -643,7 +606,7 @@ function CategoryCarousel({ categories = [] }) {
                     </div>
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             ))}
             <div className="w-2 flex-none sm:w-4" aria-hidden />
           </div>
@@ -797,31 +760,22 @@ export default function Hero() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.65, ease: [0.4, 0, 0.2, 1] }}
+                      transition={{ duration: 0.35 }}
                       className="absolute inset-0"
                     >
-                      <motion.div
-                        className="absolute inset-0"
-                        initial={{ scale: 1.06 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 6, ease: [0.22, 1, 0.36, 1] }}
-                      >
+                      <div className="absolute inset-0">
                         <img
                           src={getImageUrl(currentBanner?.image)}
                           alt={currentBanner?.title || "Featured banner"}
+                          loading={slideIndex === 0 ? "eager" : "lazy"}
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/10 sm:bg-gradient-to-r sm:from-black/75 sm:via-black/45 sm:to-black/5" />
-                      </motion.div>
+                      </div>
 
                       <div className="relative flex h-full min-h-[200px] items-end px-4 pb-9 pt-6 sm:min-h-[220px] sm:items-center sm:px-6 sm:pb-8 md:min-h-[240px] md:px-8 lg:min-h-[260px]">
-                        <motion.div
-                          key={`content-${slideIndex}`}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.15, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                          className="max-w-md sm:max-w-lg"
-                        >
+                        <div className="max-w-md sm:max-w-lg">
                           <SectionEyebrow onDark>Featured</SectionEyebrow>
 
                           <h1 className="mt-2 text-[clamp(1.25rem,3.5vw,1.75rem)] font-semibold leading-tight tracking-[-0.03em] text-white drop-shadow-sm">
@@ -849,7 +803,7 @@ export default function Hero() {
                               <ChevronRight size={14} />
                             </Link>
                           </div>
-                        </motion.div>
+                        </div>
                       </div>
                     </motion.div>
                   </AnimatePresence>

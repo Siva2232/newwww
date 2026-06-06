@@ -33,61 +33,70 @@ export default function Navbar() {
   const [searchLoading, setSearchLoading] = useState(false);
 
   const { products = [], shopCategories = [], shopSubCategories = [] } = useProducts();
+  const productsRef = useRef(products);
+  productsRef.current = products;
 
-  // Search logic
+  // Search logic — local first for instant results, API only when term is longer
   useEffect(() => {
-    // allow searching even for a single character to show results/categories
-    if (searchTerm.trim().length >= 1) {
-      const handler = setTimeout(async () => {
-        setSearchLoading(true);
-        try {
-          let productsRes = await api.searchProducts(searchTerm);
-          const term = searchTerm.trim().toLowerCase();
-          // local category/subcategory filtering
-          const matchingCats = shopCategories.filter((c) =>
-            c.name.toLowerCase().includes(term),
-          );
-          const matchingSubcats = shopSubCategories.filter((sc) => {
-            const name = typeof sc.name === "string" ? sc.name : "";
-            return name.toLowerCase().includes(term);
-          });
+    const trimmed = searchTerm.trim();
+    if (trimmed.length < 1) {
+      setSearchResults({ products: [], categories: [], subcategories: [] });
+      setSearchLoading(false);
+      return;
+    }
 
-          // if API returned nothing, fall back to local product list
-          if (!productsRes || productsRes.length === 0) {
-            productsRes = products.filter((p) => {
-              const n = (p.name || "").toLowerCase();
-              return n.includes(term);
-            });
-          }
+    const term = trimmed.toLowerCase();
+    const matchingCats = shopCategories.filter((c) =>
+      c.name.toLowerCase().includes(term),
+    );
+    const matchingSubcats = shopSubCategories.filter((sc) => {
+      const name = typeof sc.name === "string" ? sc.name : "";
+      return name.toLowerCase().includes(term);
+    });
+    const localProducts = productsRef.current.filter((p) =>
+      (p.name || "").toLowerCase().includes(term),
+    );
 
+    setSearchResults({
+      products: localProducts,
+      categories: matchingCats,
+      subcategories: matchingSubcats,
+    });
+
+    if (trimmed.length < 2) {
+      setSearchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const handler = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const productsRes = await api.searchProducts(trimmed);
+        if (cancelled) return;
+        setSearchResults({
+          products:
+            productsRes?.length > 0 ? productsRes : localProducts,
+          categories: matchingCats,
+          subcategories: matchingSubcats,
+        });
+      } catch {
+        if (!cancelled) {
           setSearchResults({
-            products: productsRes || [],
+            products: localProducts,
             categories: matchingCats,
             subcategories: matchingSubcats,
           });
-        } catch (err) {
-          console.error("Search error:", err);
-          // fallback to local products if request fails
-          const term = searchTerm.trim().toLowerCase();
-          const fallbackProducts = products.filter((p) =>
-            (p.name || "").toLowerCase().includes(term),
-          );
-          const matchingCats = shopCategories.filter((c) =>
-            c.name.toLowerCase().includes(term),
-          );
-          const matchingSubcats = shopSubCategories.filter((sc) => {
-            const name = typeof sc.name === "string" ? sc.name : "";
-            return name.toLowerCase().includes(term);
-          });
-          setSearchResults({ products: fallbackProducts, categories: matchingCats, subcategories: matchingSubcats });
-        } finally {
-          setSearchLoading(false);
         }
-      }, 300);
-      return () => clearTimeout(handler);
-    } else {
-      setSearchResults({ products: [], categories: [], subcategories: [] });
-    }
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(handler);
+    };
   }, [searchTerm, shopCategories, shopSubCategories]);
 
   const filteredProducts = searchResults.products;
@@ -178,10 +187,10 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 z-50 w-full transition-all duration-300 ${
+        className={`fixed top-0 left-0 z-50 w-full transition-[background-color,box-shadow,border-color] duration-200 ${
           scrolled
-            ? "border-b border-black/[0.06] bg-white/90 shadow-[0_4px_24px_rgba(0,0,0,0.06)] backdrop-blur-xl"
-            : "border-b border-black/[0.04] bg-white/80 backdrop-blur-lg"
+            ? "border-b border-black/[0.06] bg-white/95 shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
+            : "border-b border-black/[0.04] bg-white/90"
         }`}
       >
         {/* Top bar */}

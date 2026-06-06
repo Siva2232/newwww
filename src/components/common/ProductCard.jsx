@@ -1,9 +1,13 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles, ShoppingBag, ArrowUpRight } from "lucide-react";
 import { getImageUrl } from "../../utils/imageUrl";
 import { getProductId, isProductInList } from "../../utils/productIds";
 
-const ProductCard = ({
+const formatPrice = (num) =>
+  new Intl.NumberFormat("en-IN").format(Number(num) || 0);
+
+const ProductCard = memo(function ProductCard({
   product,
   whatsappNumber,
   getDisplayCategory = (cat) => cat,
@@ -12,7 +16,7 @@ const ProductCard = ({
   bestSellerProductIds = [],
   onSelect,
   selected = false,
-}) => {
+}) {
   const displayCategory =
     typeof getDisplayCategory === "function"
       ? getDisplayCategory(product.category)
@@ -24,8 +28,6 @@ const ProductCard = ({
   const pid = getProductId(product);
   const isTrending = isProductInList(pid, trendingProductIds);
   const isBestSeller = isProductInList(pid, bestSellerProductIds);
-  const formatPrice = (num) =>
-    new Intl.NumberFormat("en-IN").format(Number(num) || 0);
 
   const discountPercentage = product.originalPrice
     ? Math.round(
@@ -48,7 +50,7 @@ const ProductCard = ({
       <div className="relative aspect-[4/5] overflow-hidden bg-[#f8f8fa]">
         <div className="absolute left-3 top-3 z-20 flex flex-col gap-1.5">
           {isBestSeller && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-black/[0.06] bg-white/95 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#1d1d1f] shadow-sm backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1 rounded-full border border-black/[0.06] bg-white/95 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#1d1d1f] shadow-sm">
               <Sparkles size={9} className="text-orange-500" fill="currentColor" />
               Bestseller
             </span>
@@ -60,10 +62,7 @@ const ProductCard = ({
           )}
           {isTrending && !isBestSeller && (
             <span className="inline-flex items-center gap-1 rounded-full bg-[#1d1d1f] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-white">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-400" />
-              </span>
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-orange-400" />
               Trending
             </span>
           )}
@@ -73,25 +72,27 @@ const ProductCard = ({
           <img
             src={imageSrc}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
           />
         ) : (
           <Link to={productPath} className="block h-full">
             <img
               src={imageSrc}
               alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
             />
           </Link>
         )}
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-
         {!onSelect && (
-          <div className="absolute bottom-3 left-3 right-3 z-30 translate-y-10 opacity-0 transition-all duration-400 group-hover:translate-y-0 group-hover:opacity-100">
+          <div className="absolute bottom-3 left-3 right-3 z-30 translate-y-8 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
             <Link
               to={productPath}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/80 bg-white/95 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1d1d1f] shadow-lg backdrop-blur-md"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/80 bg-white py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1d1d1f] shadow-lg"
             >
               <ShoppingBag size={12} />
               View details
@@ -147,7 +148,7 @@ const ProductCard = ({
                   "_blank",
                 );
               }}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1d1d1f] text-white shadow-sm transition-all hover:bg-[#25D366] active:scale-95"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1d1d1f] text-white shadow-sm transition-colors hover:bg-[#25D366] active:scale-95"
               aria-label="Inquire on WhatsApp"
             >
               {WhatsAppIcon ? (
@@ -159,7 +160,7 @@ const ProductCard = ({
           )}
 
           {onSelect && (
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1d1d1f] text-white transition-transform group-hover:scale-105">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1d1d1f] text-white">
               <ArrowUpRight size={16} />
             </span>
           )}
@@ -168,7 +169,7 @@ const ProductCard = ({
     </>
   );
 
-  const shellClass = `group relative w-full overflow-hidden rounded-[22px] border bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] ${
+  const shellClass = `group relative w-full overflow-hidden rounded-[22px] border bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-shadow duration-300 hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] ${
     selected
       ? "border-orange-400 ring-2 ring-orange-400/30"
       : "border-black/[0.05]"
@@ -187,6 +188,6 @@ const ProductCard = ({
   }
 
   return <div className={shellClass}>{cardInner}</div>;
-};
+});
 
 export default ProductCard;

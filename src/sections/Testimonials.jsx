@@ -83,7 +83,7 @@ export default function Testimonials() {
               type="button"
               onClick={() => scroll("left")}
               disabled={!canScrollLeft}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[0.06] bg-white text-[#1d1d1f] shadow-sm transition-all hover:bg-[#1d1d1f] hover:text-white active:scale-95 disabled:opacity-35"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[0.06] bg-white text-[#1d1d1f] shadow-sm transition-all hover:bg-[#f7ef22] hover:text-black active:scale-95 disabled:opacity-35"
               aria-label="Previous testimonial"
             >
               <ChevronLeft size={20} strokeWidth={1.5} />
@@ -92,7 +92,7 @@ export default function Testimonials() {
               type="button"
               onClick={() => scroll("right")}
               disabled={!canScrollRight}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[0.06] bg-white text-[#1d1d1f] shadow-sm transition-all hover:bg-[#1d1d1f] hover:text-white active:scale-95 disabled:opacity-35"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/[0.06] bg-white text-[#1d1d1f] shadow-sm transition-all hover:bg-[#f7ef22] hover:text-black active:scale-95 disabled:opacity-35"
               aria-label="Next testimonial"
             >
               <ChevronRight size={20} strokeWidth={1.5} />

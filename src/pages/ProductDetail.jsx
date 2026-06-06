@@ -18,8 +18,8 @@ import {
   Facebook,
   Send,
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 
 const WhatsAppIcon = ({ size = 20 }) => (
@@ -231,23 +231,58 @@ export default function ProductDetail() {
   useEffect(() => setPreviewImage(null), [id]);
 
   const [isHovering, setIsHovering] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
+  const [zoomStyle, setZoomStyle] = useState({
+    transform: "scale(1)",
+    transformOrigin: "50% 50%",
+  });
+  const zoomRafRef = useRef(null);
 
-  const handleMouseMove = (e) => {
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - left) / width;
-    const y = (e.clientY - top) / height;
-    setMousePos({ x, y });
-  };
+  const handleMouseMove = useCallback((e) => {
+    if (zoomRafRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    zoomRafRef.current = requestAnimationFrame(() => {
+      const x = ((clientX - rect.left) / rect.width) * 100;
+      const y = ((clientY - rect.top) / rect.height) * 100;
+      setZoomStyle({
+        transform: "scale(2)",
+        transformOrigin: `${x}% ${y}%`,
+      });
+      zoomRafRef.current = null;
+    });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovering(false);
+    setZoomStyle({ transform: "scale(1)", transformOrigin: "50% 50%" });
+  }, []);
 
   useEffect(() => {
     setCurrentImg(0);
     setIsHovering(false);
+    setZoomStyle({ transform: "scale(1)", transformOrigin: "50% 50%" });
   }, [id]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo(0, 0);
   }, [id]);
+
+  const allImages = useMemo(() => {
+    if (!product) return [];
+    return product.image
+      ? [product.image, ...(product.images || [])]
+      : product.images?.length > 0
+        ? product.images
+        : [];
+  }, [product]);
+
+  const suggestedProducts = useMemo(() => {
+    if (!product) return [];
+    return products
+      .filter((p) => (p._id || p.id) !== (product._id || product.id))
+      .slice(0, 4);
+  }, [products, product]);
 
   if (loading) {
     return (
@@ -264,26 +299,11 @@ export default function ProductDetail() {
       </div>
     );
 
-  const allImages = product.image
-    ? [product.image, ...(product.images || [])]
-    : product.images?.length > 0
-      ? product.images
-      : [];
-
-  const suggestedProducts = products
-    .filter((p) => (p._id || p.id) !== (product._id || product.id))
-    .slice(0, 4);
-
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
-    <LayoutGroup>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-[100vh] bg-[#fcfcfc] text-[#1d1d1f] font-sans overflow-x-hidden"
-      >
-        <nav className="top-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-black/[0.03] px-5 py-3">
+    <div className="min-h-[100vh] bg-[#fcfcfc] text-[#1d1d1f] font-sans overflow-x-hidden">
+        <nav className="top-0 z-[100] bg-white/95 border-b border-black/[0.03] px-5 py-3">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <Link
               to="/models"
@@ -317,39 +337,31 @@ export default function ProductDetail() {
                 <div
                   className="relative aspect-[5/6] lg:aspect-[5/6] xl:aspect-[6/7] max-h-[480px] lg:max-h-[520px] mx-auto w-full max-w-[380px] lg:max-w-[420px] rounded-xl overflow-hidden bg-[#f5f5f7] shadow-md group"
                   onMouseEnter={() => setIsHovering(true)}
-                  onMouseLeave={() => setIsHovering(false)}
-                  onMouseMove={handleMouseMove}
+                  onMouseLeave={handleMouseLeave}
+                  onMouseMove={isHovering ? handleMouseMove : undefined}
                 >
-                  <AnimatePresence mode="wait">
-                    <motion.img
-                      key={currentImg + "-preview-" + (previewImage ? 1 : 0)}
-                      src={getImageUrl(previewImage || allImages[currentImg])}
-                      initial={{ opacity: 0, scale: 1.05 }}
-                      animate={{
-                        opacity: 1,
-                        scale: isHovering ? 2.4 : 1,
-                        originX: isHovering ? mousePos.x : 0.5,
-                        originY: isHovering ? mousePos.y : 0.5
-                      }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{
-                        opacity: { duration: 0.5 },
-                        scale: { duration: 0.35, ease: "easeOut" },
-                        originX: { duration: 0.1, ease: "linear" },
-                        originY: { duration: 0.1, ease: "linear" }
-                      }}
-                      className="w-full h-full object-cover will-change-transform"
-                    />
-                  </AnimatePresence>
+                  <img
+                    key={previewImage || allImages[currentImg]}
+                    src={getImageUrl(previewImage || allImages[currentImg])}
+                    alt={product.name}
+                    loading="eager"
+                    decoding="async"
+                    style={{
+                      ...zoomStyle,
+                      transition: isHovering
+                        ? "transform 0.15s ease-out"
+                        : "transform 0.25s ease-out",
+                    }}
+                    className="h-full w-full object-cover"
+                  />
 
-                  <motion.div
-                    animate={{ opacity: isHovering ? 0 : 1 }}
-                    className="absolute top-4 left-4 pointer-events-none"
-                  >
-                    <span className="flex items-center gap-1 bg-black/80 text-white px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm">
-                      <Zap size={8} fill="currentColor" />
-                    </span>
-                  </motion.div>
+                  {!isHovering && (
+                    <div className="absolute top-4 left-4 pointer-events-none">
+                      <span className="flex items-center gap-1 bg-black/80 text-white px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest">
+                        <Zap size={8} fill="currentColor" />
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Much smaller thumbnails */}
@@ -373,6 +385,8 @@ export default function ProductDetail() {
                       >
                         <img
                           src={getImageUrl(img)}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover"
                           alt={`Thumbnail ${i + 1}`}
                         />
@@ -385,12 +399,7 @@ export default function ProductDetail() {
 
             {/* CENTER: PRODUCT INFO */}
             <div className="lg:col-span-4 xl:col-span-5">
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="space-y-6"
-              >
+              <div className="space-y-6">
                 <header className="space-y-2">
                   <div className="flex items-center gap-2 text-orange-600 font-black text-[9px] uppercase tracking-[0.25em]">
                     <Sparkles size={12} fill="currentColor" /> Exclusive Edition
@@ -430,21 +439,12 @@ export default function ProductDetail() {
                       >
                         {tab}
                         {activeTab === tab && (
-                          <motion.div
-                            layoutId="underline"
-                            className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-orange-600"
-                          />
+                          <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-orange-600" />
                         )}
                       </button>
                     ))}
                   </div>
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activeTab}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="text-[15px] text-gray-600 leading-relaxed max-w-lg min-h-[90px]"
-                    >
+                    <div className="text-[15px] text-gray-600 leading-relaxed max-w-lg min-h-[90px]">
                       {activeTab === "details" && (
                         <p>
                           {product.description ||
@@ -480,20 +480,17 @@ export default function ProductDetail() {
                           Free shipping on orders over ₹1,999. Delivered in eco-friendly packaging within 5-7 days.
                         </p>
                       )}
-                    </motion.div>
-                  </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* Mobile / tablet CTA */}
                 <div className="lg:hidden space-y-3">
-                  <motion.a
+                  <a
                     href={`https://wa.me/9746683778?text=I want to order ${product.name}`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                     className="flex items-center justify-center gap-3 w-full bg-[#ffa41c] text-[#111] py-3.5 rounded-full font-bold text-sm hover:bg-[#fa8900] transition-colors shadow-md"
                   >
                     <WhatsAppIcon size={18} /> Enquire Now
-                  </motion.a>
+                  </a>
                   <div className="grid grid-cols-3 gap-2.5 bg-[#f5f5f7] p-4 rounded-xl">
                     {[
                       { icon: Truck, text: "Fast Ship" },
@@ -511,18 +508,13 @@ export default function ProductDetail() {
                     ))}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
 
             {/* RIGHT: AMAZON-STYLE BUY BOX */}
             <div className="hidden lg:block lg:col-span-3">
               <div className="sticky top-[72px]">
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="border border-gray-200 rounded-xl bg-white p-5 shadow-sm space-y-4"
-                >
+                <div className="border border-gray-200 rounded-xl bg-white p-5 shadow-sm space-y-4">
                   <div>
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <span className="text-3xl font-medium tracking-tight text-[#b12704]">
@@ -556,14 +548,12 @@ export default function ProductDetail() {
                   </div>
 
                   <div className="space-y-2.5 pt-1">
-                    <motion.a
+                    <a
                       href={`https://wa.me/9746683778?text=I want to order ${product.name}`}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
                       className="flex items-center justify-center gap-2.5 w-full bg-[#ffa41c] hover:bg-[#fa8900] text-[#111] py-3 rounded-full font-semibold text-sm transition-colors shadow-sm"
                     >
                       <WhatsAppIcon size={18} /> Enquire Now
-                    </motion.a>
+                    </a>
                   </div>
 
                   <div className="pt-3 border-t border-gray-100 space-y-2.5">
@@ -578,7 +568,7 @@ export default function ProductDetail() {
                       </div>
                     ))}
                   </div>
-                </motion.div>
+                </div>
               </div>
             </div>
           </div>
@@ -608,7 +598,9 @@ export default function ProductDetail() {
                     <img
                       src={getImageUrl(p.image)}
                       alt=""
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-[9px] font-black uppercase">
                       {p.category}
@@ -624,14 +616,8 @@ export default function ProductDetail() {
           </div>
         </section>
 
-        <AnimatePresence>
-          {!isNavMenuOpen && (
-            <motion.div
-              initial={{ y: 100 }}
-              animate={{ y: 0 }}
-              exit={{ y: 100 }}
-              className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-black/[0.05] p-5 z-[200] flex items-center gap-5"
-            >
+        {!isNavMenuOpen && (
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 border-t border-black/[0.05] p-5 z-[200] flex items-center gap-5">
               <div className="flex-1">
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   Price
@@ -644,9 +630,8 @@ export default function ProductDetail() {
               >
                 <WhatsAppIcon size={18} /> ORDER
               </a>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+        )}
 
         <ShareModal
           isOpen={isShareOpen}
@@ -654,7 +639,6 @@ export default function ProductDetail() {
           product={product}
           url={shareUrl}
         />
-      </motion.div>
-    </LayoutGroup>
+    </div>
   );
 }
